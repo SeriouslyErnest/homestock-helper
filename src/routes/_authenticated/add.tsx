@@ -108,7 +108,11 @@ function AddPage() {
       {search.name && (
         <div className="mb-4 flex items-center gap-3 rounded-2xl bg-success-soft p-3.5 text-success">
           {search.image && (
-            <img src={search.image} alt="" className="h-10 w-10 rounded-xl bg-white object-contain" />
+            <img
+              src={search.image}
+              alt=""
+              className="h-10 w-10 rounded-xl bg-white object-contain"
+            />
           )}
           <div className="text-sm">
             <strong className="block">{search.name}</strong>
@@ -167,7 +171,12 @@ function AddPage() {
             <label htmlFor="category" className={label}>
               Category
             </label>
-            <select id="category" value={category} onChange={(e) => setCategory(e.target.value)} className={field}>
+            <select
+              id="category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className={field}
+            >
               {CATEGORIES.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.emoji} {c.id}

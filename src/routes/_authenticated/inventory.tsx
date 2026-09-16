@@ -131,7 +131,9 @@ function InventoryPage() {
           <strong className="block text-xl">{items?.length ?? 0}</strong>
           <span className="text-xs font-bold">items tracked</span>
         </div>
-        <div className={`rounded-2xl p-3.5 ${attention > 0 ? "bg-warning-soft text-warning" : "bg-success-soft text-success"}`}>
+        <div
+          className={`rounded-2xl p-3.5 ${attention > 0 ? "bg-warning-soft text-warning" : "bg-success-soft text-success"}`}
+        >
           <strong className="block text-xl">{attention}</strong>
           <span className="text-xs font-bold">need attention</span>
         </div>
@@ -144,7 +146,10 @@ function InventoryPage() {
             {filtered.length}
           </span>
         </div>
-        <div className="flex rounded-xl border border-border bg-surface-2 p-1" aria-label="Choose inventory view">
+        <div
+          className="flex rounded-xl border border-border bg-surface-2 p-1"
+          aria-label="Choose inventory view"
+        >
           <button
             onClick={() => switchView("list")}
             aria-label="List view"
@@ -202,7 +207,12 @@ function InventoryPage() {
             .join(" · ");
 
           const thumb = item.image_url ? (
-            <img src={item.image_url} alt="" loading="lazy" className="h-full w-full rounded-xl object-contain" />
+            <img
+              src={item.image_url}
+              alt=""
+              loading="lazy"
+              className="h-full w-full rounded-xl object-contain"
+            />
           ) : (
             categoryEmoji(item.category)
           );
@@ -222,7 +232,9 @@ function InventoryPage() {
                 <div className="mt-1 h-4 truncate text-xs text-muted-foreground">{meta}</div>
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-lg font-bold">{item.quantity}</span>
-                  <span className={`text-[10px] font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}>
+                  <span
+                    className={`text-[10px] font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}
+                  >
                     {status.label}
                   </span>
                 </div>
@@ -231,7 +243,10 @@ function InventoryPage() {
           }
 
           return (
-            <article key={item.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-2.5">
+            <article
+              key={item.id}
+              className="flex items-center gap-3 rounded-2xl border border-border bg-card p-2.5"
+            >
               <Link
                 to="/item/$itemId"
                 params={{ itemId: item.id }}
@@ -254,7 +269,9 @@ function InventoryPage() {
                 </button>
                 <div className="w-10 text-center">
                   <strong className="block text-lg leading-tight">{item.quantity}</strong>
-                  <span className={`block text-[9px] font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}>
+                  <span
+                    className={`block text-[9px] font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}
+                  >
                     {status.label}
                   </span>
                 </div>

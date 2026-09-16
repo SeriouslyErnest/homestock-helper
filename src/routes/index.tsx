@@ -38,8 +38,7 @@ function Landing() {
       <LogoMark size={96} />
       <LogoWordmark className="mt-4 text-4xl" />
       <p className="mt-3 text-muted-foreground">
-        A shared memory for your household. Know what you have, what's running low, and what to
-        buy.
+        A shared memory for your household. Know what you have, what's running low, and what to buy.
       </p>
       <div className="mt-8 flex w-full flex-col gap-3">
         <Link

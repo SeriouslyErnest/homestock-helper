@@ -138,9 +138,7 @@ function AboutPage() {
               mockup={<RestockMock />}
               flip
             >
-              <p>
-                When you come home with groceries, open Restock and scan the product barcodes.
-              </p>
+              <p>When you come home with groceries, open Restock and scan the product barcodes.</p>
               <p>
                 Keep scanning until you are finished, adjust quantities if needed, and add
                 everything to your household inventory at once.
@@ -237,17 +235,21 @@ function AboutPage() {
             <Reveal delay={90} className="max-w-prose">
               <p className="text-[15px] leading-relaxed text-muted-foreground">
                 Requests can be generic or linked to a specific product. Add simple instructions so
-                the person shopping knows what matters without turning every request into a
-                detailed form.
+                the person shopping knows what matters without turning every request into a detailed
+                form.
               </p>
               <ul className="mt-5 flex flex-wrap gap-2">
-                {["Optional", "Only if on sale", "Any brand", "Call if unavailable", "Read notes"].map(
-                  (t) => (
-                    <li key={t}>
-                      <Tag>{t}</Tag>
-                    </li>
-                  ),
-                )}
+                {[
+                  "Optional",
+                  "Only if on sale",
+                  "Any brand",
+                  "Call if unavailable",
+                  "Read notes",
+                ].map((t) => (
+                  <li key={t}>
+                    <Tag>{t}</Tag>
+                  </li>
+                ))}
               </ul>
               <p className="mt-5 text-[15px] leading-relaxed text-muted-foreground">
                 Shopping requests stay deliberately simple. The person shopping checks a request off
@@ -300,9 +302,7 @@ function AboutPage() {
           <Reveal delay={90}>
             <div className="mx-auto mt-8 grid max-w-3xl gap-4 sm:grid-cols-[3fr_2fr] sm:items-stretch">
               <div className="rounded-3xl border-2 border-brand bg-card p-6 text-center">
-                <span className="text-xs font-bold tracking-wide uppercase text-brand">
-                  Always
-                </span>
+                <span className="text-xs font-bold tracking-wide uppercase text-brand">Always</span>
                 <p className="mt-2 text-2xl font-extrabold text-balance sm:text-3xl">
                   Product + Quantity
                 </p>

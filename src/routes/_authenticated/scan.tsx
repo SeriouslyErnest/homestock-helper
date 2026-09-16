@@ -11,7 +11,10 @@ export const Route = createFileRoute("/_authenticated/scan")({
       { title: "Scan a barcode — HomeStock" },
       { name: "description", content: "Scan a product barcode to add or find it in HomeStock." },
       { property: "og:title", content: "Scan a barcode — HomeStock" },
-      { property: "og:description", content: "Scan a product barcode to add or find it in HomeStock." },
+      {
+        property: "og:description",
+        content: "Scan a product barcode to add or find it in HomeStock.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -102,7 +105,6 @@ function ScanPage() {
       cancelled = true;
       controls?.stop();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function submitManual(e: React.FormEvent) {
@@ -112,7 +114,6 @@ function ScanPage() {
     handled.current = true;
     await handleCode.current(code);
   }
-
 
   return (
     <AppShell title="Scan a barcode" subtitle="Point the camera at a product barcode.">

@@ -93,9 +93,7 @@ function AuthPage() {
       return;
     }
     if (data.user && name.trim()) {
-      await supabase
-        .from("profiles")
-        .upsert({ id: data.user.id, display_name: name.trim() });
+      await supabase.from("profiles").upsert({ id: data.user.id, display_name: name.trim() });
     }
     navigate({ to: "/inventory", replace: true });
   }

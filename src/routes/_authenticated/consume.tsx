@@ -49,9 +49,7 @@ function ConsumePage() {
   const list = useMemo(() => {
     const all = items ?? [];
     if (!search.trim()) {
-      return [...all]
-        .sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1))
-        .slice(0, 12);
+      return [...all].sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1)).slice(0, 12);
     }
     const q = search.trim().toLowerCase();
     return all.filter(
@@ -120,7 +118,12 @@ function ConsumePage() {
               className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-surface-2 text-2xl"
             >
               {item.image_url ? (
-                <img src={item.image_url} alt="" loading="lazy" className="h-full w-full rounded-xl object-contain" />
+                <img
+                  src={item.image_url}
+                  alt=""
+                  loading="lazy"
+                  className="h-full w-full rounded-xl object-contain"
+                />
               ) : (
                 categoryEmoji(item.category)
               )}

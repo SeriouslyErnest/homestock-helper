@@ -88,33 +88,33 @@ function ShoppingPage() {
     if (toggling.current.has(entry.id)) return;
     toggling.current.add(entry.id);
     try {
-    if (entry.status === "pending") {
-      // bought_at is stored as a UTC timestamp; it's displayed in local time.
-      await supabase
-        .from("shopping_items")
-        .update({ status: "bought", bought_at: nowUtc() })
-        .eq("id", entry.id);
-      // Bought something tracked? Restock the inventory item automatically.
-      if (entry.item_id) {
-        await supabase.rpc("adjust_item_quantity", {
-          _item_id: entry.item_id,
-          _delta: Number(entry.quantity),
-        });
+      if (entry.status === "pending") {
+        // bought_at is stored as a UTC timestamp; it's displayed in local time.
+        await supabase
+          .from("shopping_items")
+          .update({ status: "bought", bought_at: nowUtc() })
+          .eq("id", entry.id);
+        // Bought something tracked? Restock the inventory item automatically.
+        if (entry.item_id) {
+          await supabase.rpc("adjust_item_quantity", {
+            _item_id: entry.item_id,
+            _delta: Number(entry.quantity),
+          });
+        }
+      } else {
+        await supabase
+          .from("shopping_items")
+          .update({ status: "pending", bought_at: null })
+          .eq("id", entry.id);
+        // Put the stock back too, so tick → untick → tick can't double-count.
+        if (entry.item_id) {
+          await supabase.rpc("adjust_item_quantity", {
+            _item_id: entry.item_id,
+            _delta: -Number(entry.quantity),
+          });
+        }
       }
-    } else {
-      await supabase
-        .from("shopping_items")
-        .update({ status: "pending", bought_at: null })
-        .eq("id", entry.id);
-      // Put the stock back too, so tick → untick → tick can't double-count.
-      if (entry.item_id) {
-        await supabase.rpc("adjust_item_quantity", {
-          _item_id: entry.item_id,
-          _delta: -Number(entry.quantity),
-        });
-      }
-    }
-    invalidate();
+      invalidate();
     } finally {
       toggling.current.delete(entry.id);
     }
@@ -137,7 +137,10 @@ function ShoppingPage() {
   }
 
   return (
-    <AppShell title="Shopping list" subtitle="What the household needs — anyone can add or tick off.">
+    <AppShell
+      title="Shopping list"
+      subtitle="What the household needs — anyone can add or tick off."
+    >
       <form onSubmit={addQuick} className="mb-4 flex gap-2">
         <input
           value={name}
@@ -171,7 +174,9 @@ function ShoppingPage() {
                 <div className="min-w-0 flex-1">
                   <strong className="block truncate text-sm">{item.name}</strong>
                   <span className="text-xs text-muted-foreground">
-                    {item.quantity <= 0 ? "Out of stock" : `${item.quantity} left · min ${item.min_quantity}`}
+                    {item.quantity <= 0
+                      ? "Out of stock"
+                      : `${item.quantity} left · min ${item.min_quantity}`}
                   </span>
                 </div>
                 <button
@@ -197,7 +202,10 @@ function ShoppingPage() {
         )}
         <div className="grid gap-2">
           {pending.map((entry) => (
-            <div key={entry.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-2.5">
+            <div
+              key={entry.id}
+              className="flex items-center gap-3 rounded-2xl border border-border bg-card p-2.5"
+            >
               <button
                 onClick={() => toggle(entry)}
                 aria-label={`Mark ${entry.name} as bought`}
@@ -237,7 +245,10 @@ function ShoppingPage() {
           </div>
           <div className="grid gap-2 opacity-70">
             {bought.map((entry) => (
-              <div key={entry.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-2.5">
+              <div
+                key={entry.id}
+                className="flex items-center gap-3 rounded-2xl border border-border bg-card p-2.5"
+              >
                 <button
                   onClick={() => toggle(entry)}
                   aria-label={`Move ${entry.name} back to the list`}
