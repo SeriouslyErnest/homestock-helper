@@ -41,6 +41,8 @@ function MorePage() {
   const [deciding, setDeciding] = useState<string | null>(null);
 
   const isOwner = (members ?? []).some((m) => m.user_id === userId && m.role === "owner");
+  const pending = (joinRequests ?? []).filter((r) => r.status === "pending");
+  const blocked = (joinRequests ?? []).filter((r) => r.status === "blocked");
 
   useEffect(() => {
     if (household) setHouseholdName(household.name);
