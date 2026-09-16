@@ -3,7 +3,12 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Home, KeyRound } from "lucide-react";
 import { LogoMark, LogoWordmark } from "@/components/logo";
-import { createHousehold } from "@/lib/homestock";
+import {
+  createHousehold,
+  planLimitMessage,
+  useEntitlements,
+  useMyJoinRequests,
+} from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/setup")({
