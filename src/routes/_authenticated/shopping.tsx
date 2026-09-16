@@ -70,6 +70,9 @@ function ShoppingPage() {
     const { error } = await supabase.from("shopping_items").insert({
       household_id: household.id,
       name: name.trim(),
+      quantity: Math.max(1, qty),
+      note: note.trim() || null,
+      tags,
       requested_by: user?.id ?? null,
     });
     setBusy(false);
@@ -78,6 +81,10 @@ function ShoppingPage() {
       return;
     }
     setName("");
+    setQty(1);
+    setNote("");
+    setTags([]);
+    setShowDetails(false);
     invalidate();
   }
 
