@@ -291,8 +291,9 @@ function InventoryPage() {
                 </div>
                 <button
                   onClick={() => adjust(item, 1)}
+                  disabled={busyId === item.id}
                   aria-label={`Restock one ${item.name}`}
-                  className="grid h-11 w-11 place-items-center rounded-xl border border-border text-muted-foreground active:bg-surface-2"
+                  className="grid h-11 w-11 place-items-center rounded-xl border border-border text-muted-foreground active:bg-surface-2 disabled:opacity-40"
                 >
                   <Plus size={18} />
                 </button>
