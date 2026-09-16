@@ -378,7 +378,7 @@ function AboutPage() {
         </Section>
 
         {/* PHILOSOPHY */}
-        <Section className="bg-surface-2">
+        <Section>
           <Reveal>
             <SectionHeading title="Designed for real household habits" />
           </Reveal>
@@ -408,7 +408,7 @@ function AboutPage() {
         </Section>
 
         {/* BENEFITS */}
-        <Section>
+        <Section className="bg-surface-2">
           <Reveal>
             <SectionHeading title="Why HomeStock?" />
           </Reveal>
