@@ -61,8 +61,20 @@ function InventoryPage() {
         (i) => i.name.toLowerCase().includes(q) || (i.location ?? "").toLowerCase().includes(q),
       );
     }
-    return list;
+    // Same product in two places sits together, so "Milk (Fridge)" and "Milk (Garage)" read as one thing.
+    return sortByProductThenLocation(list);
   }, [items, search, category]);
+
+  /** How many rows and how much stock each product has across every place. */
+  const spread = useMemo(() => {
+    const map = new Map<string, { places: number; total: number }>();
+    for (const i of items ?? []) {
+      const key = productKey(i);
+      const current = map.get(key) ?? { places: 0, total: 0 };
+      map.set(key, { places: current.places + 1, total: current.total + Number(i.quantity) });
+    }
+    return map;
+  }, [items]);
 
   const attention = (items ?? []).filter((i) => isLow(i) || i.quantity <= 0).length;
 
