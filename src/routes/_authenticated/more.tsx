@@ -255,7 +255,9 @@ function MorePage() {
             {joining ? "Joining…" : "Join"}
           </button>
         </form>
-        {joinMessage && <p className="mt-2 text-sm text-muted-foreground">{joinMessage}</p>}
+        <p role="status" aria-live="polite" className="mt-2 text-sm text-muted-foreground">
+          {joinMessage}
+        </p>
       </section>
 
       <section className="rounded-2xl border border-border bg-card p-4">
