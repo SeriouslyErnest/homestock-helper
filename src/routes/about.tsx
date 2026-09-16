@@ -64,6 +64,8 @@ const TOPICS = [
 /** Sticky on-page topic index. Highlights the section currently in view. */
 function TopicNav() {
   const [active, setActive] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const chipRefs = useRef(new Map<string, HTMLAnchorElement>());
 
   useEffect(() => {
     let raf = 0;
