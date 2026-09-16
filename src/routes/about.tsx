@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Boxes, Check, Gauge, ShoppingBasket } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowUp, Boxes, Check, Gauge, ShoppingBasket } from "lucide-react";
 import { LogoMark, LogoWordmark } from "@/components/logo";
 import {
   FeatureCard,
@@ -47,6 +48,102 @@ const primaryBtn =
 const secondaryBtn =
   "inline-flex min-h-12 items-center justify-center rounded-2xl border border-border bg-card px-6 py-3.5 font-semibold transition-transform duration-200 hover:-translate-y-0.5 active:translate-y-0";
 
+const TOPICS = [
+  { id: "what-is-it", label: "What is it?" },
+  { id: "how-it-works", label: "How it works" },
+  { id: "shopping-list", label: "Shopping list" },
+  { id: "households", label: "Households" },
+  { id: "fast-first", label: "Fast first" },
+  { id: "views", label: "Views" },
+  { id: "light-dark", label: "Light & dark" },
+  { id: "times", label: "Times" },
+  { id: "principles", label: "Principles" },
+  { id: "why", label: "Why HomeStock" },
+];
+
+/** Sticky on-page topic index. Highlights the section currently in view. */
+function TopicNav() {
+  const [active, setActive] = useState("");
+
+  useEffect(() => {
+    let raf = 0;
+    const measure = () => {
+      let current = "";
+      for (const t of TOPICS) {
+        const el = document.getElementById(t.id);
+        if (el && el.getBoundingClientRect().top <= 160) current = t.id;
+      }
+      if (
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 4
+      ) {
+        current = TOPICS[TOPICS.length - 1].id;
+      }
+      setActive(current);
+    };
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(measure);
+    };
+    measure();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  return (
+    <nav aria-label="Page topics" className="border-t border-border/60">
+      <div className="mx-auto flex w-full max-w-5xl items-center gap-2 overflow-x-auto px-5 py-2 sm:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {TOPICS.map((t) => (
+          <a
+            key={t.id}
+            href={`#${t.id}`}
+            aria-current={active === t.id ? "true" : undefined}
+            className={`inline-flex h-10 shrink-0 items-center rounded-full px-3.5 text-xs font-semibold transition-colors ${
+              active === t.id
+                ? "bg-primary text-primary-foreground"
+                : "bg-surface-2 text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t.label}
+          </a>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
+/** Floating back-to-top button, shown once the page is scrolled. */
+function BackToTop() {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShow(window.scrollY > 600);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  if (!show) return null;
+  return (
+    <button
+      type="button"
+      aria-label="Back to top"
+      onClick={() => {
+        const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
+      }}
+      className="fixed right-4 bottom-4 z-40 grid h-12 w-12 place-items-center rounded-full border border-border bg-card text-foreground shadow-lg transition-transform duration-200 hover:-translate-y-0.5"
+    >
+      <ArrowUp size={20} aria-hidden="true" />
+    </button>
+  );
+}
+
 function AboutPage() {
   return (
     <div className="min-h-dvh scroll-smooth bg-background">
@@ -63,6 +160,7 @@ function AboutPage() {
             Open HomeStock
           </Link>
         </div>
+        <TopicNav />
       </header>
 
       <main>
@@ -102,7 +200,7 @@ function AboutPage() {
         </Section>
 
         {/* WHAT IS HOMESTOCK */}
-        <Section className="bg-surface-2">
+        <Section id="why" className="bg-surface-2">
           <Reveal>
             <SectionHeading
               title="What is HomeStock?"
@@ -225,7 +323,7 @@ function AboutPage() {
         </Section>
 
         {/* SHOPPING REQUESTS */}
-        <Section className="bg-surface-2">
+        <Section id="what-is-it" className="bg-surface-2">
           <Reveal>
             <SectionHeading
               title="A shared shopping list for the household"
@@ -265,7 +363,7 @@ function AboutPage() {
         </Section>
 
         {/* SHARED HOUSEHOLDS */}
-        <Section>
+        <Section id="principles">
           <div className="grid items-center gap-8 md:grid-cols-2 md:gap-12">
             <Reveal className="max-w-prose">
               <SectionHeading title="Built for shared households" centered={false} />
@@ -296,7 +394,7 @@ function AboutPage() {
         </Section>
 
         {/* FAST FIRST */}
-        <Section className="bg-surface-2">
+        <Section id="shopping-list" className="bg-surface-2">
           <Reveal>
             <SectionHeading
               title="Fast first. Detailed when useful."
@@ -328,7 +426,7 @@ function AboutPage() {
         </Section>
 
         {/* VIEW PREFERENCES */}
-        <Section>
+        <Section id="households">
           <Reveal>
             <SectionHeading
               title="See things your way"
@@ -365,7 +463,7 @@ function AboutPage() {
         </Section>
 
         {/* LIGHT & DARK MODE */}
-        <Section className="bg-surface-2">
+        <Section id="fast-first" className="bg-surface-2">
           <Reveal>
             <SectionHeading
               title="Light and dark, out of the box"
@@ -378,7 +476,7 @@ function AboutPage() {
         </Section>
 
         {/* TIMES & TIMEZONES */}
-        <Section>
+        <Section id="times">
           <Reveal>
             <SectionHeading
               title="Times shown your way"
@@ -412,7 +510,7 @@ function AboutPage() {
         </Section>
 
         {/* PHILOSOPHY */}
-        <Section>
+        <Section id="views">
           <Reveal>
             <SectionHeading title="Designed for real household habits" />
           </Reveal>
@@ -442,7 +540,7 @@ function AboutPage() {
         </Section>
 
         {/* BENEFITS */}
-        <Section className="bg-surface-2">
+        <Section id="light-dark" className="bg-surface-2">
           <Reveal>
             <SectionHeading title="Why HomeStock?" />
           </Reveal>
@@ -558,6 +656,8 @@ function AboutPage() {
           <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} HomeStock</p>
         </div>
       </footer>
+
+      <BackToTop />
     </div>
   );
 }
