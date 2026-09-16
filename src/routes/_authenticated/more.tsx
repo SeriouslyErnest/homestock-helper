@@ -163,7 +163,9 @@ function MorePage() {
     });
     setDeciding(null);
     if (error) {
-      toast.error("Could not update that request. You need to be the owner.");
+      toast.error(
+        planLimitMessage(error) ?? "Could not update that request. You need to be the owner.",
+      );
       return;
     }
     queryClient.invalidateQueries({ queryKey: ["join-requests", household?.id] });
