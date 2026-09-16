@@ -183,7 +183,8 @@ function ItemPage() {
 
       <div className="mb-4 flex items-center justify-between rounded-2xl border border-border bg-card p-4">
         <button
-          onClick={() => setQuantity(quantity - 1, true)}
+          onClick={() => adjust(-1, true)}
+          disabled={quantity <= 0}
           aria-label="Use one"
           className="grid h-14 w-14 place-items-center rounded-2xl border border-border text-2xl active:bg-surface-2"
         >
