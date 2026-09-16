@@ -372,7 +372,7 @@ function MorePage() {
             disabled={joining || !joinCode.trim()}
             className="shrink-0 rounded-2xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50"
           >
-            {joining ? "Joining…" : "Join"}
+            {joining ? "Sending…" : "Ask"}
           </button>
         </form>
         <p role="status" aria-live="polite" className="mt-2 text-sm text-muted-foreground">
