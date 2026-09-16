@@ -33,7 +33,10 @@ export const Route = createFileRoute("/about")({
       { property: "og:description", content: DESCRIPTION },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { property: "og:url", content: "https://homestock-helper.lovable.app/about" },
+      { property: "og:site_name", content: "HomeStock" },
     ],
+    links: [{ rel: "canonical", href: "https://homestock-helper.lovable.app/about" }],
   }),
   component: AboutPage,
 });
