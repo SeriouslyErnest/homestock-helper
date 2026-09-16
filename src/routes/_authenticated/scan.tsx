@@ -24,10 +24,43 @@ type Phase = "scanning" | "looking-up" | "error";
 function ScanPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const navigate = useNavigate();
+  const { data: household } = useHousehold();
   const [phase, setPhase] = useState<Phase>("scanning");
   const [manual, setManual] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const handled = useRef(false);
+
+  const handleCode = useRef<(code: string) => Promise<void>>(async () => {});
+  handleCode.current = async (code: string) => {
+    setPhase("looking-up");
+
+    // Already on the shelf? Go straight to the item so scanning doubles as "do we have this?".
+    if (household) {
+      const { data: existing } = await supabase
+        .from("items")
+        .select("id")
+        .eq("household_id", household.id)
+        .eq("barcode", code)
+        .limit(1)
+        .maybeSingle();
+      if (existing) {
+        navigate({ to: "/item/$itemId", params: { itemId: existing.id } });
+        return;
+      }
+    }
+
+    const info = await lookupProduct(code);
+    navigate({
+      to: "/add",
+      search: {
+        barcode: code,
+        name: info?.name ?? undefined,
+        brand: info?.brand ?? undefined,
+        image: info?.image_url ?? undefined,
+        notFound: info ? undefined : true,
+      },
+    });
+  };
 
   useEffect(() => {
     let controls: { stop: () => void } | null = null;
@@ -37,9 +70,9 @@ function ScanPage() {
       try {
         const { BrowserMultiFormatReader } = await import("@zxing/browser");
         const reader = new BrowserMultiFormatReader();
-        const result = await BrowserMultiFormatReader.listVideoInputDevices();
+        const devices = await BrowserMultiFormatReader.listVideoInputDevices();
         if (cancelled) return;
-        if (result.length === 0) {
+        if (devices.length === 0) {
           setPhase("error");
           setMessage("No camera found. Enter the barcode by hand below.");
           return;
@@ -50,31 +83,18 @@ function ScanPage() {
           (res) => {
             if (res && !handled.current) {
               handled.current = true;
-              void onCode(res.getText());
+              void handleCode.current(res.getText());
             }
           },
         );
+        // Left the page while the camera was still starting up.
+        if (cancelled) controls.stop();
       } catch {
         if (!cancelled) {
           setPhase("error");
           setMessage("Camera isn't available. Enter the barcode by hand below.");
         }
       }
-    }
-
-    async function onCode(code: string) {
-      setPhase("looking-up");
-      const info = await lookupProduct(code);
-      navigate({
-        to: "/add",
-        search: {
-          barcode: code,
-          name: info?.name ?? undefined,
-          brand: info?.brand ?? undefined,
-          image: info?.image_url ?? undefined,
-          notFound: info ? undefined : true,
-        },
-      });
     }
 
     start();
@@ -90,19 +110,9 @@ function ScanPage() {
     const code = manual.trim();
     if (!code || handled.current) return;
     handled.current = true;
-    setPhase("looking-up");
-    const info = await lookupProduct(code);
-    navigate({
-      to: "/add",
-      search: {
-        barcode: code,
-        name: info?.name ?? undefined,
-        brand: info?.brand ?? undefined,
-        image: info?.image_url ?? undefined,
-        notFound: info ? undefined : true,
-      },
-    });
+    await handleCode.current(code);
   }
+
 
   return (
     <AppShell title="Scan a barcode" subtitle="Point the camera at a product barcode.">
