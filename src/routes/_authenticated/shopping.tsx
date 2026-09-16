@@ -181,22 +181,103 @@ function ShoppingPage() {
       title="Shopping list"
       subtitle="What the household needs — anyone can add or tick off."
     >
-      <form onSubmit={addQuick} className="mb-4 flex gap-2">
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Add something to buy…"
-          aria-label="Add something to buy"
-          className="w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
-        />
+      <form onSubmit={addQuick} className="mb-4">
+        <div className="flex gap-2">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Add something to buy…"
+            aria-label="Add something to buy"
+            className="w-full min-w-0 rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
+          />
+          <button
+            type="submit"
+            disabled={busy || !name.trim()}
+            aria-label="Add to shopping list"
+            className="grid w-12 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground disabled:opacity-50"
+          >
+            <Plus size={20} />
+          </button>
+        </div>
+
         <button
-          type="submit"
-          disabled={busy || !name.trim()}
-          aria-label="Add to shopping list"
-          className="grid w-12 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground disabled:opacity-50"
+          type="button"
+          onClick={() => setShowDetails((v) => !v)}
+          aria-expanded={showDetails}
+          className="mt-2 rounded-xl px-2 py-1.5 text-xs font-bold text-muted-foreground active:bg-surface-2"
         >
-          <Plus size={20} />
+          {showDetails ? "Hide details" : "Add details (how many, notes, hints)"}
         </button>
+
+        {showDetails && (
+          <div className="mt-2 grid gap-3 rounded-2xl border border-border bg-card p-3">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-bold">How many</span>
+              <div className="ml-auto flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setQty((q) => Math.max(1, q - 1))}
+                  disabled={qty <= 1}
+                  aria-label="Fewer"
+                  className="grid h-11 w-11 place-items-center rounded-xl bg-surface-2 text-lg font-bold disabled:opacity-40"
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  min={1}
+                  value={qty}
+                  onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
+                  aria-label="How many to buy"
+                  className="h-11 w-16 rounded-xl border border-border bg-surface-2 text-center text-base font-bold outline-none focus:border-brand"
+                />
+                <button
+                  type="button"
+                  onClick={() => setQty((q) => q + 1)}
+                  aria-label="More"
+                  className="grid h-11 w-11 place-items-center rounded-xl bg-brand-soft text-lg font-bold text-brand"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <span className="text-sm font-bold">Hints for whoever shops</span>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {REQUEST_TAGS.map((tag) => {
+                  const on = tags.includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTag(tag)}
+                      aria-pressed={on}
+                      className={`rounded-full px-3 py-2 text-xs font-bold ${
+                        on
+                          ? "bg-brand text-white"
+                          : "border border-border bg-surface-2 text-muted-foreground"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <label className="grid gap-1.5 text-sm font-bold">
+              Notes
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={2}
+                placeholder="e.g. the blue pack, not the green one"
+                className="rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm font-normal outline-none focus:border-brand"
+              />
+            </label>
+          </div>
+        )}
       </form>
 
       {suggested.length > 0 && (
