@@ -39,6 +39,10 @@ function SetupPage() {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const { data: plan } = useEntitlements();
+  const { data: myRequests } = useMyJoinRequests();
+  const canCreate = plan?.can_create_household ?? true;
+  const myPending = (myRequests ?? []).filter((r) => r.status === "pending");
 
   const field =
     "w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand";
