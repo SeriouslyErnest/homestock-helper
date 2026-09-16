@@ -67,9 +67,9 @@ function AddPage() {
         barcode: search.barcode ?? null,
         image_url: search.image ?? null,
         category,
-        quantity,
+        quantity: Math.max(0, quantity),
         unit,
-        min_quantity: minQuantity,
+        min_quantity: Math.max(0, minQuantity),
         location: location.trim() || null,
         expires_on: expires || null,
         notes: notes.trim() || null,
@@ -148,7 +148,7 @@ function AddPage() {
               step="any"
               inputMode="decimal"
               value={quantity}
-              onChange={(e) => setQuantity(Number(e.target.value))}
+              onChange={(e) => setQuantity(Math.max(0, Number(e.target.value) || 0))}
               className={field}
             />
           </div>
@@ -221,7 +221,7 @@ function AddPage() {
               min={0}
               step="any"
               value={minQuantity}
-              onChange={(e) => setMinQuantity(Number(e.target.value))}
+              onChange={(e) => setMinQuantity(Math.max(0, Number(e.target.value) || 0))}
               className={field}
             />
           </div>
@@ -251,7 +251,9 @@ function AddPage() {
           Also add to the shopping list
         </label>
 
-        {error && <p className="text-sm font-semibold text-warning">{error}</p>}
+        <p role="alert" aria-live="assertive" className="text-sm font-semibold text-warning">
+          {error}
+        </p>
 
         <button
           type="submit"
