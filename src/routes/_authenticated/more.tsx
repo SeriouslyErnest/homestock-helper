@@ -352,7 +352,8 @@ function MorePage() {
                   <div className="mt-2.5 flex gap-2">
                     <button
                       onClick={() => decide(r.id, "approved")}
-                      disabled={deciding === r.id}
+                      disabled={deciding === r.id || memberLimitReached}
+                      title={memberLimitReached ? "This home is full for its plan" : undefined}
                       className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-success px-3 text-sm font-semibold text-white disabled:opacity-50"
                     >
                       <Check size={15} /> Approve
