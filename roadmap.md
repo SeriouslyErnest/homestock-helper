@@ -11,8 +11,13 @@
 - Shopping list: quick add, tick off (auto-restocks tracked items), running-low suggestions
 - More: rename household, invite code, members, join by code, sign out
 - Verified on a phone-sized screen: sign-up → add item → consume → shopping list
+- Auth switched to email one-time code + Google (no passwords)
+- UX review fixes: untick now reverses stock, dates shown in local time (stored UTC),
+  avatar shows your own initials, undo on inventory quick -1, 44px tap targets,
+  balanced nav with a new "Use up" page, clear-bought, save confirmation,
+  leave household / owner removes member, view toggle read after mount
 
 ## Later (beyond MVP)
 - Multi-location stock records, inventory event history, buy-request tags
 - Household switching for multi-household users
-- Consume-first scan flow (scan currently routes to restock/add)
+- Scan-to-consume (scan currently routes to restock/add; "Use up" page covers search/recent)
