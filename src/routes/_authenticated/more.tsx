@@ -125,6 +125,10 @@ function MorePage() {
       toast.error("Could not leave this household.");
       return;
     }
+    // Don't keep pointing at a home the user is no longer in.
+    const next = (households ?? []).find((h) => h.id !== household.id);
+    if (next) setActiveHouseholdId(next.id);
+    else clearActiveHouseholdId();
     await queryClient.invalidateQueries();
     setConfirmLeave(false);
     toast.success("You left the household");
