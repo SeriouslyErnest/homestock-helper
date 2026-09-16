@@ -114,7 +114,7 @@ function ItemPage() {
     await supabase
       .from("items")
       .update({
-        name: name.trim() || item.name,
+        name: name.trim() || item!.name,
         category,
         location: location.trim() || null,
         unit,
@@ -136,7 +136,7 @@ function ItemPage() {
     await supabase.from("shopping_items").insert({
       household_id: household.id,
       item_id: itemId,
-      name: item.name,
+      name: item!.name,
       requested_by: user?.id ?? null,
     });
     queryClient.invalidateQueries({ queryKey: ["shopping", household.id] });
