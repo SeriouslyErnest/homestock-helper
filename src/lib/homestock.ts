@@ -44,6 +44,8 @@ export type ShoppingItem = {
   requested_by: string | null;
   created_at: string;
   bought_at: string | null;
+  /** How much stock ticking this off added, so unticking can take back exactly that. */
+  stock_applied?: number | null;
 };
 
 export const CATEGORIES = [
