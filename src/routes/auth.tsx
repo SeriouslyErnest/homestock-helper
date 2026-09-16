@@ -120,8 +120,8 @@ function AuthPage() {
         <LogoWordmark className="mt-3 text-3xl" />
         <p className="mt-1 text-sm text-muted-foreground">
           {step === "email"
-            ? "Enter your email and we'll send you a code."
-            : "Enter the 6-digit code from your email."}
+            ? "Enter your email and we'll send you a sign-in link."
+            : "Check your email — tap the link inside, or enter the code it shows."}
         </p>
       </div>
 
