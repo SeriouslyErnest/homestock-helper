@@ -14,13 +14,232 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      household_members: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          household_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          household_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          household_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_members_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      households: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          invite_code: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          invite_code?: string
+          name?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          invite_code?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      items: {
+        Row: {
+          barcode: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          expires_on: string | null
+          household_id: string
+          id: string
+          image_url: string | null
+          location: string | null
+          min_quantity: number
+          name: string
+          notes: string | null
+          quantity: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          barcode?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          expires_on?: string | null
+          household_id: string
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          min_quantity?: number
+          name: string
+          notes?: string | null
+          quantity?: number
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          barcode?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          expires_on?: string | null
+          household_id?: string
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          min_quantity?: number
+          name?: string
+          notes?: string | null
+          quantity?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "items_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          barcode: string
+          brand: string | null
+          fetched_at: string
+          image_url: string | null
+          name: string | null
+          quantity_label: string | null
+          source: string
+        }
+        Insert: {
+          barcode: string
+          brand?: string | null
+          fetched_at?: string
+          image_url?: string | null
+          name?: string | null
+          quantity_label?: string | null
+          source?: string
+        }
+        Update: {
+          barcode?: string
+          brand?: string | null
+          fetched_at?: string
+          image_url?: string | null
+          name?: string | null
+          quantity_label?: string | null
+          source?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      shopping_items: {
+        Row: {
+          bought_at: string | null
+          created_at: string
+          household_id: string
+          id: string
+          item_id: string | null
+          name: string
+          note: string | null
+          quantity: number
+          requested_by: string | null
+          status: string
+        }
+        Insert: {
+          bought_at?: string | null
+          created_at?: string
+          household_id: string
+          id?: string
+          item_id?: string | null
+          name: string
+          note?: string | null
+          quantity?: number
+          requested_by?: string | null
+          status?: string
+        }
+        Update: {
+          bought_at?: string | null
+          created_at?: string
+          household_id?: string
+          id?: string
+          item_id?: string | null
+          name?: string
+          note?: string | null
+          quantity?: number
+          requested_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_items_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_household_member: { Args: { _household_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
