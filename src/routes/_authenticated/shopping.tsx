@@ -335,12 +335,26 @@ function ShoppingPage() {
               >
                 <span className="block h-7 w-7 rounded-full border-2 border-border" />
               </button>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 py-1">
                 <strong className="block truncate text-sm">{entry.name}</strong>
-                <span className="text-xs text-muted-foreground">
-                  ×{entry.quantity}
-                  {entry.note ? ` · ${entry.note}` : ""}
-                </span>
+                <span className="text-xs text-muted-foreground">×{entry.quantity}</span>
+                {(entry.tags?.length ?? 0) > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {entry.tags!.map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-bold text-brand"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {entry.note && (
+                  <p className="mt-1 rounded-lg bg-warning-soft px-2 py-1 text-xs font-semibold text-warning">
+                    {entry.note}
+                  </p>
+                )}
               </div>
               <button
                 onClick={() => remove(entry.id)}
