@@ -132,7 +132,7 @@ function MorePage() {
       toast.error("Couldn't rename the household. Try again.");
       return;
     }
-    queryClient.invalidateQueries({ queryKey: ["household"] });
+    queryClient.invalidateQueries({ queryKey: ["households"] });
     toast.success("Household renamed");
   }
 
