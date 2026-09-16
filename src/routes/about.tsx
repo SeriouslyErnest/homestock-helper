@@ -97,12 +97,30 @@ function TopicNav() {
     };
   }, []);
 
+  // Slide the chip row so the active topic stays visible.
+  useEffect(() => {
+    if (!active) return;
+    const container = scrollRef.current;
+    const chip = chipRefs.current.get(active);
+    if (!container || !chip) return;
+    const target =
+      chip.offsetLeft - container.clientWidth / 2 + chip.clientWidth / 2;
+    container.scrollTo({ left: target, behavior: "smooth" });
+  }, [active]);
+
   return (
     <nav aria-label="Page topics" className="border-t border-border/60">
-      <div className="mx-auto flex w-full max-w-5xl items-center gap-2 overflow-x-auto px-5 py-2 sm:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div
+        ref={scrollRef}
+        className="mx-auto flex w-full max-w-5xl items-center gap-2 overflow-x-auto px-5 py-2 sm:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {TOPICS.map((t) => (
           <a
             key={t.id}
+            ref={(el) => {
+              if (el) chipRefs.current.set(t.id, el);
+              else chipRefs.current.delete(t.id);
+            }}
             href={`#${t.id}`}
             aria-current={active === t.id ? "true" : undefined}
             className={`inline-flex h-10 shrink-0 items-center rounded-full px-3.5 text-xs font-semibold transition-colors ${
