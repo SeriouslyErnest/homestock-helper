@@ -87,18 +87,13 @@ function ItemPage() {
 
   const quantity = Number(item.quantity);
 
-  async function setQuantity(next: number, withUndo = false) {
-    const value = Math.max(0, next);
+  async function adjust(delta: number, withUndo = false) {
     if (withUndo) {
       if (undo) clearTimeout(undo.timer);
-      const previous = quantity;
       const timer = setTimeout(() => setUndo(null), 4000);
-      setUndo({ previous, timer });
+      setUndo({ previous: -delta, timer });
     }
-    await supabase
-      .from("items")
-      .update({ quantity: value, updated_at: new Date().toISOString() })
-      .eq("id", itemId);
+    await supabase.rpc("adjust_item_quantity", { _item_id: itemId, _delta: delta });
     queryClient.invalidateQueries({ queryKey: ["item", itemId] });
     queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
   }
@@ -106,8 +101,9 @@ function ItemPage() {
   function undoLast() {
     if (!undo) return;
     clearTimeout(undo.timer);
+    const revert = undo.previous;
     setUndo(null);
-    void setQuantity(undo.previous);
+    void adjust(revert);
   }
 
   async function saveDetails() {
