@@ -151,7 +151,7 @@ function ConsumePage() {
             </Link>
             <button
               onClick={() => take(item)}
-              disabled={item.quantity <= 0}
+              disabled={item.quantity <= 0 || busyId === item.id}
               aria-label={`Take one ${item.name}`}
               className="flex h-11 items-center gap-1.5 rounded-xl bg-brand-soft px-4 text-sm font-bold text-brand disabled:opacity-40"
             >

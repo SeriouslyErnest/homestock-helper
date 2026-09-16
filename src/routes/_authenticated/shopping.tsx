@@ -60,13 +60,17 @@ function ShoppingPage() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    await supabase.from("shopping_items").insert({
+    const { error } = await supabase.from("shopping_items").insert({
       household_id: household.id,
       name: name.trim(),
       requested_by: user?.id ?? null,
     });
-    setName("");
     setBusy(false);
+    if (error) {
+      toast.error("Couldn't add that to the list. Try again.");
+      return;
+    }
+    setName("");
     invalidate();
   }
 
@@ -75,12 +79,16 @@ function ShoppingPage() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    await supabase.from("shopping_items").insert({
+    const { error } = await supabase.from("shopping_items").insert({
       household_id: household.id,
       item_id: itemId,
       name: itemName,
       requested_by: user?.id ?? null,
     });
+    if (error) {
+      toast.error("Couldn't add that to the list. Try again.");
+      return;
+    }
     invalidate();
   }
 
@@ -89,28 +97,38 @@ function ShoppingPage() {
     toggling.current.add(entry.id);
     try {
       if (entry.status === "pending") {
+        const delta = Number(entry.quantity);
         // bought_at is stored as a UTC timestamp; it's displayed in local time.
-        await supabase
+        const { error } = await supabase
           .from("shopping_items")
-          .update({ status: "bought", bought_at: nowUtc() })
+          .update({ status: "bought", bought_at: nowUtc(), stock_applied: delta })
           .eq("id", entry.id);
+        if (error) {
+          toast.error("Couldn't tick that off. Try again.");
+          return;
+        }
         // Bought something tracked? Restock the inventory item automatically.
-        if (entry.item_id) {
+        if (entry.item_id && delta !== 0) {
           await supabase.rpc("adjust_item_quantity", {
             _item_id: entry.item_id,
-            _delta: Number(entry.quantity),
+            _delta: delta,
           });
         }
       } else {
-        await supabase
+        // Take back exactly what ticking it off added, even if the quantity changed since.
+        const applied = Number(entry.stock_applied ?? 0);
+        const { error } = await supabase
           .from("shopping_items")
-          .update({ status: "pending", bought_at: null })
+          .update({ status: "pending", bought_at: null, stock_applied: 0 })
           .eq("id", entry.id);
-        // Put the stock back too, so tick → untick → tick can't double-count.
-        if (entry.item_id) {
+        if (error) {
+          toast.error("Couldn't move that back to the list. Try again.");
+          return;
+        }
+        if (entry.item_id && applied !== 0) {
           await supabase.rpc("adjust_item_quantity", {
             _item_id: entry.item_id,
-            _delta: -Number(entry.quantity),
+            _delta: -applied,
           });
         }
       }
@@ -121,17 +139,25 @@ function ShoppingPage() {
   }
 
   async function remove(id: string) {
-    await supabase.from("shopping_items").delete().eq("id", id);
+    const { error } = await supabase.from("shopping_items").delete().eq("id", id);
+    if (error) {
+      toast.error("Couldn't remove that. Try again.");
+      return;
+    }
     invalidate();
   }
 
   async function clearBought() {
     if (!household?.id) return;
-    await supabase
+    const { error } = await supabase
       .from("shopping_items")
       .delete()
       .eq("household_id", household.id)
       .eq("status", "bought");
+    if (error) {
+      toast.error("Couldn't clear the bought items. Try again.");
+      return;
+    }
     invalidate();
     toast.success("Cleared the bought items");
   }
