@@ -33,7 +33,10 @@ export const Route = createFileRoute("/about")({
       { property: "og:description", content: DESCRIPTION },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { property: "og:url", content: "https://homestock-helper.lovable.app/about" },
+      { property: "og:site_name", content: "HomeStock" },
     ],
+    links: [{ rel: "canonical", href: "https://homestock-helper.lovable.app/about" }],
   }),
   component: AboutPage,
 });
@@ -328,7 +331,7 @@ function AboutPage() {
           <Reveal>
             <SectionHeading
               title="See things your way"
-              intro="Different people organise information differently. Where useful, HomeStock supports both List and Card views."
+              intro="Different people organise information differently. Inventory supports both List and Card views today, and more screens will follow."
             />
           </Reveal>
           <Reveal delay={90} className="mt-8">
@@ -337,14 +340,14 @@ function AboutPage() {
           <Reveal delay={150}>
             <div className="mx-auto mt-8 max-w-md rounded-3xl border border-border bg-card p-5">
               <p className="text-sm text-muted-foreground">
-                Your preference is remembered separately for each part of the app.
+                Your preference is remembered per screen — starting with Inventory.
               </p>
               <dl className="mt-3 grid gap-2 text-sm">
                 {[
-                  ["Inventory", "List"],
-                  ["Restock basket", "Cards"],
-                  ["Consume", "Cards"],
-                  ["Shopping", "List"],
+                  ["Inventory", "List or Cards"],
+                  ["Restock basket", "Coming soon"],
+                  ["Consume", "Coming soon"],
+                  ["Shopping", "Coming soon"],
                 ].map(([area, mode]) => (
                   <div key={area} className="flex items-center justify-between gap-3">
                     <dt className="text-muted-foreground">{area}</dt>

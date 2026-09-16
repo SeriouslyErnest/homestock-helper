@@ -33,37 +33,55 @@ function ScanPage() {
   const [message, setMessage] = useState<string | null>(null);
   const handled = useRef(false);
 
+  const [lastCode, setLastCode] = useState<string | null>(null);
+
   const handleCode = useRef<(code: string) => Promise<void>>(async () => {});
   handleCode.current = async (code: string) => {
     setPhase("looking-up");
+    setMessage(null);
+    setLastCode(code);
 
-    // Already on the shelf? Go straight to the item so scanning doubles as "do we have this?".
-    if (household) {
-      const { data: existing } = await supabase
-        .from("items")
-        .select("id")
-        .eq("household_id", household.id)
-        .eq("barcode", code)
-        .limit(1)
-        .maybeSingle();
-      if (existing) {
-        navigate({ to: "/item/$itemId", params: { itemId: existing.id } });
-        return;
+    try {
+      // Already on the shelf? Go straight to the item so scanning doubles as "do we have this?".
+      if (household) {
+        const { data: existing, error } = await supabase
+          .from("items")
+          .select("id")
+          .eq("household_id", household.id)
+          .eq("barcode", code)
+          .limit(1)
+          .maybeSingle();
+        if (error) throw error;
+        if (existing) {
+          navigate({ to: "/item/$itemId", params: { itemId: existing.id } });
+          return;
+        }
       }
-    }
 
-    const info = await lookupProduct(code);
-    navigate({
-      to: "/add",
-      search: {
-        barcode: code,
-        name: info?.name ?? undefined,
-        brand: info?.brand ?? undefined,
-        image: info?.image_url ?? undefined,
-        notFound: info ? undefined : true,
-      },
-    });
+      const info = await lookupProduct(code);
+      navigate({
+        to: "/add",
+        search: {
+          barcode: code,
+          name: info?.name ?? undefined,
+          brand: info?.brand ?? undefined,
+          image: info?.image_url ?? undefined,
+          notFound: info ? undefined : true,
+        },
+      });
+    } catch {
+      // Network hiccup — never leave the screen hanging with no way forward.
+      handled.current = false;
+      setPhase("error");
+      setMessage("We couldn't check that code. Check your connection and try again.");
+    }
   };
+
+  async function retry() {
+    if (!lastCode) return;
+    handled.current = true;
+    await handleCode.current(lastCode);
+  }
 
   useEffect(() => {
     let controls: { stop: () => void } | null = null;
@@ -121,10 +139,20 @@ function ScanPage() {
         <video ref={videoRef} className="aspect-[3/4] w-full object-cover" muted playsInline />
       </div>
 
-      {phase === "looking-up" && (
-        <p className="mt-3 text-center text-sm font-semibold text-brand">Looking up product…</p>
+      <p role="status" aria-live="polite" className="mt-3 text-center text-sm">
+        {phase === "looking-up" && (
+          <span className="font-semibold text-brand">Looking up product…</span>
+        )}
+        {message && <span className="text-muted-foreground">{message}</span>}
+      </p>
+      {phase === "error" && lastCode && (
+        <button
+          onClick={retry}
+          className="mx-auto mt-2 block rounded-2xl border border-border px-5 py-3 text-sm font-bold"
+        >
+          Try {lastCode} again
+        </button>
       )}
-      {message && <p className="mt-3 text-center text-sm text-muted-foreground">{message}</p>}
 
       <form onSubmit={submitManual} className="mt-4 flex gap-2">
         <input

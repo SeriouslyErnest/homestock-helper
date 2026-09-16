@@ -43,6 +43,7 @@ function InventoryPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("All");
   const [view, setView] = useState<"list" | "cards">("list");
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   // Read the remembered view after mount so the first render always matches the server.
   useEffect(() => {
@@ -71,13 +72,26 @@ function InventoryPage() {
   }
 
   async function apply(item: Item, delta: number) {
-    await supabase.rpc("adjust_item_quantity", { _item_id: item.id, _delta: delta });
+    const { error } = await supabase.rpc("adjust_item_quantity", {
+      _item_id: item.id,
+      _delta: delta,
+    });
     queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
     queryClient.invalidateQueries({ queryKey: ["item", item.id] });
+    if (error) {
+      toast.error(`Couldn't update ${item.name}. Check your connection and try again.`);
+      return false;
+    }
+    return true;
   }
 
   async function adjust(item: Item, delta: number) {
-    await apply(item, delta);
+    if (busyId) return;
+    setBusyId(item.id);
+    const ok = await apply(item, delta);
+    setBusyId(null);
+    // Only offer Undo once the change actually landed on the server.
+    if (!ok) return;
     toast(delta < 0 ? `Took one ${item.name}` : `Added one ${item.name}`, {
       action: { label: "Undo", onClick: () => void apply(item, -delta) },
       duration: 5000,
@@ -261,7 +275,7 @@ function InventoryPage() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => adjust(item, -1)}
-                  disabled={item.quantity <= 0}
+                  disabled={item.quantity <= 0 || busyId === item.id}
                   aria-label={`Use one ${item.name}`}
                   className="grid h-11 w-11 place-items-center rounded-xl border border-border text-muted-foreground active:bg-surface-2 disabled:opacity-40"
                 >
@@ -277,8 +291,9 @@ function InventoryPage() {
                 </div>
                 <button
                   onClick={() => adjust(item, 1)}
+                  disabled={busyId === item.id}
                   aria-label={`Restock one ${item.name}`}
-                  className="grid h-11 w-11 place-items-center rounded-xl border border-border text-muted-foreground active:bg-surface-2"
+                  className="grid h-11 w-11 place-items-center rounded-xl border border-border text-muted-foreground active:bg-surface-2 disabled:opacity-40"
                 >
                   <Plus size={18} />
                 </button>

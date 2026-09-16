@@ -55,6 +55,12 @@ function ItemPage() {
     timer: ReturnType<typeof setTimeout>;
   } | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  // The tab title should name the item once it has loaded.
+  useEffect(() => {
+    if (item?.name) document.title = `${item.name} — HomeStock`;
+  }, [item?.name]);
 
   useEffect(() => {
     if (item) {
@@ -99,14 +105,25 @@ function ItemPage() {
   const quantity = Number(item.quantity);
 
   async function adjust(delta: number, withUndo = false) {
+    if (busy) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("adjust_item_quantity", {
+      _item_id: itemId,
+      _delta: delta,
+    });
+    queryClient.invalidateQueries({ queryKey: ["item", itemId] });
+    queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
+    setBusy(false);
+    if (error) {
+      toast.error("Couldn't update the count. Check your connection and try again.");
+      return;
+    }
+    // Only offer Undo once the change actually landed on the server.
     if (withUndo) {
       if (undo) clearTimeout(undo.timer);
       const timer = setTimeout(() => setUndo(null), 4000);
       setUndo({ previous: -delta, timer });
     }
-    await supabase.rpc("adjust_item_quantity", { _item_id: itemId, _delta: delta });
-    queryClient.invalidateQueries({ queryKey: ["item", itemId] });
-    queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
   }
 
   function undoLast() {
@@ -118,14 +135,14 @@ function ItemPage() {
   }
 
   async function saveDetails() {
-    await supabase
+    const { error } = await supabase
       .from("items")
       .update({
         name: name.trim() || item!.name,
         category,
         location: location.trim() || null,
         unit,
-        min_quantity: minQuantity,
+        min_quantity: Math.max(0, minQuantity),
         expires_on: expires || null,
         notes: notes.trim() || null,
         updated_at: nowUtc(),
@@ -133,6 +150,10 @@ function ItemPage() {
       .eq("id", itemId);
     queryClient.invalidateQueries({ queryKey: ["item", itemId] });
     queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
+    if (error) {
+      toast.error("Couldn't save your changes. Try again.");
+      return;
+    }
     toast.success("Saved");
   }
 
@@ -141,18 +162,26 @@ function ItemPage() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    await supabase.from("shopping_items").insert({
+    const { error } = await supabase.from("shopping_items").insert({
       household_id: household.id,
       item_id: itemId,
       name: item!.name,
       requested_by: user?.id ?? null,
     });
+    if (error) {
+      toast.error("Couldn't add it to the shopping list. Try again.");
+      return;
+    }
     queryClient.invalidateQueries({ queryKey: ["shopping", household.id] });
     navigate({ to: "/shopping" });
   }
 
   async function remove() {
-    await supabase.from("items").delete().eq("id", itemId);
+    const { error } = await supabase.from("items").delete().eq("id", itemId);
+    if (error) {
+      toast.error("Couldn't remove this item. Try again.");
+      return;
+    }
     queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
     navigate({ to: "/inventory" });
   }
@@ -203,7 +232,7 @@ function ItemPage() {
       <div className="mb-4 flex items-center justify-between rounded-2xl border border-border bg-card p-4">
         <button
           onClick={() => adjust(-1, true)}
-          disabled={quantity <= 0}
+          disabled={quantity <= 0 || busy}
           aria-label="Use one"
           className="grid h-14 w-14 place-items-center rounded-2xl border border-border text-2xl active:bg-surface-2"
         >
@@ -215,8 +244,9 @@ function ItemPage() {
         </div>
         <button
           onClick={() => adjust(1)}
+          disabled={busy}
           aria-label="Restock one"
-          className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-2xl text-brand"
+          className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-2xl text-brand disabled:opacity-40"
         >
           <Plus />
         </button>
@@ -303,7 +333,7 @@ function ItemPage() {
               min={0}
               step="any"
               value={minQuantity}
-              onChange={(e) => setMinQuantity(Number(e.target.value))}
+              onChange={(e) => setMinQuantity(Math.max(0, Number(e.target.value) || 0))}
               className={field}
             />
           </div>
