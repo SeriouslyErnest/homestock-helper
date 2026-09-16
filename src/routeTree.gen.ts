@@ -18,6 +18,7 @@ import { Route as AuthenticatedConsumeRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
 import { Route as AuthenticatedMoreRouteImport } from './routes/_authenticated/more'
 import { Route as AuthenticatedScanRouteImport } from './routes/_authenticated/scan'
+import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedShoppingRouteImport } from './routes/_authenticated/shopping'
 import { Route as AuthenticatedItemItemIdRouteImport } from './routes/_authenticated/item/$itemId'
 
@@ -65,6 +66,11 @@ const AuthenticatedScanRoute = AuthenticatedScanRouteImport.update({
   path: '/scan',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSetupRoute = AuthenticatedSetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedShoppingRoute = AuthenticatedShoppingRouteImport.update({
   id: '/shopping',
   path: '/shopping',
@@ -85,6 +91,7 @@ export interface FileRoutesByFullPath {
   '/inventory': typeof AuthenticatedInventoryRoute
   '/more': typeof AuthenticatedMoreRoute
   '/scan': typeof AuthenticatedScanRoute
+  '/setup': typeof AuthenticatedSetupRoute
   '/shopping': typeof AuthenticatedShoppingRoute
   '/item/$itemId': typeof AuthenticatedItemItemIdRoute
 }
@@ -97,6 +104,7 @@ export interface FileRoutesByTo {
   '/inventory': typeof AuthenticatedInventoryRoute
   '/more': typeof AuthenticatedMoreRoute
   '/scan': typeof AuthenticatedScanRoute
+  '/setup': typeof AuthenticatedSetupRoute
   '/shopping': typeof AuthenticatedShoppingRoute
   '/item/$itemId': typeof AuthenticatedItemItemIdRoute
 }
@@ -111,6 +119,7 @@ export interface FileRoutesById {
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
   '/_authenticated/more': typeof AuthenticatedMoreRoute
   '/_authenticated/scan': typeof AuthenticatedScanRoute
+  '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/shopping': typeof AuthenticatedShoppingRoute
   '/_authenticated/item/$itemId': typeof AuthenticatedItemItemIdRoute
 }
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/more'
     | '/scan'
+    | '/setup'
     | '/shopping'
     | '/item/$itemId'
   fileRoutesByTo: FileRoutesByTo
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/more'
     | '/scan'
+    | '/setup'
     | '/shopping'
     | '/item/$itemId'
   id:
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inventory'
     | '/_authenticated/more'
     | '/_authenticated/scan'
+    | '/_authenticated/setup'
     | '/_authenticated/shopping'
     | '/_authenticated/item/$itemId'
   fileRoutesById: FileRoutesById
@@ -226,6 +238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedScanRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/setup': {
+      id: '/_authenticated/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof AuthenticatedSetupRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/shopping': {
       id: '/_authenticated/shopping'
       path: '/shopping'
@@ -249,6 +268,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
   AuthenticatedMoreRoute: typeof AuthenticatedMoreRoute
   AuthenticatedScanRoute: typeof AuthenticatedScanRoute
+  AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedShoppingRoute: typeof AuthenticatedShoppingRoute
   AuthenticatedItemItemIdRoute: typeof AuthenticatedItemItemIdRoute
 }
@@ -259,6 +279,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
   AuthenticatedMoreRoute: AuthenticatedMoreRoute,
   AuthenticatedScanRoute: AuthenticatedScanRoute,
+  AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedShoppingRoute: AuthenticatedShoppingRoute,
   AuthenticatedItemItemIdRoute: AuthenticatedItemItemIdRoute,
 }

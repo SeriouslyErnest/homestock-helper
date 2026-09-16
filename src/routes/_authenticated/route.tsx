@@ -1,11 +1,20 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LogoMark } from "@/components/logo";
+import { useHouseholds } from "@/lib/homestock";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthGate,
 });
+
+function Splash() {
+  return (
+    <div className="grid min-h-dvh place-items-center">
+      <LogoMark size={56} />
+    </div>
+  );
+}
 
 function AuthGate() {
   const [ready, setReady] = useState(false);
@@ -32,13 +41,27 @@ function AuthGate() {
     };
   }, [navigate]);
 
-  if (!ready) {
-    return (
-      <div className="grid min-h-dvh place-items-center">
-        <LogoMark size={56} />
-      </div>
-    );
-  }
+  if (!ready) return <Splash />;
+
+  return <HouseholdGate />;
+}
+
+/** New accounts have no home yet — send them to choose join or create. */
+function HouseholdGate() {
+  const { data: households, isPending, isError } = useHouseholds();
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const onSetup = pathname === "/setup";
+
+  useEffect(() => {
+    if (isPending || isError) return;
+    if ((households?.length ?? 0) === 0 && !onSetup) {
+      navigate({ to: "/setup", replace: true });
+    }
+  }, [households, isPending, isError, onSetup, navigate]);
+
+  if (isPending) return <Splash />;
+  if (!isError && (households?.length ?? 0) === 0 && !onSetup) return <Splash />;
 
   return <Outlet />;
 }
