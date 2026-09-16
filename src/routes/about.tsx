@@ -200,7 +200,7 @@ function AboutPage() {
         </Section>
 
         {/* WHAT IS HOMESTOCK */}
-        <Section id="why" className="bg-surface-2">
+        <Section id="what-is-it" className="bg-surface-2">
           <Reveal>
             <SectionHeading
               title="What is HomeStock?"
@@ -323,7 +323,7 @@ function AboutPage() {
         </Section>
 
         {/* SHOPPING REQUESTS */}
-        <Section id="what-is-it" className="bg-surface-2">
+        <Section id="shopping-list" className="bg-surface-2">
           <Reveal>
             <SectionHeading
               title="A shared shopping list for the household"
@@ -363,7 +363,7 @@ function AboutPage() {
         </Section>
 
         {/* SHARED HOUSEHOLDS */}
-        <Section id="principles">
+        <Section id="households">
           <div className="grid items-center gap-8 md:grid-cols-2 md:gap-12">
             <Reveal className="max-w-prose">
               <SectionHeading title="Built for shared households" centered={false} />
@@ -394,7 +394,7 @@ function AboutPage() {
         </Section>
 
         {/* FAST FIRST */}
-        <Section id="shopping-list" className="bg-surface-2">
+        <Section id="fast-first" className="bg-surface-2">
           <Reveal>
             <SectionHeading
               title="Fast first. Detailed when useful."
@@ -426,7 +426,7 @@ function AboutPage() {
         </Section>
 
         {/* VIEW PREFERENCES */}
-        <Section id="households">
+        <Section id="views">
           <Reveal>
             <SectionHeading
               title="See things your way"
@@ -463,7 +463,7 @@ function AboutPage() {
         </Section>
 
         {/* LIGHT & DARK MODE */}
-        <Section id="fast-first" className="bg-surface-2">
+        <Section id="light-dark" className="bg-surface-2">
           <Reveal>
             <SectionHeading
               title="Light and dark, out of the box"
@@ -510,7 +510,7 @@ function AboutPage() {
         </Section>
 
         {/* PHILOSOPHY */}
-        <Section id="views">
+        <Section id="principles">
           <Reveal>
             <SectionHeading title="Designed for real household habits" />
           </Reveal>
@@ -540,7 +540,7 @@ function AboutPage() {
         </Section>
 
         {/* BENEFITS */}
-        <Section id="light-dark" className="bg-surface-2">
+        <Section id="why" className="bg-surface-2">
           <Reveal>
             <SectionHeading title="Why HomeStock?" />
           </Reveal>
