@@ -256,3 +256,29 @@ export function HouseholdMock() {
     </figure>
   );
 }
+
+export function LightDarkMock() {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      <figure className="theme-light rounded-3xl border border-border bg-card p-4">
+        <InventoryMock />
+        <figcaption className="mt-1 text-sm">
+          <strong>Light</strong>
+          <span className="block text-muted-foreground">
+            Bright and clear — easy to read in the kitchen.
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure className="theme-dark rounded-3xl border border-border bg-card p-4">
+        <InventoryMock />
+        <figcaption className="mt-1 text-sm">
+          <strong>Dark</strong>
+          <span className="block text-muted-foreground">
+            Gentle at night — for late fridge checks.
+          </span>
+        </figcaption>
+      </figure>
+    </div>
+  );
+}

@@ -115,6 +115,50 @@
   }
 }
 
+/* Scoped themes for the About page light/dark appearance samples.
+   Keep in sync with the :root token sets above. */
+.theme-light {
+  color-scheme: light;
+  --background: oklch(0.968 0.005 224);
+  --foreground: oklch(0.33 0.045 232);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.33 0.045 232);
+  --border: oklch(0.91 0.008 220);
+  --input: oklch(0.91 0.008 220);
+  --ring: oklch(0.635 0.115 248);
+  --surface-2: oklch(0.943 0.012 224);
+  --primary: oklch(0.635 0.115 248);
+  --primary-foreground: oklch(0.99 0.005 248);
+  --muted-foreground: oklch(0.6 0.025 224);
+  --brand: oklch(0.635 0.115 248);
+  --brand-soft: oklch(0.935 0.03 243);
+  --success: oklch(0.59 0.1 162);
+  --success-soft: oklch(0.945 0.03 160);
+  --warning: oklch(0.585 0.115 65);
+  --warning-soft: oklch(0.95 0.035 85);
+}
+
+.theme-dark {
+  color-scheme: dark;
+  --background: oklch(0.21 0.02 225);
+  --foreground: oklch(0.955 0.008 220);
+  --card: oklch(0.26 0.022 222);
+  --card-foreground: oklch(0.955 0.008 220);
+  --border: oklch(0.38 0.03 222);
+  --input: oklch(0.38 0.03 222);
+  --ring: oklch(0.775 0.095 245);
+  --surface-2: oklch(0.31 0.028 220);
+  --primary: oklch(0.775 0.095 245);
+  --primary-foreground: oklch(0.21 0.03 245);
+  --muted-foreground: oklch(0.75 0.018 220);
+  --brand: oklch(0.775 0.095 245);
+  --brand-soft: oklch(0.34 0.045 240);
+  --success: oklch(0.8 0.115 160);
+  --success-soft: oklch(0.37 0.045 160);
+  --warning: oklch(0.83 0.11 80);
+  --warning-soft: oklch(0.34 0.04 70);
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
