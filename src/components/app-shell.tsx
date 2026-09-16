@@ -21,7 +21,7 @@ export function AppShell({
   headerExtra,
 }: {
   title: string;
-  subtitle?: string;
+  subtitle?: string | undefined;
   children: ReactNode;
   headerExtra?: ReactNode;
 }) {

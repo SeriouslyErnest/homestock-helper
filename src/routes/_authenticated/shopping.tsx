@@ -59,7 +59,7 @@ function ShoppingPage() {
     await supabase.from("shopping_items").insert({
       household_id: household.id,
       name: name.trim(),
-      requested_by: user?.id,
+      requested_by: user?.id ?? null,
     });
     setName("");
     setBusy(false);
@@ -75,7 +75,7 @@ function ShoppingPage() {
       household_id: household.id,
       item_id: itemId,
       name: itemName,
-      requested_by: user?.id,
+      requested_by: user?.id ?? null,
     });
     invalidate();
   }
