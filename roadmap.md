@@ -1,15 +1,18 @@
-# HomeStock build roadmap
+# HomeStock roadmap
 
-- [x] Enable Lovable Cloud + email/Google auth
-- [ ] Database schema: households, members, products cache, items, shopping list (RLS + grants)
-- [ ] Theme tokens from template palette + favicon + root head metadata
-- [ ] Auth screen (email + Google)
-- [ ] Auth gate layout + app shell (header, bottom nav with center scan button)
-- [ ] Inventory home: search, category chips, summary cards, list/card toggle, low-stock state
-- [ ] Item detail: consume (-), restock (+), edit min stock / expiry / location, add to shopping
-- [ ] Add item flow (manual quick add)
-- [ ] Barcode scan → local product cache → Open Food Facts → manual fallback
-- [ ] Shopping list: request, check off, bought items restock inventory
-- [ ] More screen: household settings, invite/join via code, sign out
-- [ ] Head metadata per route
-- [ ] Mobile flow verification (Playwright)
+## Done
+- Backend: households, members, profiles, products cache, items, shopping_items (RLS + invite-code join)
+- Auth: email/password + Google sign-in
+- Landing page, app shell with bottom nav (Inventory / Shopping / Scan / More)
+- Inventory: search, category chips, low-stock summary, list/card toggle (remembered), quick +/-
+- Item detail: big +/- counter, consume with 4s Undo, edit details, add to shopping, delete
+- Add item: name-only minimum, pre-filled from barcode scan (Open Food Facts, cached)
+- Scan page: camera barcode scan + manual entry fallback
+- Shopping list: quick add, tick off (auto-restocks tracked items), running-low suggestions
+- More: rename household, invite code, members, join by code, sign out
+- Verified on a phone-sized screen: sign-up → add item → consume → shopping list
+
+## Later (beyond MVP)
+- Multi-location stock records, inventory event history, buy-request tags
+- Household switching for multi-household users
+- Consume-first scan flow (scan currently routes to restock/add)
