@@ -55,6 +55,12 @@ function ItemPage() {
     timer: ReturnType<typeof setTimeout>;
   } | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  // The tab title should name the item once it has loaded.
+  useEffect(() => {
+    if (item?.name) document.title = `${item.name} — HomeStock`;
+  }, [item?.name]);
 
   useEffect(() => {
     if (item) {
@@ -99,14 +105,25 @@ function ItemPage() {
   const quantity = Number(item.quantity);
 
   async function adjust(delta: number, withUndo = false) {
+    if (busy) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("adjust_item_quantity", {
+      _item_id: itemId,
+      _delta: delta,
+    });
+    queryClient.invalidateQueries({ queryKey: ["item", itemId] });
+    queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
+    setBusy(false);
+    if (error) {
+      toast.error("Couldn't update the count. Check your connection and try again.");
+      return;
+    }
+    // Only offer Undo once the change actually landed on the server.
     if (withUndo) {
       if (undo) clearTimeout(undo.timer);
       const timer = setTimeout(() => setUndo(null), 4000);
       setUndo({ previous: -delta, timer });
     }
-    await supabase.rpc("adjust_item_quantity", { _item_id: itemId, _delta: delta });
-    queryClient.invalidateQueries({ queryKey: ["item", itemId] });
-    queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
   }
 
   function undoLast() {
