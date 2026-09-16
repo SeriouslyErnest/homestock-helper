@@ -10,6 +10,8 @@ import {
   formatLocalDate,
   isExpiringSoon,
   isLow,
+  productKey,
+  sortByProductThenLocation,
   useHousehold,
   useItems,
   type Item,
@@ -61,8 +63,20 @@ function InventoryPage() {
         (i) => i.name.toLowerCase().includes(q) || (i.location ?? "").toLowerCase().includes(q),
       );
     }
-    return list;
+    // Same product in two places sits together, so "Milk (Fridge)" and "Milk (Garage)" read as one thing.
+    return sortByProductThenLocation(list);
   }, [items, search, category]);
+
+  /** How many rows and how much stock each product has across every place. */
+  const spread = useMemo(() => {
+    const map = new Map<string, { places: number; total: number }>();
+    for (const i of items ?? []) {
+      const key = productKey(i);
+      const current = map.get(key) ?? { places: 0, total: 0 };
+      map.set(key, { places: current.places + 1, total: current.total + Number(i.quantity) });
+    }
+    return map;
+  }, [items]);
 
   const attention = (items ?? []).filter((i) => isLow(i) || i.quantity <= 0).length;
 
@@ -209,11 +223,16 @@ function InventoryPage() {
       )}
 
       <div className={view === "cards" ? "grid grid-cols-2 gap-2.5" : "grid gap-2"}>
-        {filtered.map((item) => {
+        {filtered.map((item, index) => {
           const status = statusOf(item);
+          const key = productKey(item);
+          const group = spread.get(key);
+          const multiPlace = (group?.places ?? 1) > 1;
+          // Only the first row of a cluster carries the "3 total across 2 places" note.
+          const leadsGroup = multiPlace && (index === 0 || productKey(filtered[index - 1]!) !== key);
+          const place = item.location?.trim();
           const meta = [
             item.category,
-            item.location,
             item.expires_on
               ? `${isExpiringSoon(item) ? "⚠ " : ""}Exp ${formatLocalDate(item.expires_on, { day: "numeric", month: "short", ...(item.expires_on.slice(0, 4) === String(new Date().getFullYear()) ? {} : { year: "numeric" }) })}`
               : null,
@@ -245,8 +264,13 @@ function InventoryPage() {
                 <div className="mb-2 grid h-20 w-full place-items-center rounded-xl bg-surface-2 text-3xl">
                   {thumb}
                 </div>
-                <strong className="block truncate text-sm">{item.name}</strong>
-                <div className="mt-1 h-4 truncate text-xs text-muted-foreground">{meta}</div>
+                <strong className="block truncate text-sm">
+                  {item.name}
+                  {place && <span className="font-normal text-muted-foreground"> ({place})</span>}
+                </strong>
+                <div className="mt-1 h-4 truncate text-xs text-muted-foreground">
+                  {multiPlace ? `${group?.total} in total · ${group?.places} places` : meta}
+                </div>
                 <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1">
                   <span className="text-lg font-bold">{item.quantity}</span>
                   <span
@@ -272,8 +296,14 @@ function InventoryPage() {
                 {thumb}
               </Link>
               <Link to="/item/$itemId" params={{ itemId: item.id }} className="min-w-0 flex-1">
-                <strong className="block truncate text-sm">{item.name}</strong>
-                <div className="mt-0.5 truncate text-xs text-muted-foreground">{meta}</div>
+                <strong className="block truncate text-sm">
+                  {item.name}
+                  {place && <span className="font-normal text-muted-foreground"> ({place})</span>}
+                </strong>
+                <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                  {leadsGroup ? `${group?.total} in total · ${group?.places} places · ` : ""}
+                  {meta}
+                </div>
               </Link>
               <div className="col-span-2 grid min-w-0 grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-1 border-t border-border pt-2">
                 <button

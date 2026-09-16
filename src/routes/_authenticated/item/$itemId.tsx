@@ -10,7 +10,10 @@ import {
   isExpiringSoon,
   isLow,
   nowUtc,
+  productKey,
+  sortByProductThenLocation,
   useHousehold,
+  type Item,
 } from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -40,6 +43,20 @@ function ItemPage() {
       const { data, error } = await supabase.from("items").select("*").eq("id", itemId).single();
       if (error) throw error;
       return data;
+    },
+  });
+
+  // The same product kept somewhere else is its own row — show them together.
+  const { data: siblings } = useQuery({
+    queryKey: ["item-places", household?.id, item ? productKey(item) : null],
+    enabled: Boolean(household && item),
+    queryFn: async () => {
+      const query = supabase.from("items").select("*").eq("household_id", household!.id);
+      const { data, error } = item!.barcode
+        ? await query.eq("barcode", item!.barcode)
+        : await query.ilike("name", item!.name);
+      if (error) throw error;
+      return sortByProductThenLocation((data ?? []) as Item[]).filter((row) => row.id !== itemId);
     },
   });
 
@@ -267,6 +284,52 @@ function ItemPage() {
       >
         <ShoppingCart size={16} /> Add to shopping list
       </button>
+
+      <section className="mb-6">
+        <h2 className="mb-2 text-sm font-bold">Where it's kept</h2>
+        <div className="grid gap-2">
+          <div className="flex items-center justify-between rounded-2xl border border-brand bg-brand-soft p-3 text-sm">
+            <span className="truncate font-semibold text-brand">
+              {item.location?.trim() || "No place set"}
+            </span>
+            <strong className="shrink-0 text-brand">
+              {quantity} {item.unit}
+            </strong>
+          </div>
+          {(siblings ?? []).map((other) => (
+            <Link
+              key={other.id}
+              to="/item/$itemId"
+              params={{ itemId: other.id }}
+              className="flex items-center justify-between rounded-2xl border border-border bg-card p-3 text-sm"
+            >
+              <span className="truncate">{other.location?.trim() || "No place set"}</span>
+              <strong className="shrink-0">
+                {Number(other.quantity)} {other.unit}
+              </strong>
+            </Link>
+          ))}
+          {(siblings?.length ?? 0) > 0 && (
+            <p className="px-1 text-xs font-bold text-muted-foreground">
+              {quantity + (siblings ?? []).reduce((sum, o) => sum + Number(o.quantity), 0)}{" "}
+              {item.unit} in total across {(siblings?.length ?? 0) + 1} places
+            </p>
+          )}
+          <Link
+            to="/add"
+            search={{
+              ...(item.barcode ? { barcode: item.barcode } : {}),
+              name: item.name,
+              ...(item.image_url ? { image: item.image_url } : {}),
+              category: item.category,
+            }}
+            className="rounded-2xl border border-dashed border-border py-3 text-center text-sm font-bold text-brand"
+          >
+            + Keep this somewhere else
+          </Link>
+        </div>
+      </section>
+
 
       <h2 className="mb-2 text-sm font-bold">Details</h2>
       <div className="grid gap-3">

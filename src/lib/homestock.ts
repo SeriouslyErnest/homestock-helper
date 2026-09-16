@@ -118,6 +118,26 @@ export function isExpiringSoon(item: Item): boolean {
   return daysUntilExpiry(item.expires_on) <= 14;
 }
 
+/**
+ * The same product kept in two places is two rows. This key says "same product",
+ * so the inventory can cluster them and the item page can show a combined total.
+ */
+export function productKey(item: Pick<Item, "barcode" | "name">): string {
+  return item.barcode?.trim() || item.name.trim().toLowerCase();
+}
+
+/** Sort so rows of the same product sit together, ordered by place. */
+export function sortByProductThenLocation<T extends Pick<Item, "barcode" | "name" | "location">>(
+  items: T[],
+): T[] {
+  return [...items].sort(
+    (a, b) =>
+      a.name.localeCompare(b.name) ||
+      productKey(a).localeCompare(productKey(b)) ||
+      (a.location ?? "").localeCompare(b.location ?? ""),
+  );
+}
+
 /** The signed-in user's own profile (for the avatar and member list). */
 export function useProfile() {
   return useQuery({

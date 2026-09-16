@@ -10,6 +10,7 @@ type AddSearch = {
   name?: string | undefined;
   brand?: string | undefined;
   image?: string | undefined;
+  category?: string | undefined;
   notFound?: boolean | undefined;
 };
 
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/_authenticated/add")({
     name: typeof search["name"] === "string" ? search["name"] : undefined,
     brand: typeof search["brand"] === "string" ? search["brand"] : undefined,
     image: typeof search["image"] === "string" ? search["image"] : undefined,
+    category: typeof search["category"] === "string" ? search["category"] : undefined,
     notFound: search["notFound"] === true ? true : undefined,
   }),
   head: () => ({
@@ -41,7 +43,9 @@ function AddPage() {
 
   const fullName = [search.name, search.brand].filter(Boolean).join(" — ");
   const [name, setName] = useState(fullName);
-  const [category, setCategory] = useState("Pantry");
+  const [category, setCategory] = useState(
+    CATEGORIES.some((c) => c.id === search.category) ? search.category! : "Pantry",
+  );
   const [quantity, setQuantity] = useState(1);
   const [minQuantity, setMinQuantity] = useState(0);
   const [location, setLocation] = useState("");
