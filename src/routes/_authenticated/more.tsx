@@ -356,7 +356,7 @@ function MorePage() {
       <section className="mb-6 rounded-2xl border border-border bg-card p-4">
         <h2 className="mb-1 text-sm font-bold">Join another household</h2>
         <p className="mb-3 text-xs text-muted-foreground">
-          Have a code? Joining switches this account to that household.
+          Have a code? We'll send a request — an owner there has to approve you.
         </p>
         <form onSubmit={join} className="flex gap-2">
           <input
