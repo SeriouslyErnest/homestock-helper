@@ -275,6 +275,7 @@ function MorePage() {
               onChange={(e) => setNewHomeName(e.target.value)}
               placeholder="Beach house"
               aria-label="New home name"
+              maxLength={40}
               className="w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
             />
             <button
