@@ -139,10 +139,20 @@ function ScanPage() {
         <video ref={videoRef} className="aspect-[3/4] w-full object-cover" muted playsInline />
       </div>
 
-      {phase === "looking-up" && (
-        <p className="mt-3 text-center text-sm font-semibold text-brand">Looking up product…</p>
+      <p role="status" aria-live="polite" className="mt-3 text-center text-sm">
+        {phase === "looking-up" && (
+          <span className="font-semibold text-brand">Looking up product…</span>
+        )}
+        {message && <span className="text-muted-foreground">{message}</span>}
+      </p>
+      {phase === "error" && lastCode && (
+        <button
+          onClick={retry}
+          className="mx-auto mt-2 block rounded-2xl border border-border px-5 py-3 text-sm font-bold"
+        >
+          Try {lastCode} again
+        </button>
       )}
-      {message && <p className="mt-3 text-center text-sm text-muted-foreground">{message}</p>}
 
       <form onSubmit={submitManual} className="mt-4 flex gap-2">
         <input
