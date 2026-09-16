@@ -189,8 +189,10 @@ function ShoppingPage() {
               <button
                 onClick={() => toggle(entry)}
                 aria-label={`Mark ${entry.name} as bought`}
-                className="grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 border-border"
-              />
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-full"
+              >
+                <span className="block h-7 w-7 rounded-full border-2 border-border" />
+              </button>
               <div className="min-w-0 flex-1">
                 <strong className="block truncate text-sm">{entry.name}</strong>
                 <span className="text-xs text-muted-foreground">
