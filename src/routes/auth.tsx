@@ -14,11 +14,11 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in — HomeStock" },
-      { name: "description", content: "Sign in to HomeStock with a code sent to your email." },
+      { name: "description", content: "Sign in to HomeStock with a link sent to your email — no password needed." },
       { property: "og:title", content: "Sign in — HomeStock" },
       {
         property: "og:description",
-        content: "Sign in to HomeStock with a code sent to your email.",
+        content: "Sign in to HomeStock with a link sent to your email — no password needed.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
