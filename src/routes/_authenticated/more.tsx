@@ -108,21 +108,58 @@ function MorePage() {
     }
   }
 
+  async function decide(requestId: string, decision: "approved" | "rejected" | "blocked") {
+    setDeciding(requestId);
+    const { error } = await supabase.rpc("decide_join_request", {
+      _request_id: requestId,
+      _decision: decision,
+    });
+    setDeciding(null);
+    if (error) {
+      toast.error("Could not update that request. You need to be the owner.");
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ["join-requests", household?.id] });
+    queryClient.invalidateQueries({ queryKey: ["members", household?.id] });
+    toast.success(
+      decision === "approved" ? "Approved — they're in" : decision === "blocked" ? "Blocked" : "Rejected",
+    );
+  }
+
+  async function unblock(requestId: string) {
+    setDeciding(requestId);
+    const { error } = await supabase
+      .from("household_join_requests")
+      .delete()
+      .eq("id", requestId);
+    setDeciding(null);
+    if (error) {
+      toast.error("Could not unblock them.");
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ["join-requests", household?.id] });
+    toast.success("Unblocked — they can ask again");
+  }
+
   async function join(e: React.FormEvent) {
     e.preventDefault();
     if (!joinCode.trim()) return;
     setJoining(true);
     setJoinMessage(null);
-    const { data, error } = await supabase.rpc("join_household_by_code", {
+    const { data, error } = await supabase.rpc("request_household_join", {
       _code: joinCode.trim(),
     });
     setJoining(false);
     if (error) {
       setJoinMessage(error.message);
+    } else if (data === "member") {
+      setJoinMessage("You're already a member of that household.");
+    } else if (data === "blocked") {
+      setJoinMessage("That household isn't accepting a request from you.");
     } else {
-      setJoinMessage(`You've joined “${data}”. Reloading…`);
-      queryClient.invalidateQueries();
-      setTimeout(() => window.location.assign("/inventory"), 800);
+      setJoinMessage("Request sent. An owner of that household needs to approve you.");
+      setJoinCode("");
+      queryClient.invalidateQueries({ queryKey: ["join-requests"] });
     }
   }
 
