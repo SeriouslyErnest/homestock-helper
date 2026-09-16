@@ -27,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/more")({
 function MorePage() {
   const { data: household } = useHousehold();
   const { data: members } = useMembers(household?.id);
+  const { data: joinRequests } = useJoinRequests(household?.id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
