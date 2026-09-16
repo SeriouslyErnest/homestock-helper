@@ -163,43 +163,87 @@ export function useProfile() {
   });
 }
 
-/** Fetch the current user's first household, creating one on first use. */
-export function useHousehold() {
+const ACTIVE_HOUSEHOLD_KEY = "homestock.active-household";
+
+/** Which household the user last looked at. Remembered on this device. */
+export function getActiveHouseholdId(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(ACTIVE_HOUSEHOLD_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setActiveHouseholdId(id: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(ACTIVE_HOUSEHOLD_KEY, id);
+  } catch {
+    /* storage unavailable — fall back to the newest household */
+  }
+}
+
+/** Every household the user belongs to, most recently joined first. */
+export function useHouseholds() {
   return useQuery({
-    queryKey: ["household"],
-    queryFn: async (): Promise<Household> => {
+    queryKey: ["households"],
+    queryFn: async (): Promise<Household[]> => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not signed in");
 
-      const { data: memberships, error } = await supabase
+      const { data, error } = await supabase
         .from("household_members")
         .select("household_id, created_at, households(id, name, invite_code, created_by)")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: true })
-        .limit(1);
+        .order("created_at", { ascending: false });
       if (error) throw error;
 
-      const existing = memberships?.[0]?.households as unknown as Household | undefined;
-      if (existing) return existing;
-
-      const { data: household, error: createError } = await supabase
-        .from("households")
-        .insert({ name: "Our Home", created_by: user.id })
-        .select()
-        .single();
-      if (createError) throw createError;
-
-      const { error: memberError } = await supabase
-        .from("household_members")
-        .insert({ household_id: household.id, user_id: user.id, role: "owner" });
-      if (memberError) throw memberError;
-
-      return household as Household;
+      return (data ?? [])
+        .map((row) => row.households as unknown as Household | null)
+        .filter((h): h is Household => !!h);
     },
     staleTime: 5 * 60_000,
   });
+}
+
+/** The household currently being viewed — the remembered one, else the newest. */
+export function useHousehold() {
+  const query = useHouseholds();
+  const households = query.data;
+  const activeId = getActiveHouseholdId();
+  const active =
+    households?.find((h) => h.id === activeId) ?? households?.[0] ?? undefined;
+  return { ...query, data: active, households: households ?? [] };
+}
+
+/** Create a household and join it as its owner. Returns the new household. */
+export async function createHousehold(name: string): Promise<Household> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not signed in");
+
+  const { data: household, error } = await supabase
+    .from("households")
+    .insert({ name: name.trim() || "Our Home", created_by: user.id })
+    .select()
+    .single();
+  if (error) throw error;
+
+  const { error: memberError } = await supabase.from("household_members").insert({
+    household_id: household.id,
+    user_id: user.id,
+    role: "owner",
+    display_name:
+      (user.user_metadata?.["name"] as string | undefined) ?? user.email?.split("@")[0] ?? null,
+  });
+  if (memberError) throw memberError;
+
+  setActiveHouseholdId(household.id);
+  return household as Household;
 }
 
 export function useMembers(householdId: string | undefined) {

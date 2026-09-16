@@ -4,7 +4,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Ban, Check, Copy, LogOut, RotateCcw, UserMinus, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
-import { useHousehold, useJoinRequests, useMembers } from "@/lib/homestock";
+import {
+  createHousehold,
+  setActiveHouseholdId,
+  useHousehold,
+  useHouseholds,
+  useJoinRequests,
+  useMembers,
+} from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/more")({
@@ -39,6 +46,34 @@ function MorePage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [deciding, setDeciding] = useState<string | null>(null);
+  const { data: households } = useHouseholds();
+  const [newHomeName, setNewHomeName] = useState("");
+  const [creatingHome, setCreatingHome] = useState(false);
+  const [showCreateHome, setShowCreateHome] = useState(false);
+
+  async function switchTo(id: string) {
+    if (id === household?.id) return;
+    setActiveHouseholdId(id);
+    await queryClient.invalidateQueries();
+    toast.success("Switched home");
+  }
+
+  async function createNewHome(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newHomeName.trim()) return;
+    setCreatingHome(true);
+    try {
+      await createHousehold(newHomeName);
+      await queryClient.invalidateQueries();
+      setNewHomeName("");
+      setShowCreateHome(false);
+      toast.success("New home created");
+    } catch {
+      toast.error("Couldn't create that home. Try again.");
+    } finally {
+      setCreatingHome(false);
+    }
+  }
 
   const isOwner = (members ?? []).some((m) => m.user_id === userId && m.role === "owner");
   const pending = (joinRequests ?? []).filter((r) => r.status === "pending");
@@ -97,7 +132,7 @@ function MorePage() {
       toast.error("Couldn't rename the household. Try again.");
       return;
     }
-    queryClient.invalidateQueries({ queryKey: ["household"] });
+    queryClient.invalidateQueries({ queryKey: ["households"] });
     toast.success("Household renamed");
   }
 
@@ -176,6 +211,59 @@ function MorePage() {
 
   return (
     <AppShell title="Household & account">
+      <section className="mb-6 rounded-2xl border border-border bg-card p-4">
+        <h2 className="mb-2 text-sm font-bold">Your homes · {households?.length ?? 0}</h2>
+        <ul className="grid gap-2">
+          {(households ?? []).map((h) => {
+            const active = h.id === household?.id;
+            return (
+              <li key={h.id}>
+                <button
+                  onClick={() => switchTo(h.id)}
+                  aria-current={active ? "true" : undefined}
+                  className={`flex w-full items-center gap-3 rounded-xl p-3 text-left text-sm ${
+                    active ? "bg-brand-soft font-bold text-brand" : "bg-surface-2"
+                  }`}
+                >
+                  <span className="min-w-0 flex-1 truncate">{h.name}</span>
+                  {active ? (
+                    <span className="text-xs font-bold">Viewing</span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Switch</span>
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+
+        {showCreateHome ? (
+          <form onSubmit={createNewHome} className="mt-3 flex gap-2">
+            <input
+              value={newHomeName}
+              onChange={(e) => setNewHomeName(e.target.value)}
+              placeholder="Beach house"
+              aria-label="New home name"
+              className="w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
+            />
+            <button
+              type="submit"
+              disabled={creatingHome || !newHomeName.trim()}
+              className="shrink-0 rounded-2xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+            >
+              {creatingHome ? "…" : "Create"}
+            </button>
+          </form>
+        ) : (
+          <button
+            onClick={() => setShowCreateHome(true)}
+            className="mt-3 w-full rounded-xl border border-border py-3 text-sm font-semibold"
+          >
+            Create a new home
+          </button>
+        )}
+      </section>
+
       <section className="mb-6 rounded-2xl border border-border bg-card p-4">
         <h2 className="mb-2 text-sm font-bold">Household</h2>
         <label htmlFor="hh-name" className="mb-1 block text-xs font-bold text-muted-foreground">
