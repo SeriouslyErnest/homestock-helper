@@ -86,9 +86,10 @@ function ShoppingPage() {
     toggling.current.add(entry.id);
     try {
     if (entry.status === "pending") {
+      // bought_at is stored as a UTC timestamp; it's displayed in local time.
       await supabase
         .from("shopping_items")
-        .update({ status: "bought", bought_at: new Date().toISOString() })
+        .update({ status: "bought", bought_at: nowUtc() })
         .eq("id", entry.id);
       // Bought something tracked? Restock the inventory item automatically.
       if (entry.item_id) {
@@ -102,6 +103,13 @@ function ShoppingPage() {
         .from("shopping_items")
         .update({ status: "pending", bought_at: null })
         .eq("id", entry.id);
+      // Put the stock back too, so tick → untick → tick can't double-count.
+      if (entry.item_id) {
+        await supabase.rpc("adjust_item_quantity", {
+          _item_id: entry.item_id,
+          _delta: -Number(entry.quantity),
+        });
+      }
     }
     invalidate();
     } finally {
