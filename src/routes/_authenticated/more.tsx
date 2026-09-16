@@ -73,13 +73,17 @@ function MorePage() {
       setNewHomeName("");
       setShowCreateHome(false);
       toast.success("New home created");
-    } catch {
-      toast.error("Couldn't create that home. Try again.");
+    } catch (err) {
+      toast.error(planLimitMessage(err) ?? "Couldn't create that home. Try again.");
     } finally {
       setCreatingHome(false);
     }
   }
 
+  const canCreateHome = plan?.can_create_household ?? true;
+  const memberLimitReached =
+    !!plan?.enforced && (members?.length ?? 0) >= (plan?.max_members ?? Infinity);
+  const myPending = (myRequests ?? []).filter((r) => r.status === "pending");
   const isOwner = (members ?? []).some((m) => m.user_id === userId && m.role === "owner");
   const pending = (joinRequests ?? []).filter((r) => r.status === "pending");
   const blocked = (joinRequests ?? []).filter((r) => r.status === "blocked");
