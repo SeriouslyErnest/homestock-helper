@@ -195,7 +195,7 @@ function ItemPage() {
           <span className="text-xs font-bold text-muted-foreground">{item.unit} on hand</span>
         </div>
         <button
-          onClick={() => setQuantity(quantity + 1)}
+          onClick={() => adjust(1)}
           aria-label="Restock one"
           className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-2xl text-brand"
         >
