@@ -112,7 +112,14 @@ export function RunningLowMock() {
     <PhoneFrame label="HomeStock running low list showing milk, washing-up liquid and coffee below their desired levels">
       <p className="mb-2 text-[11px] font-bold text-warning">Running low · 3</p>
       <div className="grid gap-1.5">
-        <Row emoji="🥛" name="Whole milk" meta="Desired 3 · need 2" qty="1" status="Low" tone="warning" />
+        <Row
+          emoji="🥛"
+          name="Whole milk"
+          meta="Desired 3 · need 2"
+          qty="1"
+          status="Low"
+          tone="warning"
+        />
         <Row
           emoji="🧴"
           name="Washing-up liquid"
@@ -121,7 +128,14 @@ export function RunningLowMock() {
           status="Low"
           tone="warning"
         />
-        <Row emoji="☕" name="Coffee" meta="Desired 2 · need 2" qty="0" status="Out" tone="warning" />
+        <Row
+          emoji="☕"
+          name="Coffee"
+          meta="Desired 2 · need 2"
+          qty="0"
+          status="Out"
+          tone="warning"
+        />
       </div>
     </PhoneFrame>
   );
@@ -192,7 +206,10 @@ export function ListVsCardMock() {
             { e: "🧻", n: "Kitchen roll", q: "3" },
             { e: "☕", n: "Coffee", q: "0" },
           ].map((p) => (
-            <div key={p.n} className="rounded-xl border border-border bg-surface-2 p-2.5 text-center">
+            <div
+              key={p.n}
+              className="rounded-xl border border-border bg-surface-2 p-2.5 text-center"
+            >
               <span className="text-2xl">{p.e}</span>
               <strong className="mt-1 block truncate text-[11px]">{p.n}</strong>
               <strong className="block text-xl leading-tight">{p.q}</strong>

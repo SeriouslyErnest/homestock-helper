@@ -13,7 +13,10 @@ export const Route = createFileRoute("/_authenticated/more")({
       { title: "Household & account — HomeStock" },
       { name: "description", content: "Manage your household, invite code, members and account." },
       { property: "og:title", content: "Household & account — HomeStock" },
-      { property: "og:description", content: "Manage your household, invite code, members and account." },
+      {
+        property: "og:description",
+        content: "Manage your household, invite code, members and account.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -102,7 +105,9 @@ function MorePage() {
     if (!joinCode.trim()) return;
     setJoining(true);
     setJoinMessage(null);
-    const { data, error } = await supabase.rpc("join_household_by_code", { _code: joinCode.trim() });
+    const { data, error } = await supabase.rpc("join_household_by_code", {
+      _code: joinCode.trim(),
+    });
     setJoining(false);
     if (error) {
       setJoinMessage(error.message);
@@ -129,8 +134,16 @@ function MorePage() {
           Name
         </label>
         <div className="flex gap-2">
-          <input id="hh-name" value={householdName} onChange={(e) => setHouseholdName(e.target.value)} className={field} />
-          <button onClick={renameHousehold} className="shrink-0 rounded-2xl bg-primary px-4 text-sm font-semibold text-primary-foreground">
+          <input
+            id="hh-name"
+            value={householdName}
+            onChange={(e) => setHouseholdName(e.target.value)}
+            className={field}
+          />
+          <button
+            onClick={renameHousehold}
+            className="shrink-0 rounded-2xl bg-primary px-4 text-sm font-semibold text-primary-foreground"
+          >
             Save
           </button>
         </div>
@@ -138,9 +151,14 @@ function MorePage() {
         <div className="mt-4 flex items-center justify-between rounded-2xl bg-brand-soft p-3.5">
           <div>
             <span className="block text-xs font-bold text-brand">Invite code</span>
-            <strong className="text-lg tracking-[0.3em]">{household?.invite_code ?? "······"}</strong>
+            <strong className="text-lg tracking-[0.3em]">
+              {household?.invite_code ?? "······"}
+            </strong>
           </div>
-          <button onClick={copyCode} className="flex items-center gap-1.5 rounded-xl bg-card px-3 py-2 text-xs font-bold text-brand">
+          <button
+            onClick={copyCode}
+            className="flex items-center gap-1.5 rounded-xl bg-card px-3 py-2 text-xs font-bold text-brand"
+          >
             <Copy size={14} /> Copy
           </button>
         </div>
@@ -153,7 +171,10 @@ function MorePage() {
         <h2 className="mb-2 text-sm font-bold">Members · {members?.length ?? 0}</h2>
         <ul className="grid gap-2">
           {(members ?? []).map((m) => (
-            <li key={m.user_id} className="flex items-center gap-3 rounded-xl bg-surface-2 p-2.5 text-sm">
+            <li
+              key={m.user_id}
+              className="flex items-center gap-3 rounded-xl bg-surface-2 p-2.5 text-sm"
+            >
               <span className="grid h-8 w-8 place-items-center rounded-full bg-brand-soft text-xs font-extrabold text-brand">
                 {(m.display_name ?? "?").slice(0, 2).toUpperCase()}
               </span>
@@ -177,8 +198,8 @@ function MorePage() {
         {confirmLeave ? (
           <div className="mt-3 rounded-xl bg-warning-soft p-3">
             <p className="text-sm">
-              Leave {household?.name}? You'll lose access to its inventory until someone invites
-              you back.
+              Leave {household?.name}? You'll lose access to its inventory until someone invites you
+              back.
             </p>
             <div className="mt-3 flex gap-2">
               <button
@@ -219,7 +240,11 @@ function MorePage() {
             aria-label="Invite code"
             className={`${field} tracking-[0.3em] uppercase`}
           />
-          <button type="submit" disabled={joining || !joinCode.trim()} className="shrink-0 rounded-2xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+          <button
+            type="submit"
+            disabled={joining || !joinCode.trim()}
+            className="shrink-0 rounded-2xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+          >
             {joining ? "Joining…" : "Join"}
           </button>
         </form>

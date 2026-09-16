@@ -50,7 +50,10 @@ function ItemPage() {
   const [minQuantity, setMinQuantity] = useState(0);
   const [expires, setExpires] = useState("");
   const [notes, setNotes] = useState("");
-  const [undo, setUndo] = useState<{ previous: number; timer: ReturnType<typeof setTimeout> } | null>(null);
+  const [undo, setUndo] = useState<{
+    previous: number;
+    timer: ReturnType<typeof setTimeout>;
+  } | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   useEffect(() => {
@@ -164,7 +167,10 @@ function ItemPage() {
     <AppShell
       title={item.name}
       headerExtra={
-        <Link to="/inventory" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand">
+        <Link
+          to="/inventory"
+          className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand"
+        >
           <ArrowLeft size={16} /> Back to inventory
         </Link>
       }
@@ -174,11 +180,13 @@ function ItemPage() {
           {item.image_url ? (
             <img src={item.image_url} alt="" className="h-full w-full rounded-2xl object-contain" />
           ) : (
-            CATEGORIES.find((c) => c.id === item.category)?.emoji ?? "📦"
+            (CATEGORIES.find((c) => c.id === item.category)?.emoji ?? "📦")
           )}
         </div>
         <div className="text-sm">
-          <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-bold ${low ? "bg-warning-soft text-warning" : "bg-success-soft text-success"}`}>
+          <span
+            className={`inline-block rounded-full px-2.5 py-1 text-xs font-bold ${low ? "bg-warning-soft text-warning" : "bg-success-soft text-success"}`}
+          >
             {quantity <= 0 ? "Out of stock" : low ? "Running low" : "In stock"}
           </span>
           <div className="mt-1.5 text-muted-foreground">
@@ -186,7 +194,9 @@ function ItemPage() {
             {item.expires_on &&
               ` · ${expiring ? "⚠ " : ""}Expires ${formatLocalDate(item.expires_on)}`}
           </div>
-          {item.barcode && <div className="mt-0.5 text-xs text-muted-foreground">Barcode {item.barcode}</div>}
+          {item.barcode && (
+            <div className="mt-0.5 text-xs text-muted-foreground">Barcode {item.barcode}</div>
+          )}
         </div>
       </div>
 
@@ -231,42 +241,101 @@ function ItemPage() {
       <h2 className="mb-2 text-sm font-bold">Details</h2>
       <div className="grid gap-3">
         <div>
-          <label htmlFor="d-name" className={label}>Name</label>
-          <input id="d-name" value={name} onChange={(e) => setName(e.target.value)} className={field} />
+          <label htmlFor="d-name" className={label}>
+            Name
+          </label>
+          <input
+            id="d-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className={field}
+          />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label htmlFor="d-cat" className={label}>Category</label>
-            <select id="d-cat" value={category} onChange={(e) => setCategory(e.target.value)} className={field}>
+            <label htmlFor="d-cat" className={label}>
+              Category
+            </label>
+            <select
+              id="d-cat"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className={field}
+            >
               {CATEGORIES.map((c) => (
-                <option key={c.id} value={c.id}>{c.emoji} {c.id}</option>
+                <option key={c.id} value={c.id}>
+                  {c.emoji} {c.id}
+                </option>
               ))}
             </select>
           </div>
           <div>
-            <label htmlFor="d-loc" className={label}>Location</label>
-            <input id="d-loc" value={location} onChange={(e) => setLocation(e.target.value)} className={field} />
+            <label htmlFor="d-loc" className={label}>
+              Location
+            </label>
+            <input
+              id="d-loc"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className={field}
+            />
           </div>
         </div>
         <div className="grid grid-cols-3 gap-3">
           <div>
-            <label htmlFor="d-unit" className={label}>Unit</label>
-            <input id="d-unit" value={unit} onChange={(e) => setUnit(e.target.value)} className={field} />
+            <label htmlFor="d-unit" className={label}>
+              Unit
+            </label>
+            <input
+              id="d-unit"
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              className={field}
+            />
           </div>
           <div>
-            <label htmlFor="d-min" className={label}>Keep at least</label>
-            <input id="d-min" type="number" min={0} step="any" value={minQuantity} onChange={(e) => setMinQuantity(Number(e.target.value))} className={field} />
+            <label htmlFor="d-min" className={label}>
+              Keep at least
+            </label>
+            <input
+              id="d-min"
+              type="number"
+              min={0}
+              step="any"
+              value={minQuantity}
+              onChange={(e) => setMinQuantity(Number(e.target.value))}
+              className={field}
+            />
           </div>
           <div>
-            <label htmlFor="d-exp" className={label}>Expires</label>
-            <input id="d-exp" type="date" value={expires} onChange={(e) => setExpires(e.target.value)} className={field} />
+            <label htmlFor="d-exp" className={label}>
+              Expires
+            </label>
+            <input
+              id="d-exp"
+              type="date"
+              value={expires}
+              onChange={(e) => setExpires(e.target.value)}
+              className={field}
+            />
           </div>
         </div>
         <div>
-          <label htmlFor="d-notes" className={label}>Notes</label>
-          <textarea id="d-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className={field} />
+          <label htmlFor="d-notes" className={label}>
+            Notes
+          </label>
+          <textarea
+            id="d-notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            className={field}
+          />
         </div>
-        <button onClick={saveDetails} className="rounded-2xl bg-primary py-3.5 font-semibold text-primary-foreground">
+        <button
+          onClick={saveDetails}
+          className="rounded-2xl bg-primary py-3.5 font-semibold text-primary-foreground"
+        >
           Save changes
         </button>
       </div>
@@ -274,10 +343,16 @@ function ItemPage() {
       <div className="mt-6">
         {confirmingDelete ? (
           <div className="grid grid-cols-2 gap-2">
-            <button onClick={remove} className="rounded-2xl bg-destructive py-3 text-sm font-bold text-destructive-foreground">
+            <button
+              onClick={remove}
+              className="rounded-2xl bg-destructive py-3 text-sm font-bold text-destructive-foreground"
+            >
               Yes, remove it
             </button>
-            <button onClick={() => setConfirmingDelete(false)} className="rounded-2xl border border-border py-3 text-sm font-bold">
+            <button
+              onClick={() => setConfirmingDelete(false)}
+              className="rounded-2xl border border-border py-3 text-sm font-bold"
+            >
               Keep it
             </button>
           </div>

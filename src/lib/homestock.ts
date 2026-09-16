@@ -123,7 +123,8 @@ export function useProfile() {
       return {
         id: user.id,
         email: user.email ?? "",
-        displayName: data?.display_name ?? (user.user_metadata?.["name"] as string | undefined) ?? null,
+        displayName:
+          data?.display_name ?? (user.user_metadata?.["name"] as string | undefined) ?? null,
       };
     },
     staleTime: 5 * 60_000,
