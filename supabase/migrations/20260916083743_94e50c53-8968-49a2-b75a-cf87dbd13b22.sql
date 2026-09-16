@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.guard_membership_role_change() FROM PUBLIC, anon, authenticated;
