@@ -246,10 +246,11 @@ function InventoryPage() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => adjust(item, -1)}
+                  disabled={item.quantity <= 0}
                   aria-label={`Use one ${item.name}`}
-                  className="grid h-8 w-8 place-items-center rounded-lg border border-border text-muted-foreground active:bg-surface-2"
+                  className="grid h-11 w-11 place-items-center rounded-xl border border-border text-muted-foreground active:bg-surface-2 disabled:opacity-40"
                 >
-                  <Minus size={14} />
+                  <Minus size={18} />
                 </button>
                 <div className="w-10 text-center">
                   <strong className="block text-lg leading-tight">{item.quantity}</strong>
@@ -260,9 +261,9 @@ function InventoryPage() {
                 <button
                   onClick={() => adjust(item, 1)}
                   aria-label={`Restock one ${item.name}`}
-                  className="grid h-8 w-8 place-items-center rounded-lg border border-border text-muted-foreground active:bg-surface-2"
+                  className="grid h-11 w-11 place-items-center rounded-xl border border-border text-muted-foreground active:bg-surface-2"
                 >
-                  <Plus size={14} />
+                  <Plus size={18} />
                 </button>
               </div>
             </article>
