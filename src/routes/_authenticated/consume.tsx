@@ -26,20 +26,35 @@ function ConsumePage() {
   const { data: items, isPending } = useItems(household?.id);
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
   };
 
   async function take(item: Item) {
-    await supabase.rpc("adjust_item_quantity", { _item_id: item.id, _delta: -1 });
+    if (busyId) return;
+    setBusyId(item.id);
+    const { error } = await supabase.rpc("adjust_item_quantity", {
+      _item_id: item.id,
+      _delta: -1,
+    });
     invalidate();
+    setBusyId(null);
+    if (error) {
+      toast.error(`Couldn't update ${item.name}. Check your connection and try again.`);
+      return;
+    }
     toast(`Took one ${item.name}`, {
       action: {
         label: "Undo",
         onClick: async () => {
-          await supabase.rpc("adjust_item_quantity", { _item_id: item.id, _delta: 1 });
+          const { error: undoError } = await supabase.rpc("adjust_item_quantity", {
+            _item_id: item.id,
+            _delta: 1,
+          });
           invalidate();
+          if (undoError) toast.error("Couldn't undo that. Try again.");
         },
       },
       duration: 5000,
