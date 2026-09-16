@@ -331,7 +331,7 @@ function AboutPage() {
           <Reveal>
             <SectionHeading
               title="See things your way"
-              intro="Different people organise information differently. Where useful, HomeStock supports both List and Card views."
+              intro="Different people organise information differently. Inventory supports both List and Card views today, and more screens will follow."
             />
           </Reveal>
           <Reveal delay={90} className="mt-8">
