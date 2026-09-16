@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -14,9 +14,12 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in — HomeStock" },
-      { name: "description", content: "Sign in or create your HomeStock account." },
+      { name: "description", content: "Sign in to HomeStock with a code sent to your email." },
       { property: "og:title", content: "Sign in — HomeStock" },
-      { property: "og:description", content: "Sign in or create your HomeStock account." },
+      {
+        property: "og:description",
+        content: "Sign in to HomeStock with a code sent to your email.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -25,14 +28,15 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
-  const { mode } = Route.useSearch();
   const navigate = useNavigate();
-  const [isSignup, setIsSignup] = useState(mode !== "signin");
-  const [name, setName] = useState("");
+  const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+  const codeInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -40,36 +44,59 @@ function AuthPage() {
     });
   }, [navigate]);
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
+  async function sendCode(e?: React.FormEvent) {
+    e?.preventDefault();
+    const address = email.trim().toLowerCase();
+    if (!address) return;
     setBusy(true);
     setMessage(null);
-    try {
-      if (isSignup) {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { data: { display_name: name || undefined } },
-        });
-        if (error) throw error;
-        if (data.user && name) {
-          await supabase.from("profiles").upsert({ id: data.user.id, display_name: name });
-        }
-        if (!data.session) {
-          setMessage("Check your email to confirm your account, then sign in.");
-          setIsSignup(false);
-          return;
-        }
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-      }
-      navigate({ to: "/inventory" });
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setBusy(false);
+    const { error } = await supabase.auth.signInWithOtp({
+      email: address,
+      options: {
+        shouldCreateUser: true,
+        data: name.trim() ? { display_name: name.trim() } : undefined,
+      },
+    });
+    setBusy(false);
+    if (error) {
+      setMessage(error.message);
+      return;
     }
+    setStep("code");
+    setCooldown(30);
+    setMessage(`We sent a 6-digit code to ${address}.`);
+    setTimeout(() => codeInput.current?.focus(), 50);
+  }
+
+  async function verify(e?: React.FormEvent) {
+    e?.preventDefault();
+    const digits = code.replace(/\D/g, "");
+    if (digits.length !== 6) return;
+    setBusy(true);
+    setMessage(null);
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: email.trim().toLowerCase(),
+      token: digits,
+      type: "email",
+    });
+    if (error) {
+      setBusy(false);
+      setCode("");
+      setMessage("That code didn't work. Check it or send a new one.");
+      return;
+    }
+    if (data.user && name.trim()) {
+      await supabase
+        .from("profiles")
+        .upsert({ id: data.user.id, display_name: name.trim() });
+    }
+    navigate({ to: "/inventory", replace: true });
   }
 
   async function google() {
@@ -84,7 +111,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/inventory" });
+    navigate({ to: "/inventory", replace: true });
   }
 
   return (
@@ -93,68 +120,85 @@ function AuthPage() {
         <LogoMark size={64} />
         <LogoWordmark className="mt-3 text-3xl" />
         <p className="mt-1 text-sm text-muted-foreground">
-          {isSignup ? "Create your account to start stocking." : "Welcome back."}
+          {step === "email"
+            ? "Enter your email and we'll send you a code."
+            : "Enter the 6-digit code from your email."}
         </p>
       </div>
 
-      <div className="mb-5 grid grid-cols-2 rounded-2xl border border-border bg-surface-2 p-1">
-        {(["Sign in", "Create account"] as const).map((label, i) => {
-          const active = isSignup === (i === 1);
-          return (
-            <button
-              key={label}
-              type="button"
-              onClick={() => {
-                setIsSignup(i === 1);
-                setMessage(null);
-              }}
-              className={`rounded-xl py-2 text-sm font-semibold ${
-                active ? "bg-card text-brand shadow-sm" : "text-muted-foreground"
-              }`}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
-
-      <form onSubmit={submit} className="flex flex-col gap-3">
-        {isSignup && (
+      {step === "email" ? (
+        <form onSubmit={sendCode} className="flex flex-col gap-3">
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Your name"
+            placeholder="Your name (new here? optional)"
             autoComplete="name"
             className="rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
           />
-        )}
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email"
-          autoComplete="email"
-          className="rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
-        />
-        <input
-          type="password"
-          required
-          minLength={6}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          autoComplete={isSignup ? "new-password" : "current-password"}
-          className="rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
-        />
-        <button
-          type="submit"
-          disabled={busy}
-          className="rounded-2xl bg-primary px-4 py-3.5 font-semibold text-primary-foreground disabled:opacity-60"
-        >
-          {busy ? "One moment…" : isSignup ? "Create account" : "Sign in"}
-        </button>
-      </form>
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            autoComplete="email"
+            inputMode="email"
+            className="rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
+          />
+          <button
+            type="submit"
+            disabled={busy || !email.trim()}
+            className="rounded-2xl bg-primary px-4 py-3.5 font-semibold text-primary-foreground disabled:opacity-60"
+          >
+            {busy ? "Sending…" : "Email me a code"}
+          </button>
+        </form>
+      ) : (
+        <form onSubmit={verify} className="flex flex-col gap-3">
+          <input
+            ref={codeInput}
+            value={code}
+            onChange={(e) => {
+              const next = e.target.value.replace(/\D/g, "").slice(0, 6);
+              setCode(next);
+              if (next.length === 6) setTimeout(() => verify(), 0);
+            }}
+            placeholder="123456"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            aria-label="6-digit code"
+            className="rounded-2xl border border-border bg-surface-2 px-4 py-4 text-center font-condensed text-3xl tracking-[0.4em] outline-none focus:border-brand"
+          />
+          <button
+            type="submit"
+            disabled={busy || code.length !== 6}
+            className="rounded-2xl bg-primary px-4 py-3.5 font-semibold text-primary-foreground disabled:opacity-60"
+          >
+            {busy ? "Checking…" : "Sign in"}
+          </button>
+          <div className="flex items-center justify-between text-sm">
+            <button
+              type="button"
+              onClick={() => {
+                setStep("email");
+                setCode("");
+                setMessage(null);
+              }}
+              className="py-2 text-muted-foreground underline"
+            >
+              Use another email
+            </button>
+            <button
+              type="button"
+              disabled={busy || cooldown > 0}
+              onClick={() => sendCode()}
+              className="py-2 font-semibold text-brand disabled:opacity-50"
+            >
+              {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"}
+            </button>
+          </div>
+        </form>
+      )}
 
       <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
         <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />

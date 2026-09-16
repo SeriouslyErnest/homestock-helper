@@ -81,8 +81,9 @@ export function useHousehold() {
 
       const { data: memberships, error } = await supabase
         .from("household_members")
-        .select("household_id, households(id, name, invite_code, created_by)")
+        .select("household_id, created_at, households(id, name, invite_code, created_by)")
         .eq("user_id", user.id)
+        .order("created_at", { ascending: true })
         .limit(1);
       if (error) throw error;
 
