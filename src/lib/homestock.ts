@@ -46,7 +46,17 @@ export type ShoppingItem = {
   bought_at: string | null;
   /** How much stock ticking this off added, so unticking can take back exactly that. */
   stock_applied?: number | null;
+  /** Short hints for whoever shops: "Only if on sale", "Any brand", … */
+  tags?: string[] | null;
 };
+
+/** The small, fixed set of hints a buy request can carry. Deliberately short. */
+export const REQUEST_TAGS = [
+  "Optional",
+  "Only if on sale",
+  "Any brand",
+  "Call if unavailable",
+] as const;
 
 export const CATEGORIES = [
   { id: "Pantry", emoji: "🍜" },
