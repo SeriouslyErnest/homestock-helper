@@ -40,9 +40,13 @@ function InventoryPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("All");
-  const [view, setView] = useState<"list" | "cards">(
-    () => (localStorage.getItem("homestock-view") as "list" | "cards") || "list",
-  );
+  const [view, setView] = useState<"list" | "cards">("list");
+
+  // Read the remembered view after mount so the first render always matches the server.
+  useEffect(() => {
+    const stored = localStorage.getItem("homestock-view");
+    if (stored === "list" || stored === "cards") setView(stored);
+  }, []);
 
   const filtered = useMemo(() => {
     let list = items ?? [];
