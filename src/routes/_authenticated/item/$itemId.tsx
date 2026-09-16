@@ -87,18 +87,13 @@ function ItemPage() {
 
   const quantity = Number(item.quantity);
 
-  async function setQuantity(next: number, withUndo = false) {
-    const value = Math.max(0, next);
+  async function adjust(delta: number, withUndo = false) {
     if (withUndo) {
       if (undo) clearTimeout(undo.timer);
-      const previous = quantity;
       const timer = setTimeout(() => setUndo(null), 4000);
-      setUndo({ previous, timer });
+      setUndo({ previous: -delta, timer });
     }
-    await supabase
-      .from("items")
-      .update({ quantity: value, updated_at: new Date().toISOString() })
-      .eq("id", itemId);
+    await supabase.rpc("adjust_item_quantity", { _item_id: itemId, _delta: delta });
     queryClient.invalidateQueries({ queryKey: ["item", itemId] });
     queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
   }
@@ -106,8 +101,9 @@ function ItemPage() {
   function undoLast() {
     if (!undo) return;
     clearTimeout(undo.timer);
+    const revert = undo.previous;
     setUndo(null);
-    void setQuantity(undo.previous);
+    void adjust(revert);
   }
 
   async function saveDetails() {
@@ -187,7 +183,8 @@ function ItemPage() {
 
       <div className="mb-4 flex items-center justify-between rounded-2xl border border-border bg-card p-4">
         <button
-          onClick={() => setQuantity(quantity - 1, true)}
+          onClick={() => adjust(-1, true)}
+          disabled={quantity <= 0}
           aria-label="Use one"
           className="grid h-14 w-14 place-items-center rounded-2xl border border-border text-2xl active:bg-surface-2"
         >
@@ -198,7 +195,7 @@ function ItemPage() {
           <span className="text-xs font-bold text-muted-foreground">{item.unit} on hand</span>
         </div>
         <button
-          onClick={() => setQuantity(quantity + 1)}
+          onClick={() => adjust(1)}
           aria-label="Restock one"
           className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-2xl text-brand"
         >

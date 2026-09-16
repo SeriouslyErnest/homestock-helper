@@ -239,6 +239,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      adjust_item_quantity: {
+        Args: { _delta: number; _item_id: string }
+        Returns: number
+      }
       join_household_by_code: { Args: { _code: string }; Returns: string }
     }
     Enums: {

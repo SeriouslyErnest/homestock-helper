@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
@@ -34,6 +34,7 @@ function ShoppingPage() {
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const toggling = useRef<Set<string>>(new Set());
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["shopping", household?.id] });
@@ -81,6 +82,9 @@ function ShoppingPage() {
   }
 
   async function toggle(entry: ShoppingItem) {
+    if (toggling.current.has(entry.id)) return;
+    toggling.current.add(entry.id);
+    try {
     if (entry.status === "pending") {
       await supabase
         .from("shopping_items")
@@ -88,20 +92,10 @@ function ShoppingPage() {
         .eq("id", entry.id);
       // Bought something tracked? Restock the inventory item automatically.
       if (entry.item_id) {
-        const { data: item } = await supabase
-          .from("items")
-          .select("quantity")
-          .eq("id", entry.item_id)
-          .single();
-        if (item) {
-          await supabase
-            .from("items")
-            .update({
-              quantity: Number(item.quantity) + Number(entry.quantity),
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", entry.item_id);
-        }
+        await supabase.rpc("adjust_item_quantity", {
+          _item_id: entry.item_id,
+          _delta: Number(entry.quantity),
+        });
       }
     } else {
       await supabase
@@ -110,6 +104,9 @@ function ShoppingPage() {
         .eq("id", entry.id);
     }
     invalidate();
+    } finally {
+      toggling.current.delete(entry.id);
+    }
   }
 
   async function remove(id: string) {
