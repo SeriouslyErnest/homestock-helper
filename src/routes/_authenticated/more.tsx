@@ -209,9 +209,88 @@ function MorePage() {
           </button>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          Share this code so family or flatmates can join.
+          Share this code so family or flatmates can ask to join. Nobody gets in until an owner
+          approves them.
         </p>
       </section>
+
+      {isOwner && (
+        <section className="mb-6 rounded-2xl border border-border bg-card p-4">
+          <h2 className="mb-1 text-sm font-bold">
+            Join requests{pending.length > 0 ? ` · ${pending.length}` : ""}
+          </h2>
+          {pending.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              Nobody is waiting. Requests from people using your invite code show up here.
+            </p>
+          ) : (
+            <ul className="mt-2 grid gap-2">
+              {pending.map((r) => (
+                <li key={r.id} className="rounded-xl bg-surface-2 p-3">
+                  <p className="truncate text-sm font-semibold">
+                    {r.display_name ?? r.email ?? "Someone"}
+                  </p>
+                  {r.email && r.display_name && (
+                    <p className="truncate text-xs text-muted-foreground">{r.email}</p>
+                  )}
+                  <div className="mt-2.5 flex gap-2">
+                    <button
+                      onClick={() => decide(r.id, "approved")}
+                      disabled={deciding === r.id}
+                      className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-success px-3 text-sm font-semibold text-white disabled:opacity-50"
+                    >
+                      <Check size={15} /> Approve
+                    </button>
+                    <button
+                      onClick={() => decide(r.id, "rejected")}
+                      disabled={deciding === r.id}
+                      className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-border px-3 text-sm font-semibold disabled:opacity-50"
+                    >
+                      <X size={15} /> Reject
+                    </button>
+                    <button
+                      onClick={() => decide(r.id, "blocked")}
+                      aria-label={`Block ${r.display_name ?? r.email ?? "this person"}`}
+                      disabled={deciding === r.id}
+                      className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border text-muted-foreground disabled:opacity-50"
+                    >
+                      <Ban size={15} />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {blocked.length > 0 && (
+            <>
+              <h3 className="mt-4 mb-2 text-xs font-bold text-muted-foreground">
+                Blocked · {blocked.length}
+              </h3>
+              <ul className="grid gap-2">
+                {blocked.map((r) => (
+                  <li
+                    key={r.id}
+                    className="flex items-center gap-2 rounded-xl bg-surface-2 p-2.5 text-sm"
+                  >
+                    <span className="flex-1 truncate">
+                      {r.display_name ?? r.email ?? "Someone"}
+                    </span>
+                    <button
+                      onClick={() => unblock(r.id)}
+                      disabled={deciding === r.id}
+                      className="flex h-11 items-center gap-1.5 rounded-xl px-3 text-xs font-bold text-brand disabled:opacity-50"
+                    >
+                      <RotateCcw size={14} /> Unblock
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
+      )}
+
 
       <section className="mb-6 rounded-2xl border border-border bg-card p-4">
         <h2 className="mb-2 text-sm font-bold">Members · {members?.length ?? 0}</h2>
