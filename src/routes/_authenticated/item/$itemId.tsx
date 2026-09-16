@@ -232,7 +232,7 @@ function ItemPage() {
       <div className="mb-4 flex items-center justify-between rounded-2xl border border-border bg-card p-4">
         <button
           onClick={() => adjust(-1, true)}
-          disabled={quantity <= 0}
+          disabled={quantity <= 0 || busy}
           aria-label="Use one"
           className="grid h-14 w-14 place-items-center rounded-2xl border border-border text-2xl active:bg-surface-2"
         >
@@ -244,8 +244,9 @@ function ItemPage() {
         </div>
         <button
           onClick={() => adjust(1)}
+          disabled={busy}
           aria-label="Restock one"
-          className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-2xl text-brand"
+          className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-2xl text-brand disabled:opacity-40"
         >
           <Plus />
         </button>
@@ -332,7 +333,7 @@ function ItemPage() {
               min={0}
               step="any"
               value={minQuantity}
-              onChange={(e) => setMinQuantity(Number(e.target.value))}
+              onChange={(e) => setMinQuantity(Math.max(0, Number(e.target.value) || 0))}
               className={field}
             />
           </div>

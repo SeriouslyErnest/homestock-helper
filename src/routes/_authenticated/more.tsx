@@ -85,7 +85,14 @@ function MorePage() {
 
   async function renameHousehold() {
     if (!household || !householdName.trim()) return;
-    await supabase.from("households").update({ name: householdName.trim() }).eq("id", household.id);
+    const { error } = await supabase
+      .from("households")
+      .update({ name: householdName.trim() })
+      .eq("id", household.id);
+    if (error) {
+      toast.error("Couldn't rename the household. Try again.");
+      return;
+    }
     queryClient.invalidateQueries({ queryKey: ["household"] });
     toast.success("Household renamed");
   }
