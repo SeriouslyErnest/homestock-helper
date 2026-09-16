@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -165,6 +166,14 @@ export function useProfile() {
 
 const ACTIVE_HOUSEHOLD_KEY = "homestock.active-household";
 
+/** Screens re-read the remembered home when it changes, so switching is instant. */
+const activeListeners = new Set<() => void>();
+
+function subscribeActiveHousehold(listener: () => void): () => void {
+  activeListeners.add(listener);
+  return () => activeListeners.delete(listener);
+}
+
 /** Which household the user last looked at. Remembered on this device. */
 export function getActiveHouseholdId(): string | null {
   if (typeof window === "undefined") return null;
@@ -182,6 +191,18 @@ export function setActiveHouseholdId(id: string): void {
   } catch {
     /* storage unavailable — fall back to the newest household */
   }
+  activeListeners.forEach((l) => l());
+}
+
+/** Forget the remembered home — used when leaving one, so it can't point nowhere. */
+export function clearActiveHouseholdId(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(ACTIVE_HOUSEHOLD_KEY);
+  } catch {
+    /* nothing to clear */
+  }
+  activeListeners.forEach((l) => l());
 }
 
 /** Every household the user belongs to, most recently joined first. */
@@ -205,7 +226,10 @@ export function useHouseholds() {
         .map((row) => row.households as unknown as Household | null)
         .filter((h): h is Household => !!h);
     },
-    staleTime: 5 * 60_000,
+    // Being removed from a home should take effect without a manual reload.
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 60_000,
   });
 }
 
@@ -213,9 +237,12 @@ export function useHouseholds() {
 export function useHousehold() {
   const query = useHouseholds();
   const households = query.data;
-  const activeId = getActiveHouseholdId();
-  const active =
-    households?.find((h) => h.id === activeId) ?? households?.[0] ?? undefined;
+  const activeId = useSyncExternalStore(
+    subscribeActiveHousehold,
+    getActiveHouseholdId,
+    () => null,
+  );
+  const active = households?.find((h) => h.id === activeId) ?? households?.[0] ?? undefined;
   return { ...query, data: active, households: households ?? [] };
 }
 

@@ -8,6 +8,7 @@ import {
   createHousehold,
   planLimitMessage,
   setActiveHouseholdId,
+  clearActiveHouseholdId,
   useEntitlements,
   useHousehold,
   useHouseholds,
@@ -125,6 +126,10 @@ function MorePage() {
       toast.error("Could not leave this household.");
       return;
     }
+    // Don't keep pointing at a home the user is no longer in.
+    const next = (households ?? []).find((h) => h.id !== household.id);
+    if (next) setActiveHouseholdId(next.id);
+    else clearActiveHouseholdId();
     await queryClient.invalidateQueries();
     setConfirmLeave(false);
     toast.success("You left the household");
@@ -270,6 +275,7 @@ function MorePage() {
               onChange={(e) => setNewHomeName(e.target.value)}
               placeholder="Beach house"
               aria-label="New home name"
+              maxLength={40}
               className="w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
             />
             <button

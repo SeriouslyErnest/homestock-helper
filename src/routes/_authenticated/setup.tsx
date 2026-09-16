@@ -175,6 +175,7 @@ function SetupPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             aria-label="Home name"
+            maxLength={40}
             className={`${field} mt-5`}
           />
           <button

@@ -55,13 +55,18 @@ function HouseholdGate() {
 
   useEffect(() => {
     if (isPending || isError) return;
-    if ((households?.length ?? 0) === 0 && !onSetup) {
+    const count = households?.length ?? 0;
+    if (count === 0 && !onSetup) {
       navigate({ to: "/setup", replace: true });
+    } else if (count > 0 && onSetup) {
+      // First-run only — once you have a home, this screen can't make duplicates.
+      navigate({ to: "/inventory", replace: true });
     }
   }, [households, isPending, isError, onSetup, navigate]);
 
   if (isPending) return <Splash />;
   if (!isError && (households?.length ?? 0) === 0 && !onSetup) return <Splash />;
+  if (!isError && (households?.length ?? 0) > 0 && onSetup) return <Splash />;
 
   return <Outlet />;
 }
