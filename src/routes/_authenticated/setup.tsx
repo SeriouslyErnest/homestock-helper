@@ -55,8 +55,8 @@ function SetupPage() {
       await createHousehold(name);
       await queryClient.invalidateQueries();
       navigate({ to: "/inventory" });
-    } catch {
-      setMessage("Couldn't create that home. Please try again.");
+    } catch (err) {
+      setMessage(planLimitMessage(err) ?? "Couldn't create that home. Please try again.");
     } finally {
       setBusy(false);
     }
