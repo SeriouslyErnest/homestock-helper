@@ -377,6 +377,40 @@ function AboutPage() {
           </Reveal>
         </Section>
 
+        {/* TIMES & TIMEZONES */}
+        <Section>
+          <Reveal>
+            <SectionHeading
+              title="Times shown your way"
+              intro="When someone in your household restocks or uses an item, HomeStock notes when it happened — and each inventory item shows when it was last updated, like “Updated 1 Sept”."
+            />
+          </Reveal>
+          <Reveal delay={90} className="mt-8">
+            <div className="mx-auto max-w-2xl rounded-3xl border border-border bg-card p-6">
+              <dl className="grid gap-4 text-sm sm:grid-cols-[auto_1fr] sm:gap-x-6">
+                <dt className="font-semibold sm:text-right">How your timezone is chosen</dt>
+                <dd className="text-muted-foreground">
+                  From your device. HomeStock reads the time and region already set on your phone or
+                  computer — the same one your clock and calendar use. If you travel, dates follow
+                  automatically; there is no setting to pick inside the app.
+                </dd>
+                <dt className="font-semibold sm:text-right">What happens behind the scenes</dt>
+                <dd className="text-muted-foreground">
+                  Every timestamp is stored in UTC — a single, timezone-neutral standard — so a
+                  restock recorded in Singapore reads the same moment for someone checking from
+                  London. When it is shown to you, that stored moment is converted into your
+                  device's local time.
+                </dd>
+                <dt className="font-semibold sm:text-right">Daylight saving, handled</dt>
+                <dd className="text-muted-foreground">
+                  Because the stored time never shifts with daylight saving, “Updated 1 Sept” stays
+                  accurate all year — no clocks jumping an hour, no dates showing early or late.
+                </dd>
+              </dl>
+            </div>
+          </Reveal>
+        </Section>
+
         {/* PHILOSOPHY */}
         <Section>
           <Reveal>
