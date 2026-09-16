@@ -43,6 +43,7 @@ function InventoryPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("All");
   const [view, setView] = useState<"list" | "cards">("list");
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   // Read the remembered view after mount so the first render always matches the server.
   useEffect(() => {
@@ -274,7 +275,7 @@ function InventoryPage() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => adjust(item, -1)}
-                  disabled={item.quantity <= 0}
+                  disabled={item.quantity <= 0 || busyId === item.id}
                   aria-label={`Use one ${item.name}`}
                   className="grid h-11 w-11 place-items-center rounded-xl border border-border text-muted-foreground active:bg-surface-2 disabled:opacity-40"
                 >
