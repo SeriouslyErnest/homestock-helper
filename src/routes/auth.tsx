@@ -60,6 +60,7 @@ function AuthPage() {
       email: address,
       options: {
         shouldCreateUser: true,
+        emailRedirectTo: `${window.location.origin}/inventory`,
         ...(name.trim() ? { data: { display_name: name.trim() } } : {}),
       },
     });
@@ -70,7 +71,7 @@ function AuthPage() {
     }
     setStep("code");
     setCooldown(30);
-    setMessage(`We sent a 6-digit code to ${address}.`);
+    setMessage(`We emailed ${address}. Enter the code, or just tap the link in that email.`);
     setTimeout(() => codeInput.current?.focus(), 50);
   }
 
