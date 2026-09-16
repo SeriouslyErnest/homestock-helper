@@ -223,11 +223,16 @@ function InventoryPage() {
       )}
 
       <div className={view === "cards" ? "grid grid-cols-2 gap-2.5" : "grid gap-2"}>
-        {filtered.map((item) => {
+        {filtered.map((item, index) => {
           const status = statusOf(item);
+          const key = productKey(item);
+          const group = spread.get(key);
+          const multiPlace = (group?.places ?? 1) > 1;
+          // Only the first row of a cluster carries the "3 total across 2 places" note.
+          const leadsGroup = multiPlace && (index === 0 || productKey(filtered[index - 1]!) !== key);
+          const place = item.location?.trim();
           const meta = [
             item.category,
-            item.location,
             item.expires_on
               ? `${isExpiringSoon(item) ? "⚠ " : ""}Exp ${formatLocalDate(item.expires_on, { day: "numeric", month: "short", ...(item.expires_on.slice(0, 4) === String(new Date().getFullYear()) ? {} : { year: "numeric" }) })}`
               : null,
