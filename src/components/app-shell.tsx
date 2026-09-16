@@ -47,8 +47,12 @@ export function AppShell({
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-background">
       <header className="px-5 pt-5 pb-3">
-        <div className="flex items-center justify-between">
-          <Link to="/inventory" className="flex items-center gap-2.5" aria-label="HomeStock home">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+          <Link
+            to="/inventory"
+            className="flex min-w-0 items-center gap-2.5 overflow-hidden"
+            aria-label="HomeStock home"
+          >
             <LogoMark size={32} />
             <LogoWordmark />
           </Link>
@@ -71,7 +75,7 @@ export function AppShell({
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 bg-gradient-to-t from-background from-30% to-transparent px-3 pt-7 pb-3">
         <nav
           aria-label="Main navigation"
-          className="pointer-events-auto mx-auto flex h-16 w-full max-w-md items-center justify-around rounded-3xl border border-border bg-card/95 shadow-lg backdrop-blur"
+          className="pointer-events-auto mx-auto grid h-16 w-full max-w-md grid-cols-5 items-center justify-items-center rounded-3xl border border-border bg-card/95 shadow-lg backdrop-blur"
         >
           {navItem("/inventory", "Inventory", Home)}
           {navItem("/consume", "Use up", MinusCircle)}
