@@ -264,8 +264,13 @@ function InventoryPage() {
                 <div className="mb-2 grid h-20 w-full place-items-center rounded-xl bg-surface-2 text-3xl">
                   {thumb}
                 </div>
-                <strong className="block truncate text-sm">{item.name}</strong>
-                <div className="mt-1 h-4 truncate text-xs text-muted-foreground">{meta}</div>
+                <strong className="block truncate text-sm">
+                  {item.name}
+                  {place && <span className="font-normal text-muted-foreground"> ({place})</span>}
+                </strong>
+                <div className="mt-1 h-4 truncate text-xs text-muted-foreground">
+                  {multiPlace ? `${group?.total} in total · ${group?.places} places` : meta}
+                </div>
                 <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1">
                   <span className="text-lg font-bold">{item.quantity}</span>
                   <span
@@ -291,8 +296,14 @@ function InventoryPage() {
                 {thumb}
               </Link>
               <Link to="/item/$itemId" params={{ itemId: item.id }} className="min-w-0 flex-1">
-                <strong className="block truncate text-sm">{item.name}</strong>
-                <div className="mt-0.5 truncate text-xs text-muted-foreground">{meta}</div>
+                <strong className="block truncate text-sm">
+                  {item.name}
+                  {place && <span className="font-normal text-muted-foreground"> ({place})</span>}
+                </strong>
+                <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                  {leadsGroup ? `${group?.total} in total · ${group?.places} places · ` : ""}
+                  {meta}
+                </div>
               </Link>
               <div className="col-span-2 grid min-w-0 grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-1 border-t border-border pt-2">
                 <button
