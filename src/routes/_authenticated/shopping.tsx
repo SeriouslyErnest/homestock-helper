@@ -81,6 +81,9 @@ function ShoppingPage() {
   }
 
   async function toggle(entry: ShoppingItem) {
+    if (toggling.current.has(entry.id)) return;
+    toggling.current.add(entry.id);
+    try {
     if (entry.status === "pending") {
       await supabase
         .from("shopping_items")
