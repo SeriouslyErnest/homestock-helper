@@ -214,19 +214,34 @@ function ShoppingPage() {
 
       {bought.length > 0 && (
         <section className="mt-5">
-          <h2 className="mb-2 text-sm font-bold text-muted-foreground">Bought · {bought.length}</h2>
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-sm font-bold text-muted-foreground">Bought · {bought.length}</h2>
+            <button
+              onClick={clearBought}
+              className="rounded-xl px-3 py-2 text-xs font-bold text-muted-foreground active:bg-surface-2"
+            >
+              Clear bought
+            </button>
+          </div>
           <div className="grid gap-2 opacity-70">
             {bought.map((entry) => (
               <div key={entry.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-2.5">
                 <button
                   onClick={() => toggle(entry)}
                   aria-label={`Move ${entry.name} back to the list`}
-                  className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-success text-xs font-bold text-white"
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full"
                 >
-                  ✓
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-success text-xs font-bold text-white">
+                    ✓
+                  </span>
                 </button>
                 <div className="min-w-0 flex-1">
                   <strong className="block truncate text-sm line-through">{entry.name}</strong>
+                  {entry.bought_at && (
+                    <span className="text-xs text-muted-foreground">
+                      {formatLocalDateTime(entry.bought_at)}
+                    </span>
+                  )}
                 </div>
                 <button
                   onClick={() => remove(entry.id)}
