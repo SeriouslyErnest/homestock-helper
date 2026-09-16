@@ -340,14 +340,14 @@ function AboutPage() {
           <Reveal delay={150}>
             <div className="mx-auto mt-8 max-w-md rounded-3xl border border-border bg-card p-5">
               <p className="text-sm text-muted-foreground">
-                Your preference is remembered separately for each part of the app.
+                Your preference is remembered per screen — starting with Inventory.
               </p>
               <dl className="mt-3 grid gap-2 text-sm">
                 {[
-                  ["Inventory", "List"],
-                  ["Restock basket", "Cards"],
-                  ["Consume", "Cards"],
-                  ["Shopping", "List"],
+                  ["Inventory", "List or Cards"],
+                  ["Restock basket", "Coming soon"],
+                  ["Consume", "Coming soon"],
+                  ["Shopping", "Coming soon"],
                 ].map(([area, mode]) => (
                   <div key={area} className="flex items-center justify-between gap-3">
                     <dt className="text-muted-foreground">{area}</dt>
