@@ -43,7 +43,9 @@ function AddPage() {
 
   const fullName = [search.name, search.brand].filter(Boolean).join(" — ");
   const [name, setName] = useState(fullName);
-  const [category, setCategory] = useState("Pantry");
+  const [category, setCategory] = useState(
+    CATEGORIES.some((c) => c.id === search.category) ? search.category! : "Pantry",
+  );
   const [quantity, setQuantity] = useState(1);
   const [minQuantity, setMinQuantity] = useState(0);
   const [location, setLocation] = useState("");
