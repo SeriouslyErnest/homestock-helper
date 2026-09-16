@@ -409,8 +409,38 @@ function MorePage() {
       )}
 
 
+      {myPending.length > 0 && (
+        <section className="mb-6 rounded-2xl border border-border bg-card p-4">
+          <h2 className="mb-1 text-sm font-bold">Waiting for approval · {myPending.length}</h2>
+          <p className="mb-2 text-xs text-muted-foreground">
+            You'll get in as soon as an owner approves you.
+          </p>
+          <ul className="grid gap-2">
+            {myPending.map((r) => (
+              <li
+                key={r.id}
+                className="flex items-center gap-2 rounded-xl bg-surface-2 p-3 text-sm"
+              >
+                <span className="min-w-0 flex-1 truncate font-semibold">{r.household_name}</span>
+                <span className="shrink-0 rounded-lg bg-warning-soft px-2 py-1 text-xs font-bold">
+                  Pending
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section className="mb-6 rounded-2xl border border-border bg-card p-4">
-        <h2 className="mb-2 text-sm font-bold">Members · {members?.length ?? 0}</h2>
+        <h2 className="mb-2 text-sm font-bold">
+          Members · {members?.length ?? 0}
+          {plan?.enforced ? ` of ${plan.max_members}` : ""}
+        </h2>
+        {memberLimitReached && (
+          <p className="mb-2 text-xs text-muted-foreground">
+            This home has reached the number of people its plan allows.
+          </p>
+        )}
         <ul className="grid gap-2">
           {(members ?? []).map((m) => (
             <li
