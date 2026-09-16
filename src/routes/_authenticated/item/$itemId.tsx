@@ -135,14 +135,14 @@ function ItemPage() {
   }
 
   async function saveDetails() {
-    await supabase
+    const { error } = await supabase
       .from("items")
       .update({
         name: name.trim() || item!.name,
         category,
         location: location.trim() || null,
         unit,
-        min_quantity: minQuantity,
+        min_quantity: Math.max(0, minQuantity),
         expires_on: expires || null,
         notes: notes.trim() || null,
         updated_at: nowUtc(),
@@ -150,6 +150,10 @@ function ItemPage() {
       .eq("id", itemId);
     queryClient.invalidateQueries({ queryKey: ["item", itemId] });
     queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
+    if (error) {
+      toast.error("Couldn't save your changes. Try again.");
+      return;
+    }
     toast.success("Saved");
   }
 
@@ -158,18 +162,26 @@ function ItemPage() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    await supabase.from("shopping_items").insert({
+    const { error } = await supabase.from("shopping_items").insert({
       household_id: household.id,
       item_id: itemId,
       name: item!.name,
       requested_by: user?.id ?? null,
     });
+    if (error) {
+      toast.error("Couldn't add it to the shopping list. Try again.");
+      return;
+    }
     queryClient.invalidateQueries({ queryKey: ["shopping", household.id] });
     navigate({ to: "/shopping" });
   }
 
   async function remove() {
-    await supabase.from("items").delete().eq("id", itemId);
+    const { error } = await supabase.from("items").delete().eq("id", itemId);
+    if (error) {
+      toast.error("Couldn't remove this item. Try again.");
+      return;
+    }
     queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
     navigate({ to: "/inventory" });
   }
