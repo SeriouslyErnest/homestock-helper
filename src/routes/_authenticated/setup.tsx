@@ -82,6 +82,9 @@ function SetupPage() {
       setMessage(
         "Request sent. Someone who owns that home has to approve you — you'll get in once they do.",
       );
+      setCode("");
+      setMode("choose");
+      queryClient.invalidateQueries({ queryKey: ["my-join-requests"] });
     }
   }
 
