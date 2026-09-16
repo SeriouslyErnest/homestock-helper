@@ -70,10 +70,18 @@ function InventoryPage() {
     localStorage.setItem("homestock-view", v);
   }
 
-  async function adjust(item: Item, delta: number) {
+  async function apply(item: Item, delta: number) {
     await supabase.rpc("adjust_item_quantity", { _item_id: item.id, _delta: delta });
     queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
     queryClient.invalidateQueries({ queryKey: ["item", item.id] });
+  }
+
+  async function adjust(item: Item, delta: number) {
+    await apply(item, delta);
+    toast(delta < 0 ? `Took one ${item.name}` : `Added one ${item.name}`, {
+      action: { label: "Undo", onClick: () => void apply(item, -delta) },
+      duration: 5000,
+    });
   }
 
   const chips = ["All", "Low", ...CATEGORIES.map((c) => c.id)];
@@ -185,7 +193,7 @@ function InventoryPage() {
             item.category,
             item.location,
             item.expires_on
-              ? `${isExpiringSoon(item) ? "⚠ " : ""}Exp ${new Date(item.expires_on).toLocaleDateString(undefined, { day: "numeric", month: "short", year: item.expires_on.slice(0, 4) === String(new Date().getFullYear()) ? undefined : "numeric" })}`
+              ? `${isExpiringSoon(item) ? "⚠ " : ""}Exp ${formatLocalDate(item.expires_on, { day: "numeric", month: "short", ...(item.expires_on.slice(0, 4) === String(new Date().getFullYear()) ? {} : { year: "numeric" }) })}`
               : null,
             item.min_quantity > 0 ? `Min ${item.min_quantity}` : null,
           ]
