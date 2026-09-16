@@ -71,7 +71,7 @@ function AuthPage() {
     }
     setStep("code");
     setCooldown(30);
-    setMessage(`We emailed ${address}. Enter the code, or just tap the link in that email.`);
+    setMessage(`We emailed ${address}. Tap the sign-in link in that email and you're in. If it shows a 6-digit code, you can enter it below instead.`);
     setTimeout(() => codeInput.current?.focus(), 50);
   }
 
