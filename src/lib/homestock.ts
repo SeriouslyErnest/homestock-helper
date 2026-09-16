@@ -217,6 +217,33 @@ export function useMembers(householdId: string | undefined) {
   });
 }
 
+export type JoinRequest = {
+  id: string;
+  household_id: string;
+  user_id: string;
+  display_name: string | null;
+  email: string | null;
+  status: "pending" | "approved" | "rejected" | "blocked";
+  created_at: string;
+};
+
+export function useJoinRequests(householdId: string | undefined) {
+  return useQuery({
+    queryKey: ["join-requests", householdId],
+    enabled: !!householdId,
+    refetchInterval: 30000,
+    queryFn: async (): Promise<JoinRequest[]> => {
+      const { data, error } = await supabase
+        .from("household_join_requests")
+        .select("*")
+        .eq("household_id", householdId!)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as JoinRequest[];
+    },
+  });
+}
+
 export function useItems(householdId: string | undefined) {
   return useQuery({
     queryKey: ["items", householdId],
