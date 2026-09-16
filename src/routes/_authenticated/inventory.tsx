@@ -231,7 +231,8 @@ function InventoryPage() {
           // Only the first row of a cluster carries the "3 total across 2 places" note.
           const leadsGroup = multiPlace && (index === 0 || productKey(filtered[index - 1]!) !== key);
           const place = item.location?.trim();
-          const updated = `Upd ${formatLocalDate(item.updated_at.slice(0, 10), { day: "numeric", month: "short" })}`;
+          // updated_at is a UTC timestamp; render the calendar day in the viewer's own timezone.
+          const updated = `Upd ${new Date(item.updated_at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`;
           const meta = [
             item.category,
             item.expires_on
