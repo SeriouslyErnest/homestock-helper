@@ -37,7 +37,14 @@ function ShoppingPage() {
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  const [qty, setQty] = useState(1);
+  const [note, setNote] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const toggling = useRef<Set<string>>(new Set());
+
+  const toggleTag = (tag: string) =>
+    setTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["shopping", household?.id] });
