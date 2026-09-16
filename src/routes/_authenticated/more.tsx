@@ -50,6 +50,8 @@ function MorePage() {
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [deciding, setDeciding] = useState<string | null>(null);
   const { data: households } = useHouseholds();
+  const { data: plan } = useEntitlements();
+  const { data: myRequests } = useMyJoinRequests();
   const [newHomeName, setNewHomeName] = useState("");
   const [creatingHome, setCreatingHome] = useState(false);
   const [showCreateHome, setShowCreateHome] = useState(false);
