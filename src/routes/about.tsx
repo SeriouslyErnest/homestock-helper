@@ -14,6 +14,7 @@ import {
   ConsumeMock,
   HouseholdMock,
   InventoryMock,
+  LightDarkMock,
   ListVsCardMock,
   RestockMock,
   RunningLowMock,
@@ -360,6 +361,19 @@ function AboutPage() {
               HomeStock remembers your choices, so you do not have to keep configuring the
               interface.
             </p>
+          </Reveal>
+        </Section>
+
+        {/* LIGHT & DARK MODE */}
+        <Section className="bg-surface-2">
+          <Reveal>
+            <SectionHeading
+              title="Light and dark, out of the box"
+              intro="HomeStock comes in both. It follows your device's appearance automatically — switch Dark Mode on your phone and HomeStock switches with it. There is nothing to set up inside the app."
+            />
+          </Reveal>
+          <Reveal delay={90} className="mt-8">
+            <LightDarkMock />
           </Reveal>
         </Section>
 
