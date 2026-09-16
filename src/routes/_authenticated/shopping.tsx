@@ -2,10 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import {
   categoryEmoji,
+  formatLocalDateTime,
   isLow,
+  nowUtc,
   useHousehold,
   useItems,
   useShopping,
@@ -86,9 +89,10 @@ function ShoppingPage() {
     toggling.current.add(entry.id);
     try {
     if (entry.status === "pending") {
+      // bought_at is stored as a UTC timestamp; it's displayed in local time.
       await supabase
         .from("shopping_items")
-        .update({ status: "bought", bought_at: new Date().toISOString() })
+        .update({ status: "bought", bought_at: nowUtc() })
         .eq("id", entry.id);
       // Bought something tracked? Restock the inventory item automatically.
       if (entry.item_id) {
@@ -102,6 +106,13 @@ function ShoppingPage() {
         .from("shopping_items")
         .update({ status: "pending", bought_at: null })
         .eq("id", entry.id);
+      // Put the stock back too, so tick → untick → tick can't double-count.
+      if (entry.item_id) {
+        await supabase.rpc("adjust_item_quantity", {
+          _item_id: entry.item_id,
+          _delta: -Number(entry.quantity),
+        });
+      }
     }
     invalidate();
     } finally {
@@ -112,6 +123,17 @@ function ShoppingPage() {
   async function remove(id: string) {
     await supabase.from("shopping_items").delete().eq("id", id);
     invalidate();
+  }
+
+  async function clearBought() {
+    if (!household?.id) return;
+    await supabase
+      .from("shopping_items")
+      .delete()
+      .eq("household_id", household.id)
+      .eq("status", "bought");
+    invalidate();
+    toast.success("Cleared the bought items");
   }
 
   return (
@@ -179,8 +201,10 @@ function ShoppingPage() {
               <button
                 onClick={() => toggle(entry)}
                 aria-label={`Mark ${entry.name} as bought`}
-                className="grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 border-border"
-              />
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-full"
+              >
+                <span className="block h-7 w-7 rounded-full border-2 border-border" />
+              </button>
               <div className="min-w-0 flex-1">
                 <strong className="block truncate text-sm">{entry.name}</strong>
                 <span className="text-xs text-muted-foreground">
@@ -202,19 +226,34 @@ function ShoppingPage() {
 
       {bought.length > 0 && (
         <section className="mt-5">
-          <h2 className="mb-2 text-sm font-bold text-muted-foreground">Bought · {bought.length}</h2>
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-sm font-bold text-muted-foreground">Bought · {bought.length}</h2>
+            <button
+              onClick={clearBought}
+              className="rounded-xl px-3 py-2 text-xs font-bold text-muted-foreground active:bg-surface-2"
+            >
+              Clear bought
+            </button>
+          </div>
           <div className="grid gap-2 opacity-70">
             {bought.map((entry) => (
               <div key={entry.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-2.5">
                 <button
                   onClick={() => toggle(entry)}
                   aria-label={`Move ${entry.name} back to the list`}
-                  className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-success text-xs font-bold text-white"
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full"
                 >
-                  ✓
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-success text-xs font-bold text-white">
+                    ✓
+                  </span>
                 </button>
                 <div className="min-w-0 flex-1">
                   <strong className="block truncate text-sm line-through">{entry.name}</strong>
+                  {entry.bought_at && (
+                    <span className="text-xs text-muted-foreground">
+                      {formatLocalDateTime(entry.bought_at)}
+                    </span>
+                  )}
                 </div>
                 <button
                   onClick={() => remove(entry.id)}

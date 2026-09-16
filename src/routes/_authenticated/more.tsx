@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Copy, LogOut } from "lucide-react";
+import { Copy, LogOut, UserMinus } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { useHousehold, useMembers } from "@/lib/homestock";
@@ -32,14 +32,53 @@ function MorePage() {
   const [joinCode, setJoinCode] = useState("");
   const [joinMessage, setJoinMessage] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [confirmLeave, setConfirmLeave] = useState(false);
+
+  const isOwner = (members ?? []).some((m) => m.user_id === userId && m.role === "owner");
 
   useEffect(() => {
     if (household) setHouseholdName(household.name);
   }, [household]);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
+    supabase.auth.getUser().then(({ data }) => {
+      setEmail(data.user?.email ?? "");
+      setUserId(data.user?.id ?? null);
+    });
   }, []);
+
+  async function removeMember(memberUserId: string, name: string) {
+    if (!household) return;
+    const { error } = await supabase
+      .from("household_members")
+      .delete()
+      .eq("household_id", household.id)
+      .eq("user_id", memberUserId);
+    if (error) {
+      toast.error("Could not remove them — you need to be the owner.");
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ["members", household.id] });
+    toast.success(`${name} removed`);
+  }
+
+  async function leaveHousehold() {
+    if (!household || !userId) return;
+    const { error } = await supabase
+      .from("household_members")
+      .delete()
+      .eq("household_id", household.id)
+      .eq("user_id", userId);
+    if (error) {
+      toast.error("Could not leave this household.");
+      return;
+    }
+    await queryClient.invalidateQueries();
+    setConfirmLeave(false);
+    toast.success("You left the household");
+    navigate({ to: "/inventory" });
+  }
 
   async function renameHousehold() {
     if (!household || !householdName.trim()) return;
@@ -118,11 +157,52 @@ function MorePage() {
               <span className="grid h-8 w-8 place-items-center rounded-full bg-brand-soft text-xs font-extrabold text-brand">
                 {(m.display_name ?? "?").slice(0, 2).toUpperCase()}
               </span>
-              <span className="flex-1 truncate font-semibold">{m.display_name ?? "Housemate"}</span>
+              <span className="flex-1 truncate font-semibold">
+                {m.user_id === userId ? "You" : (m.display_name ?? "Housemate")}
+              </span>
               <span className="text-xs text-muted-foreground">{m.role}</span>
+              {isOwner && m.user_id !== userId && (
+                <button
+                  onClick={() => removeMember(m.user_id, m.display_name ?? "Housemate")}
+                  aria-label={`Remove ${m.display_name ?? "housemate"}`}
+                  className="grid h-11 w-11 place-items-center rounded-xl text-muted-foreground active:bg-card"
+                >
+                  <UserMinus size={16} />
+                </button>
+              )}
             </li>
           ))}
         </ul>
+
+        {confirmLeave ? (
+          <div className="mt-3 rounded-xl bg-warning-soft p-3">
+            <p className="text-sm">
+              Leave {household?.name}? You'll lose access to its inventory until someone invites
+              you back.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={leaveHousehold}
+                className="flex-1 rounded-xl bg-warning py-2.5 text-sm font-semibold text-white"
+              >
+                Leave
+              </button>
+              <button
+                onClick={() => setConfirmLeave(false)}
+                className="flex-1 rounded-xl border border-border py-2.5 text-sm font-semibold"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmLeave(true)}
+            className="mt-3 w-full rounded-xl border border-border py-3 text-sm font-semibold text-muted-foreground"
+          >
+            Leave this household
+          </button>
+        )}
       </section>
 
       <section className="mb-6 rounded-2xl border border-border bg-card p-4">

@@ -2,8 +2,16 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
-import { CATEGORIES, isExpiringSoon, isLow, useHousehold } from "@/lib/homestock";
+import {
+  CATEGORIES,
+  formatLocalDate,
+  isExpiringSoon,
+  isLow,
+  nowUtc,
+  useHousehold,
+} from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/item/$itemId")({
@@ -117,11 +125,12 @@ function ItemPage() {
         min_quantity: minQuantity,
         expires_on: expires || null,
         notes: notes.trim() || null,
-        updated_at: new Date().toISOString(),
+        updated_at: nowUtc(),
       })
       .eq("id", itemId);
     queryClient.invalidateQueries({ queryKey: ["item", itemId] });
     queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
+    toast.success("Saved");
   }
 
   async function addToShopping() {
@@ -175,7 +184,7 @@ function ItemPage() {
           <div className="mt-1.5 text-muted-foreground">
             {item.location ?? "No location set"}
             {item.expires_on &&
-              ` · ${expiring ? "⚠ " : ""}Expires ${new Date(item.expires_on).toLocaleDateString()}`}
+              ` · ${expiring ? "⚠ " : ""}Expires ${formatLocalDate(item.expires_on)}`}
           </div>
           {item.barcode && <div className="mt-0.5 text-xs text-muted-foreground">Barcode {item.barcode}</div>}
         </div>

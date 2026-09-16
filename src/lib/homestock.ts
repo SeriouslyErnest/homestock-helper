@@ -63,10 +63,71 @@ export function isLow(item: Item): boolean {
   return item.min_quantity > 0 && item.quantity <= item.min_quantity;
 }
 
+/**
+ * Parse a plain calendar date ("2026-09-20") in the viewer's own timezone.
+ * `new Date("2026-09-20")` is parsed as UTC and can render a day early.
+ */
+export function parseLocalDate(value: string): Date {
+  const [y, m, d] = value.slice(0, 10).split("-").map(Number);
+  return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1);
+}
+
+/** Format a calendar date for display in the viewer's local timezone. */
+export function formatLocalDate(
+  value: string,
+  options: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" },
+): string {
+  return parseLocalDate(value).toLocaleDateString(undefined, options);
+}
+
+/** Format a UTC timestamp from the database in the viewer's local time. */
+export function formatLocalDateTime(value: string): string {
+  return new Date(value).toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+/** Current moment as a UTC timestamp for storage. */
+export function nowUtc(): string {
+  return new Date().toISOString();
+}
+
+export function daysUntilExpiry(value: string): number {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((parseLocalDate(value).getTime() - today.getTime()) / 86400000);
+}
+
 export function isExpiringSoon(item: Item): boolean {
   if (!item.expires_on) return false;
-  const days = (new Date(item.expires_on).getTime() - Date.now()) / 86400000;
-  return days <= 14;
+  return daysUntilExpiry(item.expires_on) <= 14;
+}
+
+/** The signed-in user's own profile (for the avatar and member list). */
+export function useProfile() {
+  return useQuery({
+    queryKey: ["profile"],
+    queryFn: async (): Promise<{ id: string; email: string; displayName: string | null }> => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not signed in");
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("id", user.id)
+        .maybeSingle();
+      return {
+        id: user.id,
+        email: user.email ?? "",
+        displayName: data?.display_name ?? (user.user_metadata?.["name"] as string | undefined) ?? null,
+      };
+    },
+    staleTime: 5 * 60_000,
+  });
 }
 
 /** Fetch the current user's first household, creating one on first use. */
