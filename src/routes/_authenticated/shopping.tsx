@@ -183,13 +183,13 @@ function ShoppingPage() {
       subtitle="What the household needs — anyone can add or tick off."
     >
       <form onSubmit={addQuick} className="mb-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Add something to buy…"
             aria-label="Add something to buy"
-            className="w-full min-w-0 flex-1 rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
+            className="w-full min-w-0 flex-1 rounded-2xl border border-border bg-surface-2 px-3.5 py-3 outline-none focus:border-brand"
           />
           <div className="flex shrink-0 items-center rounded-2xl border border-border bg-surface-2">
             <button
@@ -197,18 +197,18 @@ function ShoppingPage() {
               onClick={() => setQty((q) => Math.max(1, q - 1))}
               disabled={qty <= 1}
               aria-label="Fewer to buy"
-              className="grid h-11 w-10 place-items-center rounded-l-2xl text-lg font-bold disabled:opacity-40"
+              className="grid h-11 w-9 place-items-center rounded-l-2xl text-base font-bold disabled:opacity-40"
             >
               −
             </button>
-            <span aria-live="polite" className="min-w-7 text-center text-sm font-bold tabular-nums">
+            <span aria-live="polite" className="min-w-6 text-center text-sm font-bold tabular-nums">
               {qty}
             </span>
             <button
               type="button"
               onClick={() => setQty((q) => q + 1)}
               aria-label="One more to buy"
-              className="grid h-11 w-10 place-items-center rounded-r-2xl text-lg font-bold text-brand"
+              className="grid h-11 w-9 place-items-center rounded-r-2xl text-base font-bold text-brand"
             >
               +
             </button>
@@ -217,7 +217,7 @@ function ShoppingPage() {
             type="submit"
             disabled={busy || !name.trim()}
             aria-label="Add to shopping list"
-            className="grid w-12 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground disabled:opacity-50"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground disabled:opacity-50"
           >
             <Plus size={20} />
           </button>
