@@ -231,15 +231,17 @@ function InventoryPage() {
           // Only the first row of a cluster carries the "3 total across 2 places" note.
           const leadsGroup = multiPlace && (index === 0 || productKey(filtered[index - 1]!) !== key);
           const place = item.location?.trim();
+          const updated = `Upd ${formatLocalDate(item.updated_at.slice(0, 10), { day: "numeric", month: "short" })}`;
           const meta = [
             item.category,
             item.expires_on
               ? `${isExpiringSoon(item) ? "⚠ " : ""}Exp ${formatLocalDate(item.expires_on, { day: "numeric", month: "short", ...(item.expires_on.slice(0, 4) === String(new Date().getFullYear()) ? {} : { year: "numeric" }) })}`
               : null,
             item.min_quantity > 0 ? `Min ${item.min_quantity}` : null,
+            updated,
           ]
             .filter(Boolean)
-            .slice(0, 2)
+            .slice(0, 3)
             .join(" · ");
 
           const thumb = item.image_url ? (
