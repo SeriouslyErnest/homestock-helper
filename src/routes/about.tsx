@@ -77,7 +77,7 @@ function TopicNav() {
         window.innerHeight + window.scrollY >=
         document.documentElement.scrollHeight - 4
       ) {
-        current = TOPICS[TOPICS.length - 1].id;
+        current = TOPICS[TOPICS.length - 1]?.id ?? current;
       }
       setActive(current);
     };
