@@ -157,11 +157,52 @@ function MorePage() {
               <span className="grid h-8 w-8 place-items-center rounded-full bg-brand-soft text-xs font-extrabold text-brand">
                 {(m.display_name ?? "?").slice(0, 2).toUpperCase()}
               </span>
-              <span className="flex-1 truncate font-semibold">{m.display_name ?? "Housemate"}</span>
+              <span className="flex-1 truncate font-semibold">
+                {m.user_id === userId ? "You" : (m.display_name ?? "Housemate")}
+              </span>
               <span className="text-xs text-muted-foreground">{m.role}</span>
+              {isOwner && m.user_id !== userId && (
+                <button
+                  onClick={() => removeMember(m.user_id, m.display_name ?? "Housemate")}
+                  aria-label={`Remove ${m.display_name ?? "housemate"}`}
+                  className="grid h-11 w-11 place-items-center rounded-xl text-muted-foreground active:bg-card"
+                >
+                  <UserMinus size={16} />
+                </button>
+              )}
             </li>
           ))}
         </ul>
+
+        {confirmLeave ? (
+          <div className="mt-3 rounded-xl bg-warning-soft p-3">
+            <p className="text-sm">
+              Leave {household?.name}? You'll lose access to its inventory until someone invites
+              you back.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={leaveHousehold}
+                className="flex-1 rounded-xl bg-warning py-2.5 text-sm font-semibold text-white"
+              >
+                Leave
+              </button>
+              <button
+                onClick={() => setConfirmLeave(false)}
+                className="flex-1 rounded-xl border border-border py-2.5 text-sm font-semibold"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmLeave(true)}
+            className="mt-3 w-full rounded-xl border border-border py-3 text-sm font-semibold text-muted-foreground"
+          >
+            Leave this household
+          </button>
+        )}
       </section>
 
       <section className="mb-6 rounded-2xl border border-border bg-card p-4">
