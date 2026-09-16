@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowUp, Boxes, Check, Gauge, ShoppingBasket } from "lucide-react";
 import { LogoMark, LogoWordmark } from "@/components/logo";
 import {
