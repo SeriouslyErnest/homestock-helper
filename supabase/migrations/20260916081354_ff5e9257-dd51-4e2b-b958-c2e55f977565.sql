@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.plan_for_user(uuid) FROM authenticated;

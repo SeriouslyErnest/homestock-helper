@@ -3,7 +3,12 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Home, KeyRound } from "lucide-react";
 import { LogoMark, LogoWordmark } from "@/components/logo";
-import { createHousehold } from "@/lib/homestock";
+import {
+  createHousehold,
+  planLimitMessage,
+  useEntitlements,
+  useMyJoinRequests,
+} from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/setup")({
@@ -34,6 +39,10 @@ function SetupPage() {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const { data: plan } = useEntitlements();
+  const { data: myRequests } = useMyJoinRequests();
+  const canCreate = plan?.can_create_household ?? true;
+  const myPending = (myRequests ?? []).filter((r) => r.status === "pending");
 
   const field =
     "w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand";
@@ -46,8 +55,8 @@ function SetupPage() {
       await createHousehold(name);
       await queryClient.invalidateQueries();
       navigate({ to: "/inventory" });
-    } catch {
-      setMessage("Couldn't create that home. Please try again.");
+    } catch (err) {
+      setMessage(planLimitMessage(err) ?? "Couldn't create that home. Please try again.");
     } finally {
       setBusy(false);
     }
@@ -73,6 +82,9 @@ function SetupPage() {
       setMessage(
         "Request sent. Someone who owns that home has to approve you — you'll get in once they do.",
       );
+      setCode("");
+      setMode("choose");
+      queryClient.invalidateQueries({ queryKey: ["my-join-requests"] });
     }
   }
 
@@ -107,7 +119,9 @@ function SetupPage() {
             </button>
             <button
               onClick={() => setMode("create")}
-              className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left"
+              disabled={!canCreate}
+              aria-describedby={!canCreate ? "create-locked" : undefined}
+              className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left disabled:cursor-not-allowed disabled:opacity-50"
             >
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand">
                 <Home size={20} />
@@ -119,7 +133,37 @@ function SetupPage() {
                 </span>
               </span>
             </button>
+            {!canCreate && (
+              <p id="create-locked" className="text-xs text-muted-foreground">
+                Your plan includes {plan?.max_owned_households ?? 1} home. Ask the owner of the home
+                you want to share for their invite code, then use the option above.
+              </p>
+            )}
           </div>
+
+          {myPending.length > 0 && (
+            <div className="mt-6 rounded-2xl border border-border bg-card p-4">
+              <h2 className="mb-1 text-sm font-bold">Waiting for approval · {myPending.length}</h2>
+              <p className="mb-2 text-xs text-muted-foreground">
+                You'll get in as soon as an owner approves you.
+              </p>
+              <ul className="grid gap-2">
+                {myPending.map((r) => (
+                  <li
+                    key={r.id}
+                    className="flex items-center gap-2 rounded-xl bg-surface-2 p-3 text-sm"
+                  >
+                    <span className="min-w-0 flex-1 truncate font-semibold">
+                      {r.household_name}
+                    </span>
+                    <span className="shrink-0 rounded-lg bg-warning-soft px-2 py-1 text-xs font-bold">
+                      Pending
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </>
       )}
 

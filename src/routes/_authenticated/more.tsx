@@ -6,11 +6,14 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import {
   createHousehold,
+  planLimitMessage,
   setActiveHouseholdId,
+  useEntitlements,
   useHousehold,
   useHouseholds,
   useJoinRequests,
   useMembers,
+  useMyJoinRequests,
 } from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -47,6 +50,8 @@ function MorePage() {
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [deciding, setDeciding] = useState<string | null>(null);
   const { data: households } = useHouseholds();
+  const { data: plan } = useEntitlements();
+  const { data: myRequests } = useMyJoinRequests();
   const [newHomeName, setNewHomeName] = useState("");
   const [creatingHome, setCreatingHome] = useState(false);
   const [showCreateHome, setShowCreateHome] = useState(false);
@@ -68,13 +73,17 @@ function MorePage() {
       setNewHomeName("");
       setShowCreateHome(false);
       toast.success("New home created");
-    } catch {
-      toast.error("Couldn't create that home. Try again.");
+    } catch (err) {
+      toast.error(planLimitMessage(err) ?? "Couldn't create that home. Try again.");
     } finally {
       setCreatingHome(false);
     }
   }
 
+  const canCreateHome = plan?.can_create_household ?? true;
+  const memberLimitReached =
+    !!plan?.enforced && (members?.length ?? 0) >= (plan?.max_members ?? Infinity);
+  const myPending = (myRequests ?? []).filter((r) => r.status === "pending");
   const isOwner = (members ?? []).some((m) => m.user_id === userId && m.role === "owner");
   const pending = (joinRequests ?? []).filter((r) => r.status === "pending");
   const blocked = (joinRequests ?? []).filter((r) => r.status === "blocked");
@@ -154,7 +163,9 @@ function MorePage() {
     });
     setDeciding(null);
     if (error) {
-      toast.error("Could not update that request. You need to be the owner.");
+      toast.error(
+        planLimitMessage(error) ?? "Could not update that request. You need to be the owner.",
+      );
       return;
     }
     queryClient.invalidateQueries({ queryKey: ["join-requests", household?.id] });
@@ -237,7 +248,22 @@ function MorePage() {
           })}
         </ul>
 
-        {showCreateHome ? (
+        {!canCreateHome ? (
+          <>
+            <button
+              type="button"
+              disabled
+              aria-describedby="create-home-locked"
+              className="mt-3 w-full cursor-not-allowed rounded-xl border border-border py-3 text-sm font-semibold opacity-50"
+            >
+              Create a new home
+            </button>
+            <p id="create-home-locked" className="mt-2 text-xs text-muted-foreground">
+              Your plan includes {plan?.max_owned_households ?? 1} home. To share another home, ask
+              its owner for their invite code and use “Join another household” below.
+            </p>
+          </>
+        ) : showCreateHome ? (
           <form onSubmit={createNewHome} className="mt-3 flex gap-2">
             <input
               value={newHomeName}
@@ -326,7 +352,8 @@ function MorePage() {
                   <div className="mt-2.5 flex gap-2">
                     <button
                       onClick={() => decide(r.id, "approved")}
-                      disabled={deciding === r.id}
+                      disabled={deciding === r.id || memberLimitReached}
+                      title={memberLimitReached ? "This home is full for its plan" : undefined}
                       className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-success px-3 text-sm font-semibold text-white disabled:opacity-50"
                     >
                       <Check size={15} /> Approve
@@ -382,8 +409,38 @@ function MorePage() {
       )}
 
 
+      {myPending.length > 0 && (
+        <section className="mb-6 rounded-2xl border border-border bg-card p-4">
+          <h2 className="mb-1 text-sm font-bold">Waiting for approval · {myPending.length}</h2>
+          <p className="mb-2 text-xs text-muted-foreground">
+            You'll get in as soon as an owner approves you.
+          </p>
+          <ul className="grid gap-2">
+            {myPending.map((r) => (
+              <li
+                key={r.id}
+                className="flex items-center gap-2 rounded-xl bg-surface-2 p-3 text-sm"
+              >
+                <span className="min-w-0 flex-1 truncate font-semibold">{r.household_name}</span>
+                <span className="shrink-0 rounded-lg bg-warning-soft px-2 py-1 text-xs font-bold">
+                  Pending
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section className="mb-6 rounded-2xl border border-border bg-card p-4">
-        <h2 className="mb-2 text-sm font-bold">Members · {members?.length ?? 0}</h2>
+        <h2 className="mb-2 text-sm font-bold">
+          Members · {members?.length ?? 0}
+          {plan?.enforced ? ` of ${plan.max_members}` : ""}
+        </h2>
+        {memberLimitReached && (
+          <p className="mb-2 text-xs text-muted-foreground">
+            This home has reached the number of people its plan allows.
+          </p>
+        )}
         <ul className="grid gap-2">
           {(members ?? []).map((m) => (
             <li
