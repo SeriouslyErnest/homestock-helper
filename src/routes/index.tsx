@@ -55,6 +55,9 @@ function Landing() {
         >
           I already have an account
         </Link>
+        <Link to="/about" className="px-4 py-3 font-semibold text-muted-foreground">
+          Find out more about HomeStock
+        </Link>
       </div>
     </div>
   );
