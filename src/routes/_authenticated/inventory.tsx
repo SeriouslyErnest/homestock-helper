@@ -10,6 +10,8 @@ import {
   formatLocalDate,
   isExpiringSoon,
   isLow,
+  productKey,
+  sortByProductThenLocation,
   useHousehold,
   useItems,
   type Item,
