@@ -34,6 +34,7 @@ function ShoppingPage() {
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const toggling = useRef<Set<string>>(new Set());
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["shopping", household?.id] });
@@ -103,6 +104,9 @@ function ShoppingPage() {
         .eq("id", entry.id);
     }
     invalidate();
+    } finally {
+      toggling.current.delete(entry.id);
+    }
   }
 
   async function remove(id: string) {
