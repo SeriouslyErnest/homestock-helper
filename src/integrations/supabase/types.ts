@@ -239,7 +239,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      join_household_by_code: { Args: { _code: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
