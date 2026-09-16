@@ -6,11 +6,14 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import {
   createHousehold,
+  planLimitMessage,
   setActiveHouseholdId,
+  useEntitlements,
   useHousehold,
   useHouseholds,
   useJoinRequests,
   useMembers,
+  useMyJoinRequests,
 } from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
 
