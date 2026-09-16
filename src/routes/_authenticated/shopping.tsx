@@ -124,6 +124,17 @@ function ShoppingPage() {
     invalidate();
   }
 
+  async function clearBought() {
+    if (!household?.id) return;
+    await supabase
+      .from("shopping_items")
+      .delete()
+      .eq("household_id", household.id)
+      .eq("status", "bought");
+    invalidate();
+    toast.success("Cleared the bought items");
+  }
+
   return (
     <AppShell title="Shopping list" subtitle="What the household needs — anyone can add or tick off.">
       <form onSubmit={addQuick} className="mb-4 flex gap-2">
