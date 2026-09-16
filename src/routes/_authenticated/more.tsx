@@ -32,6 +32,10 @@ function MorePage() {
   const [joinCode, setJoinCode] = useState("");
   const [joinMessage, setJoinMessage] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [confirmLeave, setConfirmLeave] = useState(false);
+
+  const isOwner = (members ?? []).some((m) => m.user_id === userId && m.role === "owner");
 
   useEffect(() => {
     if (household) setHouseholdName(household.name);
