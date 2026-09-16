@@ -193,6 +193,7 @@ export type Database = {
           requested_by: string | null
           status: string
           stock_applied: number
+          tags: string[]
         }
         Insert: {
           bought_at?: string | null
@@ -206,6 +207,7 @@ export type Database = {
           requested_by?: string | null
           status?: string
           stock_applied?: number
+          tags?: string[]
         }
         Update: {
           bought_at?: string | null
@@ -219,6 +221,7 @@ export type Database = {
           requested_by?: string | null
           status?: string
           stock_applied?: number
+          tags?: string[]
         }
         Relationships: [
           {
