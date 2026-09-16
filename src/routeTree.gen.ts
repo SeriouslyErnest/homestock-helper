@@ -10,33 +10,130 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAddRouteImport } from './routes/_authenticated/add'
+import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
+import { Route as AuthenticatedMoreRouteImport } from './routes/_authenticated/more'
+import { Route as AuthenticatedScanRouteImport } from './routes/_authenticated/scan'
+import { Route as AuthenticatedShoppingRouteImport } from './routes/_authenticated/shopping'
+import { Route as AuthenticatedItemItemIdRouteImport } from './routes/_authenticated/item/$itemId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAddRoute = AuthenticatedAddRouteImport.update({
+  id: '/add',
+  path: '/add',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
+  id: '/inventory',
+  path: '/inventory',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMoreRoute = AuthenticatedMoreRouteImport.update({
+  id: '/more',
+  path: '/more',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedScanRoute = AuthenticatedScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedShoppingRoute = AuthenticatedShoppingRouteImport.update({
+  id: '/shopping',
+  path: '/shopping',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedItemItemIdRoute = AuthenticatedItemItemIdRouteImport.update({
+  id: '/item/$itemId',
+  path: '/item/$itemId',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/add': typeof AuthenticatedAddRoute
+  '/inventory': typeof AuthenticatedInventoryRoute
+  '/more': typeof AuthenticatedMoreRoute
+  '/scan': typeof AuthenticatedScanRoute
+  '/shopping': typeof AuthenticatedShoppingRoute
+  '/item/$itemId': typeof AuthenticatedItemItemIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/add': typeof AuthenticatedAddRoute
+  '/inventory': typeof AuthenticatedInventoryRoute
+  '/more': typeof AuthenticatedMoreRoute
+  '/scan': typeof AuthenticatedScanRoute
+  '/shopping': typeof AuthenticatedShoppingRoute
+  '/item/$itemId': typeof AuthenticatedItemItemIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/add': typeof AuthenticatedAddRoute
+  '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
+  '/_authenticated/more': typeof AuthenticatedMoreRoute
+  '/_authenticated/scan': typeof AuthenticatedScanRoute
+  '/_authenticated/shopping': typeof AuthenticatedShoppingRoute
+  '/_authenticated/item/$itemId': typeof AuthenticatedItemItemIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/add'
+    | '/inventory'
+    | '/more'
+    | '/scan'
+    | '/shopping'
+    | '/item/$itemId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/add'
+    | '/inventory'
+    | '/more'
+    | '/scan'
+    | '/shopping'
+    | '/item/$itemId'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/add'
+    | '/_authenticated/inventory'
+    | '/_authenticated/more'
+    | '/_authenticated/scan'
+    | '/_authenticated/shopping'
+    | '/_authenticated/item/$itemId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +145,90 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/add': {
+      id: '/_authenticated/add'
+      path: '/add'
+      fullPath: '/add'
+      preLoaderRoute: typeof AuthenticatedAddRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inventory': {
+      id: '/_authenticated/inventory'
+      path: '/inventory'
+      fullPath: '/inventory'
+      preLoaderRoute: typeof AuthenticatedInventoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/more': {
+      id: '/_authenticated/more'
+      path: '/more'
+      fullPath: '/more'
+      preLoaderRoute: typeof AuthenticatedMoreRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/scan': {
+      id: '/_authenticated/scan'
+      path: '/scan'
+      fullPath: '/scan'
+      preLoaderRoute: typeof AuthenticatedScanRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/shopping': {
+      id: '/_authenticated/shopping'
+      path: '/shopping'
+      fullPath: '/shopping'
+      preLoaderRoute: typeof AuthenticatedShoppingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/item/$itemId': {
+      id: '/_authenticated/item/$itemId'
+      path: '/item/$itemId'
+      fullPath: '/item/$itemId'
+      preLoaderRoute: typeof AuthenticatedItemItemIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAddRoute: typeof AuthenticatedAddRoute
+  AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
+  AuthenticatedMoreRoute: typeof AuthenticatedMoreRoute
+  AuthenticatedScanRoute: typeof AuthenticatedScanRoute
+  AuthenticatedShoppingRoute: typeof AuthenticatedShoppingRoute
+  AuthenticatedItemItemIdRoute: typeof AuthenticatedItemItemIdRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAddRoute: AuthenticatedAddRoute,
+  AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
+  AuthenticatedMoreRoute: AuthenticatedMoreRoute,
+  AuthenticatedScanRoute: AuthenticatedScanRoute,
+  AuthenticatedShoppingRoute: AuthenticatedShoppingRoute,
+  AuthenticatedItemItemIdRoute: AuthenticatedItemItemIdRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

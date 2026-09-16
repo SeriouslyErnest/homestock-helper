@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-labelledby="title desc">
+  <title id="title">HomeStock logo concept</title>
+  <desc id="desc">A light blue house containing two green shelves, beside a condensed HomeStock wordmark.</desc>
+  <defs>
+    <style>
+      .blue-line { fill: none; stroke: #78AEE8; stroke-width: 12; stroke-linecap: round; stroke-linejoin: round; }
+      .green-line { fill: none; stroke: #55B889; stroke-width: 11; stroke-linecap: round; stroke-linejoin: round; }
+      .green-fill { fill: #55B889; }
+      .wordmark { fill: #31506A; font-family: "Arial Narrow", "Roboto Condensed", "Helvetica Neue", Arial, sans-serif; font-size: 150px; font-stretch: condensed; font-weight: 300; letter-spacing: -3px; }
+    </style>
+  </defs>
+
+  <!-- Home-and-shelves symbol -->
+  <g transform="translate(38 34)">
+    <path class="blue-line" d="M18 111 L118 24 L218 111 V236 H18 Z"/>
+    <!-- A recognisable freestanding shelving unit -->
+    <path class="green-line" d="M54 109 V220 M182 109 V220 M54 145 H182 M54 201 H182"/>
+
+    <!-- Simple stored-item silhouettes -->
+    <rect class="green-fill" x="68" y="119" width="24" height="26" rx="3"/>
+    <path class="green-fill" d="M106 120 h18 v25 h-18 z M110 113 h10 v9 h-10 z"/>
+    <rect class="green-fill" x="140" y="115" width="28" height="30" rx="3"/>
+    <rect class="green-fill" x="67" y="166" width="32" height="35" rx="3"/>
+    <path class="green-fill" d="M114 171 h21 v30 h-21 z M118 162 h13 v11 h-13 z"/>
+    <rect class="green-fill" x="149" y="176" width="20" height="25" rx="3"/>
+  </g>
+
+  <!-- Primary horizontal wordmark -->
+  <text class="wordmark" x="305" y="212">HomeStock</text>
+</svg>
