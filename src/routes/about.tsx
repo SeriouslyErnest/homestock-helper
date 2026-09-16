@@ -673,7 +673,11 @@ function AboutPage() {
             </a>
             . HomeStock only reads this data.
           </p>
-          <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} HomeStock</p>
+          <p className="text-xs text-muted-foreground">
+            © {new Date().getFullYear()} HomeStock
+            {/* Bump this when the app ships meaningful changes. */}
+            <span className="sr-only">·</span> Last updated 16 September 2026
+          </p>
         </div>
       </footer>
 
