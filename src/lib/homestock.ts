@@ -219,31 +219,77 @@ export function useHousehold() {
   return { ...query, data: active, households: households ?? [] };
 }
 
-/** Create a household and join it as its owner. Returns the new household. */
-export async function createHousehold(name: string): Promise<Household> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not signed in");
+/**
+ * What the signed-in user's plan allows. Limits are defined in the database and
+ * are only applied when that plan row is marked as enforced, so charging for
+ * extra homes later is a data change, not a code change.
+ */
+export type Entitlements = {
+  tier: string;
+  enforced: boolean;
+  max_owned_households: number;
+  max_members: number;
+  owned_households: number;
+  can_create_household: boolean;
+};
 
-  const { data: household, error } = await supabase
-    .from("households")
-    .insert({ name: name.trim() || "Our Home", created_by: user.id })
-    .select()
-    .single();
-  if (error) throw error;
-
-  const { error: memberError } = await supabase.from("household_members").insert({
-    household_id: household.id,
-    user_id: user.id,
-    role: "owner",
-    display_name:
-      (user.user_metadata?.["name"] as string | undefined) ?? user.email?.split("@")[0] ?? null,
+export function useEntitlements() {
+  return useQuery({
+    queryKey: ["entitlements"],
+    queryFn: async (): Promise<Entitlements> => {
+      const { data, error } = await supabase.rpc("my_entitlements");
+      if (error) throw error;
+      return data as unknown as Entitlements;
+    },
+    staleTime: 60_000,
   });
-  if (memberError) throw memberError;
+}
 
+/** Requests the signed-in user has sent, so they can see what they're waiting on. */
+export type MyJoinRequest = {
+  id: string;
+  household_id: string;
+  household_name: string;
+  status: "pending" | "approved" | "rejected" | "blocked";
+  created_at: string;
+};
+
+export function useMyJoinRequests() {
+  return useQuery({
+    queryKey: ["my-join-requests"],
+    refetchInterval: 30000,
+    queryFn: async (): Promise<MyJoinRequest[]> => {
+      const { data, error } = await supabase.rpc("my_join_requests");
+      if (error) throw error;
+      return (data ?? []) as MyJoinRequest[];
+    },
+  });
+}
+
+/** Human wording for a refused action, so every screen says the same thing. */
+export function planLimitMessage(error: unknown): string | null {
+  const message = (error as { message?: string } | null)?.message ?? "";
+  if (message.includes("plan_limit_households")) {
+    return "Your plan includes one home. Ask a housemate for their invite code to join theirs.";
+  }
+  if (message.includes("plan_limit_members")) {
+    return "This home is already full for its plan.";
+  }
+  return null;
+}
+
+/**
+ * Create a household and join it as its owner. The server checks the plan
+ * allowance, so a greyed-out button is never the only thing stopping it.
+ */
+export async function createHousehold(name: string): Promise<Household> {
+  const { data, error } = await supabase.rpc("create_household", {
+    _name: name.trim() || "Our Home",
+  });
+  if (error) throw error;
+  const household = data as unknown as Household;
   setActiveHouseholdId(household.id);
-  return household as Household;
+  return household;
 }
 
 export function useMembers(householdId: string | undefined) {
