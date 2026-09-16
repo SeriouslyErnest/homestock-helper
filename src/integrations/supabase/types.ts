@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_plans: {
+        Row: {
+          created_at: string
+          enforced: boolean
+          max_members: number
+          max_owned_households: number
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enforced?: boolean
+          max_members: number
+          max_owned_households: number
+          tier: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enforced?: boolean
+          max_members?: number
+          max_owned_households?: number
+          tier?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       household_join_requests: {
         Row: {
           created_at: string
@@ -287,6 +314,35 @@ export type Database = {
           },
         ]
       }
+      user_plans: {
+        Row: {
+          created_at: string
+          tier: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          tier?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          tier?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_plans_tier_fkey"
+            columns: ["tier"]
+            isOneToOne: false
+            referencedRelation: "app_plans"
+            referencedColumns: ["tier"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -296,11 +352,55 @@ export type Database = {
         Args: { _delta: number; _item_id: string }
         Returns: number
       }
+      create_household: {
+        Args: { _name: string }
+        Returns: {
+          created_at: string
+          created_by: string
+          id: string
+          invite_code: string
+          name: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "households"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       decide_join_request: {
         Args: { _decision: string; _request_id: string }
         Returns: string
       }
       join_household_by_code: { Args: { _code: string }; Returns: string }
+      my_entitlements: { Args: never; Returns: Json }
+      my_join_requests: {
+        Args: never
+        Returns: {
+          created_at: string
+          household_id: string
+          household_name: string
+          id: string
+          status: string
+        }[]
+      }
+      plan_for_user: {
+        Args: { _user_id: string }
+        Returns: {
+          created_at: string
+          enforced: boolean
+          max_members: number
+          max_owned_households: number
+          tier: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "app_plans"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       request_household_join: { Args: { _code: string }; Returns: string }
     }
     Enums: {
