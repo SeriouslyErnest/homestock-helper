@@ -4,7 +4,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Ban, Check, Copy, LogOut, RotateCcw, UserMinus, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
-import { useHousehold, useJoinRequests, useMembers } from "@/lib/homestock";
+import {
+  createHousehold,
+  setActiveHouseholdId,
+  useHousehold,
+  useHouseholds,
+  useJoinRequests,
+  useMembers,
+} from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/more")({
@@ -39,6 +46,34 @@ function MorePage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [deciding, setDeciding] = useState<string | null>(null);
+  const { data: households } = useHouseholds();
+  const [newHomeName, setNewHomeName] = useState("");
+  const [creatingHome, setCreatingHome] = useState(false);
+  const [showCreateHome, setShowCreateHome] = useState(false);
+
+  async function switchTo(id: string) {
+    if (id === household?.id) return;
+    setActiveHouseholdId(id);
+    await queryClient.invalidateQueries();
+    toast.success("Switched home");
+  }
+
+  async function createNewHome(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newHomeName.trim()) return;
+    setCreatingHome(true);
+    try {
+      await createHousehold(newHomeName);
+      await queryClient.invalidateQueries();
+      setNewHomeName("");
+      setShowCreateHome(false);
+      toast.success("New home created");
+    } catch {
+      toast.error("Couldn't create that home. Try again.");
+    } finally {
+      setCreatingHome(false);
+    }
+  }
 
   const isOwner = (members ?? []).some((m) => m.user_id === userId && m.role === "owner");
   const pending = (joinRequests ?? []).filter((r) => r.status === "pending");
