@@ -38,6 +38,7 @@ function MorePage() {
   const [joining, setJoining] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [deciding, setDeciding] = useState<string | null>(null);
 
   const isOwner = (members ?? []).some((m) => m.user_id === userId && m.role === "owner");
 
