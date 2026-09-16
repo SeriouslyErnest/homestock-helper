@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Users can join households" ON public.household_members;
