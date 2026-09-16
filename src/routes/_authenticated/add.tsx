@@ -10,6 +10,7 @@ type AddSearch = {
   name?: string | undefined;
   brand?: string | undefined;
   image?: string | undefined;
+  category?: string | undefined;
   notFound?: boolean | undefined;
 };
 
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/_authenticated/add")({
     name: typeof search["name"] === "string" ? search["name"] : undefined,
     brand: typeof search["brand"] === "string" ? search["brand"] : undefined,
     image: typeof search["image"] === "string" ? search["image"] : undefined,
+    category: typeof search["category"] === "string" ? search["category"] : undefined,
     notFound: search["notFound"] === true ? true : undefined,
   }),
   head: () => ({
