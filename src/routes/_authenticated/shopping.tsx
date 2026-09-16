@@ -88,20 +88,10 @@ function ShoppingPage() {
         .eq("id", entry.id);
       // Bought something tracked? Restock the inventory item automatically.
       if (entry.item_id) {
-        const { data: item } = await supabase
-          .from("items")
-          .select("quantity")
-          .eq("id", entry.item_id)
-          .single();
-        if (item) {
-          await supabase
-            .from("items")
-            .update({
-              quantity: Number(item.quantity) + Number(entry.quantity),
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", entry.item_id);
-        }
+        await supabase.rpc("adjust_item_quantity", {
+          _item_id: entry.item_id,
+          _delta: Number(entry.quantity),
+        });
       }
     } else {
       await supabase

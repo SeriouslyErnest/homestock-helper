@@ -65,12 +65,9 @@ function InventoryPage() {
   }
 
   async function adjust(item: Item, delta: number) {
-    const next = Math.max(0, item.quantity + delta);
-    await supabase
-      .from("items")
-      .update({ quantity: next, updated_at: new Date().toISOString() })
-      .eq("id", item.id);
+    await supabase.rpc("adjust_item_quantity", { _item_id: item.id, _delta: delta });
     queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
+    queryClient.invalidateQueries({ queryKey: ["item", item.id] });
   }
 
   const chips = ["All", "Low", ...CATEGORIES.map((c) => c.id)];
