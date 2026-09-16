@@ -246,7 +246,22 @@ function MorePage() {
           })}
         </ul>
 
-        {showCreateHome ? (
+        {!canCreateHome ? (
+          <>
+            <button
+              type="button"
+              disabled
+              aria-describedby="create-home-locked"
+              className="mt-3 w-full cursor-not-allowed rounded-xl border border-border py-3 text-sm font-semibold opacity-50"
+            >
+              Create a new home
+            </button>
+            <p id="create-home-locked" className="mt-2 text-xs text-muted-foreground">
+              Your plan includes {plan?.max_owned_households ?? 1} home. To share another home, ask
+              its owner for their invite code and use “Join another household” below.
+            </p>
+          </>
+        ) : showCreateHome ? (
           <form onSubmit={createNewHome} className="mt-3 flex gap-2">
             <input
               value={newHomeName}
