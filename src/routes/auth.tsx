@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -29,14 +29,12 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [step, setStep] = useState<"email" | "code">("email");
+  const [step, setStep] = useState<"email" | "sent">("email");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
-  const codeInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -50,7 +48,7 @@ function AuthPage() {
     return () => clearTimeout(t);
   }, [cooldown]);
 
-  async function sendCode(e?: React.FormEvent) {
+  async function sendLink(e?: React.FormEvent) {
     e?.preventDefault();
     const address = email.trim().toLowerCase();
     if (!address) return;
@@ -69,33 +67,8 @@ function AuthPage() {
       setMessage(error.message);
       return;
     }
-    setStep("code");
+    setStep("sent");
     setCooldown(30);
-    setMessage(`We emailed ${address}. Tap the sign-in link in that email and you're in. If it shows a 6-digit code, you can enter it below instead.`);
-    setTimeout(() => codeInput.current?.focus(), 50);
-  }
-
-  async function verify(e?: React.FormEvent) {
-    e?.preventDefault();
-    const digits = code.replace(/\D/g, "");
-    if (digits.length !== 6) return;
-    setBusy(true);
-    setMessage(null);
-    const { data, error } = await supabase.auth.verifyOtp({
-      email: email.trim().toLowerCase(),
-      token: digits,
-      type: "email",
-    });
-    if (error) {
-      setBusy(false);
-      setCode("");
-      setMessage("That code didn't work. Check it or send a new one.");
-      return;
-    }
-    if (data.user && name.trim()) {
-      await supabase.from("profiles").upsert({ id: data.user.id, display_name: name.trim() });
-    }
-    navigate({ to: "/inventory", replace: true });
   }
 
   async function google() {
@@ -120,13 +93,13 @@ function AuthPage() {
         <LogoWordmark className="mt-3 text-3xl" />
         <p className="mt-1 text-sm text-muted-foreground">
           {step === "email"
-            ? "Enter your email and we'll send you a sign-in link."
-            : "Check your email — tap the link inside, or enter the code it shows."}
+            ? "Enter your email and we'll send you a sign-in link — no password needed."
+            : `We emailed ${email}. Tap the link in that email and you're in.`}
         </p>
       </div>
 
       {step === "email" ? (
-        <form onSubmit={sendCode} className="flex flex-col gap-3">
+        <form onSubmit={sendLink} className="flex flex-col gap-3">
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -149,38 +122,20 @@ function AuthPage() {
             disabled={busy || !email.trim()}
             className="rounded-2xl bg-primary px-4 py-3.5 font-semibold text-primary-foreground disabled:opacity-60"
           >
-            {busy ? "Sending…" : "Email me a code"}
+            {busy ? "Sending…" : "Email me a sign-in link"}
           </button>
         </form>
       ) : (
-        <form onSubmit={verify} className="flex flex-col gap-3">
-          <input
-            ref={codeInput}
-            value={code}
-            onChange={(e) => {
-              const next = e.target.value.replace(/\D/g, "").slice(0, 6);
-              setCode(next);
-              if (next.length === 6) setTimeout(() => verify(), 0);
-            }}
-            placeholder="123456"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            aria-label="6-digit code"
-            className="rounded-2xl border border-border bg-surface-2 px-4 py-4 text-center font-condensed text-3xl tracking-[0.4em] outline-none focus:border-brand"
-          />
-          <button
-            type="submit"
-            disabled={busy || code.length !== 6}
-            className="rounded-2xl bg-primary px-4 py-3.5 font-semibold text-primary-foreground disabled:opacity-60"
-          >
-            {busy ? "Checking…" : "Sign in"}
-          </button>
+        <div className="flex flex-col gap-3">
+          <p className="rounded-2xl bg-brand-soft px-4 py-4 text-center text-sm" aria-live="polite">
+            You can close this tab once you've tapped the link — you'll come straight back here
+            signed in.
+          </p>
           <div className="flex items-center justify-between text-sm">
             <button
               type="button"
               onClick={() => {
                 setStep("email");
-                setCode("");
                 setMessage(null);
               }}
               className="py-2 text-muted-foreground underline"
@@ -190,13 +145,13 @@ function AuthPage() {
             <button
               type="button"
               disabled={busy || cooldown > 0}
-              onClick={() => sendCode()}
+              onClick={() => sendLink()}
               className="py-2 font-semibold text-brand disabled:opacity-50"
             >
-              {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"}
+              {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend link"}
             </button>
           </div>
-        </form>
+        </div>
       )}
 
       <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
@@ -212,7 +167,11 @@ function AuthPage() {
         Continue with Google
       </button>
 
-      {message && <p className="mt-4 text-center text-sm text-muted-foreground">{message}</p>}
+      {message && (
+        <p className="mt-4 text-center text-sm text-muted-foreground" aria-live="polite">
+          {message}
+        </p>
+      )}
     </div>
   );
 }
