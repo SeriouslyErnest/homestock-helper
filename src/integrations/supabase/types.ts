@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      household_join_requests: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          display_name: string | null
+          email: string | null
+          household_id: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          display_name?: string | null
+          email?: string | null
+          household_id: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          display_name?: string | null
+          email?: string | null
+          household_id?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_join_requests_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       household_members: {
         Row: {
           created_at: string
@@ -249,7 +296,12 @@ export type Database = {
         Args: { _delta: number; _item_id: string }
         Returns: number
       }
+      decide_join_request: {
+        Args: { _decision: string; _request_id: string }
+        Returns: string
+      }
       join_household_by_code: { Args: { _code: string }; Returns: string }
+      request_household_join: { Args: { _code: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never

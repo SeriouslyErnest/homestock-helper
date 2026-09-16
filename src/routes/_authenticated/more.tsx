@@ -1,10 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Copy, LogOut, UserMinus } from "lucide-react";
+import { Ban, Check, Copy, LogOut, RotateCcw, UserMinus, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
-import { useHousehold, useMembers } from "@/lib/homestock";
+import { useHousehold, useJoinRequests, useMembers } from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/more")({
@@ -27,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/more")({
 function MorePage() {
   const { data: household } = useHousehold();
   const { data: members } = useMembers(household?.id);
+  const { data: joinRequests } = useJoinRequests(household?.id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -37,8 +38,11 @@ function MorePage() {
   const [joining, setJoining] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [deciding, setDeciding] = useState<string | null>(null);
 
   const isOwner = (members ?? []).some((m) => m.user_id === userId && m.role === "owner");
+  const pending = (joinRequests ?? []).filter((r) => r.status === "pending");
+  const blocked = (joinRequests ?? []).filter((r) => r.status === "blocked");
 
   useEffect(() => {
     if (household) setHouseholdName(household.name);
@@ -107,21 +111,58 @@ function MorePage() {
     }
   }
 
+  async function decide(requestId: string, decision: "approved" | "rejected" | "blocked") {
+    setDeciding(requestId);
+    const { error } = await supabase.rpc("decide_join_request", {
+      _request_id: requestId,
+      _decision: decision,
+    });
+    setDeciding(null);
+    if (error) {
+      toast.error("Could not update that request. You need to be the owner.");
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ["join-requests", household?.id] });
+    queryClient.invalidateQueries({ queryKey: ["members", household?.id] });
+    toast.success(
+      decision === "approved" ? "Approved — they're in" : decision === "blocked" ? "Blocked" : "Rejected",
+    );
+  }
+
+  async function unblock(requestId: string) {
+    setDeciding(requestId);
+    const { error } = await supabase
+      .from("household_join_requests")
+      .delete()
+      .eq("id", requestId);
+    setDeciding(null);
+    if (error) {
+      toast.error("Could not unblock them.");
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ["join-requests", household?.id] });
+    toast.success("Unblocked — they can ask again");
+  }
+
   async function join(e: React.FormEvent) {
     e.preventDefault();
     if (!joinCode.trim()) return;
     setJoining(true);
     setJoinMessage(null);
-    const { data, error } = await supabase.rpc("join_household_by_code", {
+    const { data, error } = await supabase.rpc("request_household_join", {
       _code: joinCode.trim(),
     });
     setJoining(false);
     if (error) {
       setJoinMessage(error.message);
+    } else if (data === "member") {
+      setJoinMessage("You're already a member of that household.");
+    } else if (data === "blocked") {
+      setJoinMessage("That household isn't accepting a request from you.");
     } else {
-      setJoinMessage(`You've joined “${data}”. Reloading…`);
-      queryClient.invalidateQueries();
-      setTimeout(() => window.location.assign("/inventory"), 800);
+      setJoinMessage("Request sent. An owner of that household needs to approve you.");
+      setJoinCode("");
+      queryClient.invalidateQueries({ queryKey: ["join-requests"] });
     }
   }
 
@@ -170,9 +211,88 @@ function MorePage() {
           </button>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          Share this code so family or flatmates can join.
+          Share this code so family or flatmates can ask to join. Nobody gets in until an owner
+          approves them.
         </p>
       </section>
+
+      {isOwner && (
+        <section className="mb-6 rounded-2xl border border-border bg-card p-4">
+          <h2 className="mb-1 text-sm font-bold">
+            Join requests{pending.length > 0 ? ` · ${pending.length}` : ""}
+          </h2>
+          {pending.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              Nobody is waiting. Requests from people using your invite code show up here.
+            </p>
+          ) : (
+            <ul className="mt-2 grid gap-2">
+              {pending.map((r) => (
+                <li key={r.id} className="rounded-xl bg-surface-2 p-3">
+                  <p className="truncate text-sm font-semibold">
+                    {r.display_name ?? r.email ?? "Someone"}
+                  </p>
+                  {r.email && r.display_name && (
+                    <p className="truncate text-xs text-muted-foreground">{r.email}</p>
+                  )}
+                  <div className="mt-2.5 flex gap-2">
+                    <button
+                      onClick={() => decide(r.id, "approved")}
+                      disabled={deciding === r.id}
+                      className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-success px-3 text-sm font-semibold text-white disabled:opacity-50"
+                    >
+                      <Check size={15} /> Approve
+                    </button>
+                    <button
+                      onClick={() => decide(r.id, "rejected")}
+                      disabled={deciding === r.id}
+                      className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-border px-3 text-sm font-semibold disabled:opacity-50"
+                    >
+                      <X size={15} /> Reject
+                    </button>
+                    <button
+                      onClick={() => decide(r.id, "blocked")}
+                      aria-label={`Block ${r.display_name ?? r.email ?? "this person"}`}
+                      disabled={deciding === r.id}
+                      className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border text-muted-foreground disabled:opacity-50"
+                    >
+                      <Ban size={15} />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {blocked.length > 0 && (
+            <>
+              <h3 className="mt-4 mb-2 text-xs font-bold text-muted-foreground">
+                Blocked · {blocked.length}
+              </h3>
+              <ul className="grid gap-2">
+                {blocked.map((r) => (
+                  <li
+                    key={r.id}
+                    className="flex items-center gap-2 rounded-xl bg-surface-2 p-2.5 text-sm"
+                  >
+                    <span className="flex-1 truncate">
+                      {r.display_name ?? r.email ?? "Someone"}
+                    </span>
+                    <button
+                      onClick={() => unblock(r.id)}
+                      disabled={deciding === r.id}
+                      className="flex h-11 items-center gap-1.5 rounded-xl px-3 text-xs font-bold text-brand disabled:opacity-50"
+                    >
+                      <RotateCcw size={14} /> Unblock
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
+      )}
+
 
       <section className="mb-6 rounded-2xl border border-border bg-card p-4">
         <h2 className="mb-2 text-sm font-bold">Members · {members?.length ?? 0}</h2>
@@ -236,7 +356,7 @@ function MorePage() {
       <section className="mb-6 rounded-2xl border border-border bg-card p-4">
         <h2 className="mb-1 text-sm font-bold">Join another household</h2>
         <p className="mb-3 text-xs text-muted-foreground">
-          Have a code? Joining switches this account to that household.
+          Have a code? We'll send a request — an owner there has to approve you.
         </p>
         <form onSubmit={join} className="flex gap-2">
           <input
@@ -252,7 +372,7 @@ function MorePage() {
             disabled={joining || !joinCode.trim()}
             className="shrink-0 rounded-2xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50"
           >
-            {joining ? "Joining…" : "Join"}
+            {joining ? "Sending…" : "Ask"}
           </button>
         </form>
         <p role="status" aria-live="polite" className="mt-2 text-sm text-muted-foreground">
