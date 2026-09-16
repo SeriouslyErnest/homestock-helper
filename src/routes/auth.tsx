@@ -14,11 +14,11 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in — HomeStock" },
-      { name: "description", content: "Sign in to HomeStock with a code sent to your email." },
+      { name: "description", content: "Sign in to HomeStock with a link sent to your email — no password needed." },
       { property: "og:title", content: "Sign in — HomeStock" },
       {
         property: "og:description",
-        content: "Sign in to HomeStock with a code sent to your email.",
+        content: "Sign in to HomeStock with a link sent to your email — no password needed.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -71,7 +71,7 @@ function AuthPage() {
     }
     setStep("code");
     setCooldown(30);
-    setMessage(`We emailed ${address}. Enter the code, or just tap the link in that email.`);
+    setMessage(`We emailed ${address}. Tap the sign-in link in that email and you're in. If it shows a 6-digit code, you can enter it below instead.`);
     setTimeout(() => codeInput.current?.focus(), 50);
   }
 
@@ -120,8 +120,8 @@ function AuthPage() {
         <LogoWordmark className="mt-3 text-3xl" />
         <p className="mt-1 text-sm text-muted-foreground">
           {step === "email"
-            ? "Enter your email and we'll send you a code."
-            : "Enter the 6-digit code from your email."}
+            ? "Enter your email and we'll send you a sign-in link."
+            : "Check your email — tap the link inside, or enter the code it shows."}
         </p>
       </div>
 
