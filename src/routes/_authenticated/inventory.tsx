@@ -105,14 +105,14 @@ function InventoryPage() {
       title="What's at home"
       subtitle={household ? `${household.name} · shared with your household` : undefined}
       headerExtra={
-        <div className="mt-4 flex gap-2">
+        <div className="mt-4 grid grid-cols-[minmax(0,1fr)_3rem] gap-2">
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search household inventory"
             aria-label="Search household inventory"
-            className="w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
+            className="min-w-0 rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
           />
           <Link
             to="/add"
@@ -124,7 +124,10 @@ function InventoryPage() {
         </div>
       }
     >
-      <div className="mb-3 flex gap-2 overflow-x-auto pb-1" aria-label="Inventory categories">
+      <div
+        className="mb-3 flex max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1"
+        aria-label="Inventory categories"
+      >
         {chips.map((c) => (
           <button
             key={c}
@@ -153,9 +156,9 @@ function InventoryPage() {
         </div>
       </div>
 
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">Inventory</h2>
+      <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <h2 className="truncate text-lg font-semibold">Inventory</h2>
           <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs text-muted-foreground">
             {filtered.length}
           </span>
@@ -244,10 +247,10 @@ function InventoryPage() {
                 </div>
                 <strong className="block truncate text-sm">{item.name}</strong>
                 <div className="mt-1 h-4 truncate text-xs text-muted-foreground">{meta}</div>
-                <div className="mt-2 flex items-center justify-between">
+                <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1">
                   <span className="text-lg font-bold">{item.quantity}</span>
                   <span
-                    className={`text-[10px] font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}
+                    className={`truncate text-right text-[10px] font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}
                   >
                     {status.label}
                   </span>
@@ -259,7 +262,7 @@ function InventoryPage() {
           return (
             <article
               key={item.id}
-              className="flex items-center gap-3 rounded-2xl border border-border bg-card p-2.5"
+              className="grid min-w-0 grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-2xl border border-border bg-card p-2.5"
             >
               <Link
                 to="/item/$itemId"
@@ -272,7 +275,7 @@ function InventoryPage() {
                 <strong className="block truncate text-sm">{item.name}</strong>
                 <div className="mt-0.5 truncate text-xs text-muted-foreground">{meta}</div>
               </Link>
-              <div className="flex items-center gap-1">
+              <div className="col-span-2 grid min-w-0 grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-1 border-t border-border pt-2">
                 <button
                   onClick={() => adjust(item, -1)}
                   disabled={item.quantity <= 0 || busyId === item.id}
@@ -281,10 +284,12 @@ function InventoryPage() {
                 >
                   <Minus size={18} />
                 </button>
-                <div className="w-10 text-center">
-                  <strong className="block text-lg leading-tight">{item.quantity}</strong>
+                <div className="min-w-0 text-center">
+                  <strong className="block truncate text-lg leading-tight">
+                    {item.quantity} {item.unit}
+                  </strong>
                   <span
-                    className={`block text-[9px] font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}
+                    className={`block truncate text-[9px] font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}
                   >
                     {status.label}
                   </span>

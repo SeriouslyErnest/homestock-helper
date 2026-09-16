@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { CATEGORIES, useHousehold } from "@/lib/homestock";
@@ -42,7 +43,6 @@ function AddPage() {
   const [name, setName] = useState(fullName);
   const [category, setCategory] = useState("Pantry");
   const [quantity, setQuantity] = useState(1);
-  const [unit, setUnit] = useState("pcs");
   const [minQuantity, setMinQuantity] = useState(0);
   const [location, setLocation] = useState("");
   const [expires, setExpires] = useState("");
@@ -68,7 +68,7 @@ function AddPage() {
         image_url: search.image ?? null,
         category,
         quantity: Math.max(0, quantity),
-        unit,
+        unit: "pcs",
         min_quantity: Math.max(0, minQuantity),
         location: location.trim() || null,
         expires_on: expires || null,
@@ -136,11 +136,20 @@ function AddPage() {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label htmlFor="quantity" className={label}>
-              Quantity
-            </label>
+        <div>
+          <label htmlFor="quantity" className={label}>
+            Quantity
+          </label>
+          <div className="grid grid-cols-[3rem_minmax(0,6rem)_3rem] items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => setQuantity((current) => Math.max(0, current - 1))}
+              disabled={quantity <= 0}
+              aria-label="Reduce quantity"
+              className="grid h-12 w-12 place-items-center rounded-2xl border border-border bg-card text-muted-foreground active:bg-surface-2 disabled:opacity-40"
+            >
+              <Minus size={20} />
+            </button>
             <input
               id="quantity"
               type="number"
@@ -149,20 +158,17 @@ function AddPage() {
               inputMode="decimal"
               value={quantity}
               onChange={(e) => setQuantity(Math.max(0, Number(e.target.value) || 0))}
-              className={field}
+              aria-label="Quantity"
+              className="h-12 min-w-0 rounded-2xl border border-border bg-surface-2 px-2 text-center text-xl font-bold outline-none focus:border-brand"
             />
-          </div>
-          <div>
-            <label htmlFor="unit" className={label}>
-              Unit
-            </label>
-            <input
-              id="unit"
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              placeholder="pcs, L, kg…"
-              className={field}
-            />
+            <button
+              type="button"
+              onClick={() => setQuantity((current) => current + 1)}
+              aria-label="Increase quantity"
+              className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-soft text-brand active:bg-surface-2"
+            >
+              <Plus size={20} />
+            </button>
           </div>
         </div>
 
