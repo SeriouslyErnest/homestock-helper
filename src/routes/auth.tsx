@@ -60,7 +60,7 @@ function AuthPage() {
       email: address,
       options: {
         shouldCreateUser: true,
-        data: name.trim() ? { display_name: name.trim() } : undefined,
+        ...(name.trim() ? { data: { display_name: name.trim() } } : {}),
       },
     });
     setBusy(false);
