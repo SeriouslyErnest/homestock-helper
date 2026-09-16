@@ -42,8 +42,43 @@ function MorePage() {
   }, [household]);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
+    supabase.auth.getUser().then(({ data }) => {
+      setEmail(data.user?.email ?? "");
+      setUserId(data.user?.id ?? null);
+    });
   }, []);
+
+  async function removeMember(memberUserId: string, name: string) {
+    if (!household) return;
+    const { error } = await supabase
+      .from("household_members")
+      .delete()
+      .eq("household_id", household.id)
+      .eq("user_id", memberUserId);
+    if (error) {
+      toast.error("Could not remove them — you need to be the owner.");
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ["members", household.id] });
+    toast.success(`${name} removed`);
+  }
+
+  async function leaveHousehold() {
+    if (!household || !userId) return;
+    const { error } = await supabase
+      .from("household_members")
+      .delete()
+      .eq("household_id", household.id)
+      .eq("user_id", userId);
+    if (error) {
+      toast.error("Could not leave this household.");
+      return;
+    }
+    await queryClient.invalidateQueries();
+    setConfirmLeave(false);
+    toast.success("You left the household");
+    navigate({ to: "/inventory" });
+  }
 
   async function renameHousehold() {
     if (!household || !householdName.trim()) return;
