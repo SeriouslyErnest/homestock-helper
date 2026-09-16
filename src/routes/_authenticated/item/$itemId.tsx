@@ -57,7 +57,12 @@ function ItemPage() {
     }
   }, [item]);
 
-  useEffect(() => () => undo && clearTimeout(undo.timer), [undo]);
+  useEffect(
+    () => () => {
+      if (undo) clearTimeout(undo.timer);
+    },
+    [undo],
+  );
 
   if (isPending) {
     return (
@@ -67,7 +72,7 @@ function ItemPage() {
     );
   }
 
-  if (!item) {
+  if (item == null) {
     return (
       <AppShell title="Item not found">
         <p className="py-8 text-center text-sm text-muted-foreground">

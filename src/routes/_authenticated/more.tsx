@@ -63,7 +63,7 @@ function MorePage() {
     if (!joinCode.trim()) return;
     setJoining(true);
     setJoinMessage(null);
-    const { data, error } = await supabase.rpc("join_household_by_code", { code: joinCode.trim() });
+    const { data, error } = await supabase.rpc("join_household_by_code", { _code: joinCode.trim() });
     setJoining(false);
     if (error) {
       setJoinMessage(error.message);

@@ -14,11 +14,11 @@ type AddSearch = {
 
 export const Route = createFileRoute("/_authenticated/add")({
   validateSearch: (search: Record<string, unknown>): AddSearch => ({
-    barcode: typeof search.barcode === "string" ? search.barcode : undefined,
-    name: typeof search.name === "string" ? search.name : undefined,
-    brand: typeof search.brand === "string" ? search.brand : undefined,
-    image: typeof search.image === "string" ? search.image : undefined,
-    notFound: search.notFound === true ? true : undefined,
+    barcode: typeof search["barcode"] === "string" ? search["barcode"] : undefined,
+    name: typeof search["name"] === "string" ? search["name"] : undefined,
+    brand: typeof search["brand"] === "string" ? search["brand"] : undefined,
+    image: typeof search["image"] === "string" ? search["image"] : undefined,
+    notFound: search["notFound"] === true ? true : undefined,
   }),
   head: () => ({
     meta: [
