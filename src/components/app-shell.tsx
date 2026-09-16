@@ -1,13 +1,13 @@
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Home, ShoppingCart, ScanBarcode, MoreHorizontal } from "lucide-react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { Home, ShoppingCart, ScanBarcode, MoreHorizontal, MinusCircle } from "lucide-react";
 import type { ReactNode } from "react";
 import { LogoMark, LogoWordmark } from "@/components/logo";
-import { useHousehold } from "@/lib/homestock";
+import { useProfile } from "@/lib/homestock";
 
 function initials(name: string | null | undefined, email: string | undefined): string {
   const base = name || email || "?";
   return base
-    .split(/[\s@]/)
+    .split(/[\s@._-]/)
     .filter(Boolean)
     .slice(0, 2)
     .map((p) => p[0]!.toUpperCase())
@@ -25,7 +25,7 @@ export function AppShell({
   children: ReactNode;
   headerExtra?: ReactNode;
 }) {
-  const { data: household } = useHousehold();
+  const { data: profile } = useProfile();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const navItem = (to: string, label: string, Icon: typeof Home) => {
@@ -33,7 +33,7 @@ export function AppShell({
     return (
       <Link
         to={to}
-        className={`flex min-w-14 flex-col items-center gap-0.5 text-[10px] ${
+        className={`flex h-14 min-w-14 flex-col items-center justify-center gap-0.5 text-[10px] ${
           active ? "font-extrabold text-brand" : "text-muted-foreground"
         }`}
         aria-current={active ? "page" : undefined}
@@ -54,10 +54,11 @@ export function AppShell({
           </Link>
           <Link
             to="/more"
-            aria-label="Profile and household settings"
-            className="grid h-9 w-9 place-items-center rounded-full bg-brand-soft text-sm font-extrabold text-brand"
+            aria-label={`Your account${profile?.email ? ` (${profile.email})` : ""}`}
+            title={profile?.displayName || profile?.email || "Your account"}
+            className="grid h-11 w-11 place-items-center rounded-full bg-brand-soft text-sm font-extrabold text-brand"
           >
-            {initials(household?.name, undefined).slice(0, 2)}
+            {initials(profile?.displayName, profile?.email).slice(0, 2)}
           </Link>
         </div>
         <h1 className="mt-4 text-[23px] leading-tight font-semibold">{title}</h1>
@@ -73,7 +74,7 @@ export function AppShell({
           className="pointer-events-auto mx-auto flex h-16 w-full max-w-md items-center justify-around rounded-3xl border border-border bg-card/95 shadow-lg backdrop-blur"
         >
           {navItem("/inventory", "Inventory", Home)}
-          {navItem("/shopping", "Shopping", ShoppingCart)}
+          {navItem("/consume", "Use up", MinusCircle)}
           <Link
             to="/scan"
             aria-label="Scan a barcode"
@@ -81,6 +82,7 @@ export function AppShell({
           >
             <ScanBarcode size={24} />
           </Link>
+          {navItem("/shopping", "Shopping", ShoppingCart)}
           {navItem("/more", "More", MoreHorizontal)}
         </nav>
       </div>
