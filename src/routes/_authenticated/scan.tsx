@@ -33,37 +33,55 @@ function ScanPage() {
   const [message, setMessage] = useState<string | null>(null);
   const handled = useRef(false);
 
+  const [lastCode, setLastCode] = useState<string | null>(null);
+
   const handleCode = useRef<(code: string) => Promise<void>>(async () => {});
   handleCode.current = async (code: string) => {
     setPhase("looking-up");
+    setMessage(null);
+    setLastCode(code);
 
-    // Already on the shelf? Go straight to the item so scanning doubles as "do we have this?".
-    if (household) {
-      const { data: existing } = await supabase
-        .from("items")
-        .select("id")
-        .eq("household_id", household.id)
-        .eq("barcode", code)
-        .limit(1)
-        .maybeSingle();
-      if (existing) {
-        navigate({ to: "/item/$itemId", params: { itemId: existing.id } });
-        return;
+    try {
+      // Already on the shelf? Go straight to the item so scanning doubles as "do we have this?".
+      if (household) {
+        const { data: existing, error } = await supabase
+          .from("items")
+          .select("id")
+          .eq("household_id", household.id)
+          .eq("barcode", code)
+          .limit(1)
+          .maybeSingle();
+        if (error) throw error;
+        if (existing) {
+          navigate({ to: "/item/$itemId", params: { itemId: existing.id } });
+          return;
+        }
       }
-    }
 
-    const info = await lookupProduct(code);
-    navigate({
-      to: "/add",
-      search: {
-        barcode: code,
-        name: info?.name ?? undefined,
-        brand: info?.brand ?? undefined,
-        image: info?.image_url ?? undefined,
-        notFound: info ? undefined : true,
-      },
-    });
+      const info = await lookupProduct(code);
+      navigate({
+        to: "/add",
+        search: {
+          barcode: code,
+          name: info?.name ?? undefined,
+          brand: info?.brand ?? undefined,
+          image: info?.image_url ?? undefined,
+          notFound: info ? undefined : true,
+        },
+      });
+    } catch {
+      // Network hiccup — never leave the screen hanging with no way forward.
+      handled.current = false;
+      setPhase("error");
+      setMessage("We couldn't check that code. Check your connection and try again.");
+    }
   };
+
+  async function retry() {
+    if (!lastCode) return;
+    handled.current = true;
+    await handleCode.current(lastCode);
+  }
 
   useEffect(() => {
     let controls: { stop: () => void } | null = null;
