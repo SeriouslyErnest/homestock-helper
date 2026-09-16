@@ -8,6 +8,7 @@ import {
   createHousehold,
   planLimitMessage,
   setActiveHouseholdId,
+  clearActiveHouseholdId,
   useEntitlements,
   useHousehold,
   useHouseholds,
