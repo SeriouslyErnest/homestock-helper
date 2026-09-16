@@ -10,7 +10,10 @@ import {
   isExpiringSoon,
   isLow,
   nowUtc,
+  productKey,
+  sortByProductThenLocation,
   useHousehold,
+  type Item,
 } from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -40,6 +43,20 @@ function ItemPage() {
       const { data, error } = await supabase.from("items").select("*").eq("id", itemId).single();
       if (error) throw error;
       return data;
+    },
+  });
+
+  // The same product kept somewhere else is its own row — show them together.
+  const { data: siblings } = useQuery({
+    queryKey: ["item-places", household?.id, item ? productKey(item) : null],
+    enabled: Boolean(household && item),
+    queryFn: async () => {
+      const query = supabase.from("items").select("*").eq("household_id", household!.id);
+      const { data, error } = item!.barcode
+        ? await query.eq("barcode", item!.barcode)
+        : await query.ilike("name", item!.name);
+      if (error) throw error;
+      return sortByProductThenLocation((data ?? []) as Item[]).filter((row) => row.id !== itemId);
     },
   });
 
