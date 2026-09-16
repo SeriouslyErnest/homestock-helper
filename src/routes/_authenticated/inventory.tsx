@@ -71,13 +71,26 @@ function InventoryPage() {
   }
 
   async function apply(item: Item, delta: number) {
-    await supabase.rpc("adjust_item_quantity", { _item_id: item.id, _delta: delta });
+    const { error } = await supabase.rpc("adjust_item_quantity", {
+      _item_id: item.id,
+      _delta: delta,
+    });
     queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
     queryClient.invalidateQueries({ queryKey: ["item", item.id] });
+    if (error) {
+      toast.error(`Couldn't update ${item.name}. Check your connection and try again.`);
+      return false;
+    }
+    return true;
   }
 
   async function adjust(item: Item, delta: number) {
-    await apply(item, delta);
+    if (busyId) return;
+    setBusyId(item.id);
+    const ok = await apply(item, delta);
+    setBusyId(null);
+    // Only offer Undo once the change actually landed on the server.
+    if (!ok) return;
     toast(delta < 0 ? `Took one ${item.name}` : `Added one ${item.name}`, {
       action: { label: "Undo", onClick: () => void apply(item, -delta) },
       duration: 5000,
