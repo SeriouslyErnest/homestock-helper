@@ -250,7 +250,7 @@ function InventoryPage() {
               src={item.image_url}
               alt=""
               loading="lazy"
-              className="h-full w-full rounded-xl object-contain"
+              className="block h-full max-h-full w-full max-w-full object-contain"
             />
           ) : (
             categoryEmoji(item.category)
@@ -264,7 +264,7 @@ function InventoryPage() {
                 params={{ itemId: item.id }}
                 className="block rounded-2xl border border-border bg-card p-3"
               >
-                <div className="mb-2 grid h-20 w-full place-items-center rounded-xl bg-surface-2 text-3xl">
+                <div className="mb-2 grid h-20 w-full place-items-center overflow-hidden rounded-xl bg-surface-2 text-3xl">
                   {thumb}
                 </div>
                 <strong className="block truncate text-sm">
@@ -294,7 +294,7 @@ function InventoryPage() {
               <Link
                 to="/item/$itemId"
                 params={{ itemId: item.id }}
-                className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-surface-2 text-2xl"
+                className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-surface-2 text-2xl"
               >
                 {thumb}
               </Link>
