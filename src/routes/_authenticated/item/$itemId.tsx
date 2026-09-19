@@ -222,9 +222,13 @@ function ItemPage() {
       }
     >
       <div className="mb-4 flex items-center gap-4 rounded-2xl border border-border bg-card p-4">
-        <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-surface-2 text-4xl">
+        <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface-2 text-4xl">
           {item.image_url ? (
-            <img src={item.image_url} alt="" className="h-full w-full rounded-2xl object-contain" />
+            <img
+              src={item.image_url}
+              alt=""
+              className="block h-full max-h-full w-full max-w-full object-contain"
+            />
           ) : (
             (CATEGORIES.find((c) => c.id === item.category)?.emoji ?? "📦")
           )}

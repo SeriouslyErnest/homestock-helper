@@ -112,11 +112,13 @@ function AddPage() {
       {search.name && (
         <div className="mb-4 flex items-center gap-3 rounded-2xl bg-success-soft p-3.5 text-success">
           {search.image && (
-            <img
-              src={search.image}
-              alt=""
-              className="h-10 w-10 rounded-xl bg-white object-contain"
-            />
+            <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-card">
+              <img
+                src={search.image}
+                alt=""
+                className="block h-full max-h-full w-full max-w-full object-contain"
+              />
+            </span>
           )}
           <div className="text-sm">
             <strong className="block">{search.name}</strong>
