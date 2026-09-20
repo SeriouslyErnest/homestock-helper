@@ -36,6 +36,15 @@ export const Route = createFileRoute("/_authenticated/add")({
   component: AddPage,
 });
 
+// Date N days from now, in the user's own timezone, as yyyy-mm-dd for the date input.
+function quickExpiry(days: number) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${month}-${day}`;
+}
+
 function AddPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
