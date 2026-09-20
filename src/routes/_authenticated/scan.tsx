@@ -172,11 +172,14 @@ function ScanPage() {
         </button>
       </form>
 
-      <p className="mt-4 text-center text-xs text-muted-foreground">
-        New products are saved to your shared cache, so the next scan is instant.{" "}
-        <Link to="/add" className="font-semibold text-brand">
-          Add without a barcode
-        </Link>
+      <Link
+        to="/add"
+        className="mt-4 block rounded-2xl border border-border bg-card py-4 text-center text-base font-semibold text-brand active:bg-surface-2"
+      >
+        Add without a barcode
+      </Link>
+      <p className="mt-2 text-center text-xs text-muted-foreground">
+        New products are saved to your shared cache, so the next scan is instant.
       </p>
     </AppShell>
   );
