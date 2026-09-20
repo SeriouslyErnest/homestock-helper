@@ -8,6 +8,7 @@ import {
   CATEGORIES,
   categoryEmoji,
   formatLocalDate,
+  isExpiringInDays,
   isExpiringSoon,
   isLow,
   productKey,
@@ -44,6 +45,9 @@ function InventoryPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("All");
+  // Low-stock and expiring filters combine, so you can see either or both.
+  const [showLow, setShowLow] = useState(false);
+  const [showExpiring, setShowExpiring] = useState(false);
   const [view, setView] = useState<"list" | "cards">("list");
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -55,8 +59,12 @@ function InventoryPage() {
 
   const filtered = useMemo(() => {
     let list = items ?? [];
-    if (category === "Low") list = list.filter((i) => isLow(i) || i.quantity <= 0);
-    else if (category !== "All") list = list.filter((i) => i.category === category);
+    if (showLow || showExpiring) {
+      list = list.filter(
+        (i) =>
+          (showLow && (isLow(i) || i.quantity <= 0)) || (showExpiring && isExpiringSoon(i)),
+      );
+    } else if (category !== "All") list = list.filter((i) => i.category === category);
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       list = list.filter(
@@ -65,7 +73,7 @@ function InventoryPage() {
     }
     // Same product in two places sits together, so "Milk (Fridge)" and "Milk (Garage)" read as one thing.
     return sortByProductThenLocation(list);
-  }, [items, search, category]);
+  }, [items, search, category, showLow, showExpiring]);
 
   /** How many rows and how much stock each product has across every place. */
   const spread = useMemo(() => {
@@ -78,7 +86,12 @@ function InventoryPage() {
     return map;
   }, [items]);
 
-  const attention = (items ?? []).filter((i) => isLow(i) || i.quantity <= 0).length;
+  // Needs attention = out / below minimum, or expiring within 3 days.
+  const attention = (items ?? []).filter(
+    (i) => isLow(i) || i.quantity <= 0 || isExpiringInDays(i, 3),
+  ).length;
+  // Expiring within a day gets its own card so it can't be missed.
+  const expiringNow = (items ?? []).filter((i) => isExpiringInDays(i, 1)).length;
 
   function switchView(v: "list" | "cards") {
     setView(v);
