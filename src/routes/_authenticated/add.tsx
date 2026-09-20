@@ -36,6 +36,15 @@ export const Route = createFileRoute("/_authenticated/add")({
   component: AddPage,
 });
 
+// Date N days from now, in the user's own timezone, as yyyy-mm-dd for the date input.
+function quickExpiry(days: number) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${month}-${day}`;
+}
+
 function AddPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
@@ -222,6 +231,28 @@ function AddPage() {
               onChange={(e) => setExpires(e.target.value)}
               className={field}
             />
+            <div className="mt-2 flex gap-2">
+              {[3, 5, 14].map((d) => {
+                const target = quickExpiry(d);
+                const active = expires === target;
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setExpires(active ? "" : target)}
+                    aria-pressed={active}
+                    className={
+                      "h-10 flex-1 rounded-2xl border text-sm font-bold outline-none focus-visible:ring-2 focus-visible:ring-ring " +
+                      (active
+                        ? "border-brand bg-brand-soft text-brand"
+                        : "border-border bg-card text-muted-foreground active:bg-surface-2")
+                    }
+                  >
+                    {d} days
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <div>
             <label htmlFor="min" className={label}>
