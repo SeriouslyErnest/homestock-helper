@@ -140,6 +140,7 @@
   --warning: oklch(0.585 0.115 65);
   --warning-soft: oklch(0.95 0.035 85);
   --danger-soft: oklch(0.95 0.03 27);
+}
 
 .theme-dark {
   color-scheme: dark;
