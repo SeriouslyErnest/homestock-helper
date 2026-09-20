@@ -8,6 +8,7 @@ import {
   CATEGORIES,
   categoryEmoji,
   formatLocalDate,
+  isExpiringInDays,
   isExpiringSoon,
   isLow,
   productKey,
@@ -44,6 +45,9 @@ function InventoryPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("All");
+  // Low-stock and expiring filters combine, so you can see either or both.
+  const [showLow, setShowLow] = useState(false);
+  const [showExpiring, setShowExpiring] = useState(false);
   const [view, setView] = useState<"list" | "cards">("list");
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -55,8 +59,12 @@ function InventoryPage() {
 
   const filtered = useMemo(() => {
     let list = items ?? [];
-    if (category === "Low") list = list.filter((i) => isLow(i) || i.quantity <= 0);
-    else if (category !== "All") list = list.filter((i) => i.category === category);
+    if (showLow || showExpiring) {
+      list = list.filter(
+        (i) =>
+          (showLow && (isLow(i) || i.quantity <= 0)) || (showExpiring && isExpiringSoon(i)),
+      );
+    } else if (category !== "All") list = list.filter((i) => i.category === category);
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       list = list.filter(
@@ -65,7 +73,7 @@ function InventoryPage() {
     }
     // Same product in two places sits together, so "Milk (Fridge)" and "Milk (Garage)" read as one thing.
     return sortByProductThenLocation(list);
-  }, [items, search, category]);
+  }, [items, search, category, showLow, showExpiring]);
 
   /** How many rows and how much stock each product has across every place. */
   const spread = useMemo(() => {
@@ -78,7 +86,12 @@ function InventoryPage() {
     return map;
   }, [items]);
 
-  const attention = (items ?? []).filter((i) => isLow(i) || i.quantity <= 0).length;
+  // Needs attention = out / below minimum, or expiring within 3 days.
+  const attention = (items ?? []).filter(
+    (i) => isLow(i) || i.quantity <= 0 || isExpiringInDays(i, 3),
+  ).length;
+  // Expiring within a day gets its own card so it can't be missed.
+  const expiringNow = (items ?? []).filter((i) => isExpiringInDays(i, 1)).length;
 
   function switchView(v: "list" | "cards") {
     setView(v);
@@ -112,7 +125,13 @@ function InventoryPage() {
     });
   }
 
-  const chips = ["All", "Low", ...CATEGORIES.map((c) => c.id)];
+  const chips = CATEGORIES.map((c) => c.id);
+
+  function pickCategory(c: string) {
+    setCategory(c);
+    setShowLow(false);
+    setShowExpiring(false);
+  }
 
   return (
     <AppShell
@@ -140,34 +159,90 @@ function InventoryPage() {
     >
       <div
         className="mb-3 flex max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1"
-        aria-label="Inventory categories"
+        aria-label="Inventory filters"
       >
+        <button
+          onClick={() => pickCategory("All")}
+          className={`rounded-full border px-3.5 py-2 text-sm whitespace-nowrap ${
+            category === "All" && !showLow && !showExpiring
+              ? "border-transparent bg-brand-soft font-bold text-brand"
+              : "border-border bg-card text-muted-foreground"
+          }`}
+        >
+          All items
+        </button>
+        <button
+          onClick={() => {
+            setShowLow((v) => !v);
+            setCategory("All");
+          }}
+          aria-pressed={showLow}
+          className={`rounded-full border px-3.5 py-2 text-sm whitespace-nowrap ${
+            showLow
+              ? "border-transparent bg-warning-soft font-bold text-warning"
+              : "border-border bg-card text-muted-foreground"
+          }`}
+        >
+          ⚠ Low
+        </button>
+        <button
+          onClick={() => {
+            setShowExpiring((v) => !v);
+            setCategory("All");
+          }}
+          aria-pressed={showExpiring}
+          className={`rounded-full border px-3.5 py-2 text-sm whitespace-nowrap ${
+            showExpiring
+              ? "border-transparent bg-danger-soft font-bold text-destructive"
+              : "border-border bg-card text-muted-foreground"
+          }`}
+        >
+          ⏳ Expiring
+        </button>
         {chips.map((c) => (
           <button
             key={c}
-            onClick={() => setCategory(c)}
+            onClick={() => pickCategory(c)}
             className={`rounded-full border px-3.5 py-2 text-sm whitespace-nowrap ${
-              category === c
+              category === c && !showLow && !showExpiring
                 ? "border-transparent bg-brand-soft font-bold text-brand"
                 : "border-border bg-card text-muted-foreground"
             }`}
           >
-            {c === "All" ? "All items" : c === "Low" ? "⚠ Low" : `${categoryEmoji(c)} ${c}`}
+            {`${categoryEmoji(c)} ${c}`}
           </button>
         ))}
       </div>
 
-      <div className="mb-4 grid grid-cols-2 gap-2.5">
-        <div className="rounded-2xl bg-success-soft p-3.5 text-success">
+      <div className="mb-4 grid grid-cols-3 gap-2.5">
+        <div className="rounded-2xl bg-success-soft p-3 text-success">
           <strong className="block text-xl">{items?.length ?? 0}</strong>
           <span className="text-xs font-bold">items tracked</span>
         </div>
-        <div
-          className={`rounded-2xl p-3.5 ${attention > 0 ? "bg-warning-soft text-warning" : "bg-success-soft text-success"}`}
+        <button
+          onClick={() => {
+            const both = showLow && showExpiring;
+            setShowLow(!both);
+            setShowExpiring(!both);
+            setCategory("All");
+          }}
+          aria-pressed={showLow && showExpiring}
+          className={`rounded-2xl p-3 text-left ${attention > 0 ? "bg-warning-soft text-warning" : "bg-success-soft text-success"}`}
         >
           <strong className="block text-xl">{attention}</strong>
           <span className="text-xs font-bold">need attention</span>
-        </div>
+        </button>
+        <button
+          onClick={() => {
+            setShowExpiring((v) => !v);
+            setCategory("All");
+          }}
+          aria-pressed={showExpiring && !showLow}
+          className={`rounded-2xl p-3 text-left ${expiringNow > 0 ? "bg-danger-soft text-destructive" : "bg-success-soft text-success"}`}
+        >
+          <strong className="block text-xl">{expiringNow}</strong>
+          <span className="text-xs font-bold">expiring soon</span>
+        </button>
       </div>
 
       <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">

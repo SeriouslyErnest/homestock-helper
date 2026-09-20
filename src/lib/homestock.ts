@@ -119,6 +119,12 @@ export function isExpiringSoon(item: Item): boolean {
   return daysUntilExpiry(item.expires_on) <= 14;
 }
 
+/** True when the item expires within the given number of days (expired counts). */
+export function isExpiringInDays(item: Item, days: number): boolean {
+  if (!item.expires_on) return false;
+  return daysUntilExpiry(item.expires_on) <= days;
+}
+
 /**
  * The same product kept in two places is two rows. This key says "same product",
  * so the inventory can cluster them and the item page can show a combined total.
