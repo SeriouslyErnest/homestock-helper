@@ -28,7 +28,7 @@ export function maskEmail(email: string): string {
 
 /** Constant-time comparison for the hidden console path. */
 export function matchesConsoleRoute(candidate: string): boolean {
-  const expected = process.env["ADMIN_CONSOLE_ROUTE_ID"];
+  const expected = process.env["ADMIN_CONSOLE_PATH"];
   if (!expected) return false;
   const a = Buffer.from(candidate);
   const b = Buffer.from(expected);
