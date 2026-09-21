@@ -355,7 +355,7 @@ function InventoryPage() {
               : "grid gap-2"
         }
       >
-        {filtered.map((item, index) => {
+        {filtered.map((item) => {
           const status = statusOf(item);
           const key = productKey(item);
           const group = spread.get(key);
