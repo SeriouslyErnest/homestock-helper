@@ -488,10 +488,15 @@ export const adminClaimConsole = createServerFn({ method: "POST" })
       .from("admin_users")
       .select("user_id", { count: "exact", head: true });
     if ((count ?? 0) > 0) throw new Error("This console already has an operator.");
-    const { error } = await supabaseAdmin
-      .from("admin_users")
-      .insert({ user_id: context.userId, role: "SUPER_ADMIN", note: "First operator" });
-    if (error) throw error;
+    // bootstrap=true is guarded by a unique index, so only one claim can ever win,
+    // even if two people hit this at the same moment.
+    const { error } = await supabaseAdmin.from("admin_users").insert({
+      user_id: context.userId,
+      role: "SUPER_ADMIN",
+      note: "First operator",
+      bootstrap: true,
+    });
+    if (error) throw new Error("This console already has an operator.");
     await writeAudit({
       adminUserId: context.userId,
       actionType: "admin.claimed",
