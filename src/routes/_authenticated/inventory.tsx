@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { LayoutGrid, List, Plus, Minus } from "lucide-react";
+import { AlignJustify, LayoutGrid, List, Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import {
@@ -12,7 +12,9 @@ import {
   isExpiringSoon,
   isLow,
   productKey,
+  sortByExpiry,
   sortByProductThenLocation,
+  sortByRecentlyUpdated,
   useHousehold,
   useItems,
   type Item,
@@ -48,13 +50,17 @@ function InventoryPage() {
   // Low-stock and expiring filters combine, so you can see either or both.
   const [showLow, setShowLow] = useState(false);
   const [showExpiring, setShowExpiring] = useState(false);
-  const [view, setView] = useState<"list" | "cards">("list");
+  const [view, setView] = useState<"list" | "cards" | "compact">("list");
+  const [sort, setSort] = useState<"name" | "expiry" | "updated">("name");
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  // Read the remembered view after mount so the first render always matches the server.
+  // Read the remembered view/sort after mount so the first render always matches the server.
   useEffect(() => {
     const stored = localStorage.getItem("homestock-view");
-    if (stored === "list" || stored === "cards") setView(stored);
+    if (stored === "list" || stored === "cards" || stored === "compact") setView(stored);
+    const storedSort = localStorage.getItem("homestock-sort");
+    if (storedSort === "name" || storedSort === "expiry" || storedSort === "updated")
+      setSort(storedSort);
   }, []);
 
   const filtered = useMemo(() => {
@@ -72,8 +78,10 @@ function InventoryPage() {
       );
     }
     // Same product in two places sits together, so "Milk (Fridge)" and "Milk (Garage)" read as one thing.
+    if (sort === "expiry") return sortByExpiry(list);
+    if (sort === "updated") return sortByRecentlyUpdated(list);
     return sortByProductThenLocation(list);
-  }, [items, search, category, showLow, showExpiring]);
+  }, [items, search, category, showLow, showExpiring, sort]);
 
   /** How many rows and how much stock each product has across every place. */
   const spread = useMemo(() => {
@@ -93,9 +101,14 @@ function InventoryPage() {
   // Expiring within a day gets its own card so it can't be missed.
   const expiringNow = (items ?? []).filter((i) => isExpiringInDays(i, 1)).length;
 
-  function switchView(v: "list" | "cards") {
+  function switchView(v: "list" | "cards" | "compact") {
     setView(v);
     localStorage.setItem("homestock-view", v);
+  }
+
+  function switchSort(s: "name" | "expiry" | "updated") {
+    setSort(s);
+    localStorage.setItem("homestock-sort", s);
   }
 
   async function apply(item: Item, delta: number) {
@@ -252,24 +265,43 @@ function InventoryPage() {
             {filtered.length}
           </span>
         </div>
-        <div
-          className="flex rounded-xl border border-border bg-surface-2 p-1"
-          aria-label="Choose inventory view"
-        >
-          <button
-            onClick={() => switchView("list")}
-            aria-label="List view"
-            className={`grid h-8 w-9 place-items-center rounded-lg ${view === "list" ? "bg-card text-brand shadow-sm" : "text-muted-foreground"}`}
+        <div className="flex shrink-0 items-center gap-2">
+          <select
+            value={sort}
+            onChange={(e) => switchSort(e.target.value as "name" | "expiry" | "updated")}
+            aria-label="Sort inventory by"
+            className="h-9 max-w-[7.5rem] rounded-xl border border-border bg-surface-2 px-2 text-xs outline-none focus:border-brand"
           >
-            <List size={16} />
-          </button>
-          <button
-            onClick={() => switchView("cards")}
-            aria-label="Card view"
-            className={`grid h-8 w-9 place-items-center rounded-lg ${view === "cards" ? "bg-card text-brand shadow-sm" : "text-muted-foreground"}`}
+            <option value="name">Sort: Name</option>
+            <option value="expiry">Sort: Expiry</option>
+            <option value="updated">Sort: Updated</option>
+          </select>
+          <div
+            className="flex rounded-xl border border-border bg-surface-2 p-1"
+            aria-label="Choose inventory view"
           >
-            <LayoutGrid size={16} />
-          </button>
+            <button
+              onClick={() => switchView("list")}
+              aria-label="Detailed list view"
+              className={`grid h-8 w-8 place-items-center rounded-lg ${view === "list" ? "bg-card text-brand shadow-sm" : "text-muted-foreground"}`}
+            >
+              <List size={16} />
+            </button>
+            <button
+              onClick={() => switchView("compact")}
+              aria-label="Compact list view"
+              className={`grid h-8 w-8 place-items-center rounded-lg ${view === "compact" ? "bg-card text-brand shadow-sm" : "text-muted-foreground"}`}
+            >
+              <AlignJustify size={16} />
+            </button>
+            <button
+              onClick={() => switchView("cards")}
+              aria-label="Card view"
+              className={`grid h-8 w-8 place-items-center rounded-lg ${view === "cards" ? "bg-card text-brand shadow-sm" : "text-muted-foreground"}`}
+            >
+              <LayoutGrid size={16} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -297,7 +329,15 @@ function InventoryPage() {
         </div>
       )}
 
-      <div className={view === "cards" ? "grid grid-cols-2 gap-2.5" : "grid gap-2"}>
+      <div
+        className={
+          view === "cards"
+            ? "grid grid-cols-2 gap-2.5"
+            : view === "compact"
+              ? "grid gap-1.5"
+              : "grid gap-2"
+        }
+      >
         {filtered.map((item, index) => {
           const status = statusOf(item);
           const key = productKey(item);
@@ -330,6 +370,64 @@ function InventoryPage() {
           ) : (
             categoryEmoji(item.category)
           );
+
+          if (view === "compact") {
+            return (
+              <article
+                key={item.id}
+                className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-1 rounded-xl border border-border bg-card px-2.5 py-1.5"
+              >
+                <Link to="/item/$itemId" params={{ itemId: item.id }} className="min-w-0">
+                  <strong className="block truncate text-sm">
+                    {item.name}
+                    {place && (
+                      <span className="font-normal text-muted-foreground"> ({place})</span>
+                    )}
+                  </strong>
+                  <div className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-[11px]">
+                    <span
+                      className={`shrink-0 font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}
+                    >
+                      {status.label}
+                    </span>
+                    {item.expires_on && (
+                      <span
+                        className={`truncate ${isExpiringSoon(item) ? "text-destructive" : "text-muted-foreground"}`}
+                      >
+                        · Exp {formatLocalDate(item.expires_on, { day: "numeric", month: "short" })}
+                      </span>
+                    )}
+                    {leadsGroup && (
+                      <span className="truncate text-muted-foreground">
+                        · {group?.total} in {group?.places} places
+                      </span>
+                    )}
+                  </div>
+                </Link>
+                <div className="flex shrink-0 items-center gap-0.5">
+                  <button
+                    onClick={() => adjust(item, -1)}
+                    disabled={item.quantity <= 0 || busyId === item.id}
+                    aria-label={`Use one ${item.name}`}
+                    className="grid h-9 w-9 place-items-center rounded-lg border border-border text-muted-foreground active:bg-surface-2 disabled:opacity-40"
+                  >
+                    <Minus size={15} />
+                  </button>
+                  <strong className="w-9 text-center text-base leading-none">
+                    {item.quantity}
+                  </strong>
+                  <button
+                    onClick={() => adjust(item, 1)}
+                    disabled={busyId === item.id}
+                    aria-label={`Restock one ${item.name}`}
+                    className="grid h-9 w-9 place-items-center rounded-lg border border-border text-muted-foreground active:bg-surface-2 disabled:opacity-40"
+                  >
+                    <Plus size={15} />
+                  </button>
+                </div>
+              </article>
+            );
+          }
 
           if (view === "cards") {
             return (
