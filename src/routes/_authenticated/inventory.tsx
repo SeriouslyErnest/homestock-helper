@@ -329,7 +329,15 @@ function InventoryPage() {
         </div>
       )}
 
-      <div className={view === "cards" ? "grid grid-cols-2 gap-2.5" : "grid gap-2"}>
+      <div
+        className={
+          view === "cards"
+            ? "grid grid-cols-2 gap-2.5"
+            : view === "compact"
+              ? "grid gap-1.5"
+              : "grid gap-2"
+        }
+      >
         {filtered.map((item, index) => {
           const status = statusOf(item);
           const key = productKey(item);
