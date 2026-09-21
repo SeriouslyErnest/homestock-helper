@@ -452,7 +452,7 @@ function InventoryPage() {
                 key={item.id}
                 to="/item/$itemId"
                 params={{ itemId: item.id }}
-                className="block rounded-2xl border border-border bg-card p-3"
+                className="block min-w-0 rounded-2xl border border-border bg-card p-3"
               >
                 <div className="mb-2 grid h-20 w-full place-items-center overflow-hidden rounded-xl bg-surface-2 text-3xl">
                   {thumb}

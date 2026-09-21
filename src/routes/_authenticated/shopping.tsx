@@ -328,7 +328,7 @@ function ShoppingPage() {
             {suggested.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center gap-3 rounded-2xl border border-border bg-card p-2.5"
+                className="flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-card p-2.5"
               >
                 <div className="grid h-10 w-10 place-items-center rounded-xl bg-warning-soft text-xl">
                   {categoryEmoji(item.category)}
@@ -366,7 +366,7 @@ function ShoppingPage() {
           {pending.map((entry) => (
             <div
               key={entry.id}
-              className="flex items-center gap-3 rounded-2xl border border-border bg-card p-2.5"
+              className="flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-card p-2.5"
             >
               <button
                 onClick={() => toggle(entry)}
@@ -391,7 +391,7 @@ function ShoppingPage() {
                   </div>
                 )}
                 {entry.note && (
-                  <p className="mt-1 rounded-lg bg-warning-soft px-2 py-1 text-xs font-semibold text-warning">
+                  <p className="mt-1 rounded-lg bg-warning-soft px-2 py-1 text-xs font-semibold break-words text-warning">
                     {entry.note}
                   </p>
                 )}
@@ -423,7 +423,7 @@ function ShoppingPage() {
             {bought.map((entry) => (
               <div
                 key={entry.id}
-                className="flex items-center gap-3 rounded-2xl border border-border bg-card p-2.5"
+                className="flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-card p-2.5"
               >
                 <button
                   onClick={() => toggle(entry)}

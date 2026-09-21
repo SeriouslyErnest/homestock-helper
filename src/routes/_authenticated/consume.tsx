@@ -125,7 +125,7 @@ function ConsumePage() {
         {list.map((item) => (
           <article
             key={item.id}
-            className="flex items-center gap-3 rounded-2xl border border-border bg-card p-2.5"
+            className="flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-card p-2.5"
           >
             <Link
               to="/item/$itemId"
