@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LogoMark } from "@/components/logo";
 import { useHouseholds } from "@/lib/homestock";
+import { syncAccountDirectory } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthGate,
@@ -28,6 +29,9 @@ function AuthGate() {
         navigate({ to: "/auth", replace: true });
       } else {
         setReady(true);
+        // Keeps the operations directory current without ever storing a plain
+        // email address in the app's own tables.
+        void syncAccountDirectory().catch(() => undefined);
       }
     });
     const {

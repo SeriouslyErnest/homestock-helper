@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Ban, Check, Copy, LogOut, RotateCcw, UserMinus, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
+import { PromoCard } from "@/components/promo-code";
 import {
   createHousehold,
   planLimitMessage,
@@ -530,6 +531,8 @@ function MorePage() {
           {joinMessage}
         </p>
       </section>
+
+      <PromoCard />
 
       <section className="rounded-2xl border border-border bg-card p-4">
         <h2 className="mb-2 text-sm font-bold">Account</h2>
