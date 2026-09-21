@@ -248,6 +248,9 @@ export const adminGrantAccess = createServerFn({ method: "POST" })
     if (data.days === null && role !== "SUPER_ADMIN") {
       throw new Error("Only a super admin can grant access with no end date");
     }
+    if (data.days !== null && (!Number.isInteger(data.days) || data.days < 1 || data.days > 3650)) {
+      throw new Error("Length must be a whole number of days between 1 and 3650");
+    }
     const { writeAudit } = await import("./admin.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const endsAt =
@@ -356,6 +359,19 @@ export const adminCreatePromotion = createServerFn({ method: "POST" })
     const code = data.code.trim().toUpperCase();
     if (code.length < 3) throw new Error("Code must be at least 3 characters");
     if (!data.campaignName.trim()) throw new Error("A campaign name is required");
+    if (
+      !Number.isInteger(data.durationDays) ||
+      data.durationDays < 1 ||
+      data.durationDays > 3650
+    ) {
+      throw new Error("Length must be a whole number of days between 1 and 3650");
+    }
+    if (
+      data.maxRedemptions !== null &&
+      (!Number.isInteger(data.maxRedemptions) || data.maxRedemptions < 1)
+    ) {
+      throw new Error("Maximum redemptions must be a whole number of 1 or more");
+    }
     const { writeAudit } = await import("./admin.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("promotions").insert({
@@ -472,10 +488,15 @@ export const adminClaimConsole = createServerFn({ method: "POST" })
       .from("admin_users")
       .select("user_id", { count: "exact", head: true });
     if ((count ?? 0) > 0) throw new Error("This console already has an operator.");
-    const { error } = await supabaseAdmin
-      .from("admin_users")
-      .insert({ user_id: context.userId, role: "SUPER_ADMIN", note: "First operator" });
-    if (error) throw error;
+    // bootstrap=true is guarded by a unique index, so only one claim can ever win,
+    // even if two people hit this at the same moment.
+    const { error } = await supabaseAdmin.from("admin_users").insert({
+      user_id: context.userId,
+      role: "SUPER_ADMIN",
+      note: "First operator",
+      bootstrap: true,
+    });
+    if (error) throw new Error("This console already has an operator.");
     await writeAudit({
       adminUserId: context.userId,
       actionType: "admin.claimed",
