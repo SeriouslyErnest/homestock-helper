@@ -24,9 +24,9 @@ export const Route = createFileRoute("/ops/$")({
   component: Console,
   head: () => ({
     meta: [
-      { title: "Operations" },
+      { title: "Not found" },
       { name: "robots", content: "noindex, nofollow" },
-      { name: "description", content: "Internal operations console." },
+      { name: "description", content: "Page not found." },
     ],
   }),
 });
