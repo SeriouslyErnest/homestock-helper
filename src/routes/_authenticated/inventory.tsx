@@ -265,24 +265,43 @@ function InventoryPage() {
             {filtered.length}
           </span>
         </div>
-        <div
-          className="flex rounded-xl border border-border bg-surface-2 p-1"
-          aria-label="Choose inventory view"
-        >
-          <button
-            onClick={() => switchView("list")}
-            aria-label="List view"
-            className={`grid h-8 w-9 place-items-center rounded-lg ${view === "list" ? "bg-card text-brand shadow-sm" : "text-muted-foreground"}`}
+        <div className="flex shrink-0 items-center gap-2">
+          <select
+            value={sort}
+            onChange={(e) => switchSort(e.target.value as "name" | "expiry" | "updated")}
+            aria-label="Sort inventory by"
+            className="h-9 max-w-[7.5rem] rounded-xl border border-border bg-surface-2 px-2 text-xs outline-none focus:border-brand"
           >
-            <List size={16} />
-          </button>
-          <button
-            onClick={() => switchView("cards")}
-            aria-label="Card view"
-            className={`grid h-8 w-9 place-items-center rounded-lg ${view === "cards" ? "bg-card text-brand shadow-sm" : "text-muted-foreground"}`}
+            <option value="name">Sort: Name</option>
+            <option value="expiry">Sort: Expiry</option>
+            <option value="updated">Sort: Updated</option>
+          </select>
+          <div
+            className="flex rounded-xl border border-border bg-surface-2 p-1"
+            aria-label="Choose inventory view"
           >
-            <LayoutGrid size={16} />
-          </button>
+            <button
+              onClick={() => switchView("list")}
+              aria-label="Detailed list view"
+              className={`grid h-8 w-8 place-items-center rounded-lg ${view === "list" ? "bg-card text-brand shadow-sm" : "text-muted-foreground"}`}
+            >
+              <List size={16} />
+            </button>
+            <button
+              onClick={() => switchView("compact")}
+              aria-label="Compact list view"
+              className={`grid h-8 w-8 place-items-center rounded-lg ${view === "compact" ? "bg-card text-brand shadow-sm" : "text-muted-foreground"}`}
+            >
+              <AlignJustify size={16} />
+            </button>
+            <button
+              onClick={() => switchView("cards")}
+              aria-label="Card view"
+              className={`grid h-8 w-8 place-items-center rounded-lg ${view === "cards" ? "bg-card text-brand shadow-sm" : "text-muted-foreground"}`}
+            >
+              <LayoutGrid size={16} />
+            </button>
+          </div>
         </div>
       </div>
 
