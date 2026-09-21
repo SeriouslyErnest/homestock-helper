@@ -101,9 +101,14 @@ function InventoryPage() {
   // Expiring within a day gets its own card so it can't be missed.
   const expiringNow = (items ?? []).filter((i) => isExpiringInDays(i, 1)).length;
 
-  function switchView(v: "list" | "cards") {
+  function switchView(v: "list" | "cards" | "compact") {
     setView(v);
     localStorage.setItem("homestock-view", v);
+  }
+
+  function switchSort(s: "name" | "expiry" | "updated") {
+    setSort(s);
+    localStorage.setItem("homestock-sort", s);
   }
 
   async function apply(item: Item, delta: number) {
