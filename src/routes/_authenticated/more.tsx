@@ -531,6 +531,8 @@ function MorePage() {
         </p>
       </section>
 
+      <PromoCard />
+
       <section className="rounded-2xl border border-border bg-card p-4">
         <h2 className="mb-2 text-sm font-bold">Account</h2>
         <p className="mb-3 truncate text-sm text-muted-foreground">{email}</p>
