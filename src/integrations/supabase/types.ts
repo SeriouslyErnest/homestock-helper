@@ -79,18 +79,21 @@ export type Database = {
       }
       admin_users: {
         Row: {
+          bootstrap: boolean | null
           created_at: string
           note: string | null
           role: string
           user_id: string
         }
         Insert: {
+          bootstrap?: boolean | null
           created_at?: string
           note?: string | null
           role?: string
           user_id: string
         }
         Update: {
+          bootstrap?: boolean | null
           created_at?: string
           note?: string | null
           role?: string
