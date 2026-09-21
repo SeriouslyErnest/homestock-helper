@@ -19,7 +19,7 @@ import {
   adminSetPromotionStatus,
 } from "@/lib/admin.functions";
 
-export const Route = createFileRoute("/ops/$routeId")({
+export const Route = createFileRoute("/ops/$")({
   ssr: false,
   component: Console,
   head: () => ({
@@ -54,7 +54,7 @@ function fmt(value: string | null): string {
 }
 
 function Console() {
-  const { routeId } = Route.useParams();
+  const routeId = Route.useParams()._splat ?? "";
   const [tab, setTab] = useState<Tab>("dashboard");
 
   const session = useQuery({
