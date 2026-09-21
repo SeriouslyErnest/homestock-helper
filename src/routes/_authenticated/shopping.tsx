@@ -124,10 +124,19 @@ function ShoppingPage() {
         }
         // Bought something tracked? Restock the inventory item automatically.
         if (entry.item_id && delta !== 0) {
-          await supabase.rpc("adjust_item_quantity", {
+          const { error: stockError } = await supabase.rpc("adjust_item_quantity", {
             _item_id: entry.item_id,
             _delta: delta,
           });
+          if (stockError) {
+            // Don't leave it ticked off with the stock untouched.
+            await supabase
+              .from("shopping_items")
+              .update({ status: "pending", bought_at: null, stock_applied: 0 })
+              .eq("id", entry.id);
+            toast.error("Ticked off, but the stock count didn't update. Try again.");
+            return;
+          }
         }
       } else {
         // Take back exactly what ticking it off added, even if the quantity changed since.
@@ -141,10 +150,19 @@ function ShoppingPage() {
           return;
         }
         if (entry.item_id && applied !== 0) {
-          await supabase.rpc("adjust_item_quantity", {
+          const { error: stockError } = await supabase.rpc("adjust_item_quantity", {
             _item_id: entry.item_id,
             _delta: -applied,
           });
+          if (stockError) {
+            // Put it back as bought so the list and the stock stay in step.
+            await supabase
+              .from("shopping_items")
+              .update({ status: "bought", bought_at: nowUtc(), stock_applied: applied })
+              .eq("id", entry.id);
+            toast.error("Couldn't take that back off the stock count. Try again.");
+            return;
+          }
         }
       }
       invalidate();
