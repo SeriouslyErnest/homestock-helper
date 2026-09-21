@@ -145,6 +145,32 @@ export function sortByProductThenLocation<T extends Pick<Item, "barcode" | "name
   );
 }
 
+/** Sort so the soonest-to-expire items come first; items with no expiry go last. */
+export function sortByExpiry<
+  T extends Pick<Item, "expires_on" | "barcode" | "name" | "location">,
+>(items: T[]): T[] {
+  const days = (i: T): number =>
+    i.expires_on ? daysUntilExpiry(i.expires_on) : Number.POSITIVE_INFINITY;
+  return [...items].sort(
+    (a, b) =>
+      days(a) - days(b) ||
+      a.name.localeCompare(b.name) ||
+      (a.location ?? "").localeCompare(b.location ?? ""),
+  );
+}
+
+/** Sort so the most recently touched items come first. */
+export function sortByRecentlyUpdated<
+  T extends Pick<Item, "updated_at" | "barcode" | "name" | "location">,
+>(items: T[]): T[] {
+  return [...items].sort(
+    (a, b) =>
+      b.updated_at.localeCompare(a.updated_at) ||
+      a.name.localeCompare(b.name) ||
+      (a.location ?? "").localeCompare(b.location ?? ""),
+  );
+}
+
 /** The signed-in user's own profile (for the avatar and member list). */
 export function useProfile() {
   return useQuery({
