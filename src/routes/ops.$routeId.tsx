@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import {
   adminAccountDetail,
   adminAuditLog,
+  adminClaimConsole,
+  adminConsoleUnclaimed,
   adminCreatePromotion,
   adminGrantAccess,
   adminListAccounts,
@@ -66,16 +68,7 @@ function Console() {
   }
 
   if (session.isError) {
-    return (
-      <div className="grid min-h-dvh place-items-center px-6 text-center">
-        <div>
-          <h1 className="text-xl font-semibold">Not found</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            This page does not exist, or your account is not an operator.
-          </p>
-        </div>
-      </div>
-    );
+    return <Locked routeId={routeId} onClaimed={() => void session.refetch()} />;
   }
 
   const role = session.data.role;
@@ -117,6 +110,43 @@ function Console() {
         {tab === "plans" && <Plans routeId={routeId} />}
         {tab === "audit" && <Audit routeId={routeId} />}
       </main>
+    </div>
+  );
+}
+
+function Locked({ routeId, onClaimed }: { routeId: string; onClaimed: () => void }) {
+  const unclaimed = useQuery({
+    queryKey: ["admin-unclaimed", routeId],
+    retry: false,
+    queryFn: () => adminConsoleUnclaimed({ data: { routeId } }),
+  });
+  const claim = useMutation({
+    mutationFn: () => adminClaimConsole({ data: { routeId } }),
+    onSuccess: () => {
+      toast.success("You are now the operator of this console");
+      onClaimed();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="grid min-h-dvh place-items-center px-6 text-center">
+      <div>
+        <h1 className="text-xl font-semibold">Not found</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          This page does not exist, or your account is not an operator.
+        </p>
+        {unclaimed.data?.unclaimed && (
+          <button
+            type="button"
+            onClick={() => claim.mutate()}
+            disabled={claim.isPending}
+            className="mt-4 h-11 rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+          >
+            {claim.isPending ? "Claiming…" : "Claim this console"}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -456,3 +456,46 @@ export const adminSetPlanEnforcement = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+/**
+ * Break-glass bootstrap: the very first operator claims the console by signing
+ * in and visiting the secret address while no operators exist yet.
+ */
+export const adminClaimConsole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string }) => input)
+  .handler(async ({ data, context }) => {
+    const { matchesConsoleRoute, writeAudit } = await import("./admin.server");
+    if (!matchesConsoleRoute(data.routeId)) throw new Error("Not found");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { count } = await supabaseAdmin
+      .from("admin_users")
+      .select("user_id", { count: "exact", head: true });
+    if ((count ?? 0) > 0) throw new Error("This console already has an operator.");
+    const { error } = await supabaseAdmin
+      .from("admin_users")
+      .insert({ user_id: context.userId, role: "SUPER_ADMIN", note: "First operator" });
+    if (error) throw error;
+    await writeAudit({
+      adminUserId: context.userId,
+      actionType: "admin.claimed",
+      targetType: "admin",
+      targetId: context.userId,
+      reason: "First operator claimed the console",
+    });
+    return { ok: true };
+  });
+
+/** True when no operator exists yet, so the claim button can be offered. */
+export const adminConsoleUnclaimed = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string }) => input)
+  .handler(async ({ data }) => {
+    const { matchesConsoleRoute } = await import("./admin.server");
+    if (!matchesConsoleRoute(data.routeId)) return { unclaimed: false };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { count } = await supabaseAdmin
+      .from("admin_users")
+      .select("user_id", { count: "exact", head: true });
+    return { unclaimed: (count ?? 0) === 0 };
+  });
