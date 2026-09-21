@@ -94,6 +94,23 @@ function InventoryPage() {
     return map;
   }, [items]);
 
+  // The "3 in total · 2 places" note belongs on the first row of a product only.
+  // Sorting by expiry or updated can split a product's rows apart, so track the
+  // first appearance instead of comparing with the previous row.
+  const groupLeaders = useMemo(() => {
+    const seen = new Set<string>();
+    const leaders = new Set<string>();
+    for (const i of filtered) {
+      const key = productKey(i);
+      if (!seen.has(key)) {
+        seen.add(key);
+        leaders.add(i.id);
+      }
+    }
+    return leaders;
+  }, [filtered]);
+
+
   // Needs attention = out / below minimum, or expiring within 3 days.
   const attention = (items ?? []).filter(
     (i) => isLow(i) || i.quantity <= 0 || isExpiringInDays(i, 3),
