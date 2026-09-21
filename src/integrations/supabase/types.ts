@@ -14,6 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_directory: {
+        Row: {
+          display_name: string | null
+          email_hash: string
+          email_masked: string
+          first_seen_at: string
+          last_seen_at: string
+          user_id: string
+        }
+        Insert: {
+          display_name?: string | null
+          email_hash: string
+          email_masked: string
+          first_seen_at?: string
+          last_seen_at?: string
+          user_id: string
+        }
+        Update: {
+          display_name?: string | null
+          email_hash?: string
+          email_masked?: string
+          first_seen_at?: string
+          last_seen_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      admin_audit_log: {
+        Row: {
+          action_type: string
+          admin_user_id: string
+          after_json: Json | null
+          before_json: Json | null
+          created_at: string
+          id: string
+          reason: string | null
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action_type: string
+          admin_user_id: string
+          after_json?: Json | null
+          before_json?: Json | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action_type?: string
+          admin_user_id?: string
+          after_json?: Json | null
+          before_json?: Json | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
+      admin_users: {
+        Row: {
+          created_at: string
+          note: string | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          note?: string | null
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          note?: string | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       app_plans: {
         Row: {
           created_at: string
@@ -40,6 +124,63 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      entitlement_grants: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ends_at: string | null
+          id: string
+          promo_code: string | null
+          reason: string | null
+          revoked_at: string | null
+          source: string
+          starts_at: string
+          tier: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          promo_code?: string | null
+          reason?: string | null
+          revoked_at?: string | null
+          source: string
+          starts_at?: string
+          tier: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          promo_code?: string | null
+          reason?: string | null
+          revoked_at?: string | null
+          source?: string
+          starts_at?: string
+          tier?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entitlement_grants_promo_code_fkey"
+            columns: ["promo_code"]
+            isOneToOne: false
+            referencedRelation: "promotions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "entitlement_grants_tier_fkey"
+            columns: ["tier"]
+            isOneToOne: false
+            referencedRelation: "app_plans"
+            referencedColumns: ["tier"]
+          },
+        ]
       }
       household_join_requests: {
         Row: {
@@ -254,6 +395,98 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_redemptions: {
+        Row: {
+          code: string
+          created_at: string
+          grant_id: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          grant_id?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          grant_id?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_redemptions_code_fkey"
+            columns: ["code"]
+            isOneToOne: false
+            referencedRelation: "promotions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "promo_redemptions_grant_id_fkey"
+            columns: ["grant_id"]
+            isOneToOne: false
+            referencedRelation: "entitlement_grants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotions: {
+        Row: {
+          campaign_name: string
+          code: string
+          created_at: string
+          created_by: string | null
+          duration_days: number
+          ends_at: string | null
+          max_redemptions: number | null
+          per_account_limit: number
+          starts_at: string
+          status: string
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_name: string
+          code: string
+          created_at?: string
+          created_by?: string | null
+          duration_days?: number
+          ends_at?: string | null
+          max_redemptions?: number | null
+          per_account_limit?: number
+          starts_at?: string
+          status?: string
+          tier: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_name?: string
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          duration_days?: number
+          ends_at?: string | null
+          max_redemptions?: number | null
+          per_account_limit?: number
+          starts_at?: string
+          status?: string
+          tier?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotions_tier_fkey"
+            columns: ["tier"]
+            isOneToOne: false
+            referencedRelation: "app_plans"
+            referencedColumns: ["tier"]
+          },
+        ]
+      }
       shopping_items: {
         Row: {
           bought_at: string | null
@@ -372,7 +605,16 @@ export type Database = {
         Args: { _decision: string; _request_id: string }
         Returns: string
       }
+      effective_tier: { Args: { _user_id: string }; Returns: string }
       join_household_by_code: { Args: { _code: string }; Returns: string }
+      my_access: {
+        Args: never
+        Returns: {
+          ends_at: string
+          source: string
+          tier: string
+        }[]
+      }
       my_entitlements: { Args: never; Returns: Json }
       my_join_requests: {
         Args: never
@@ -401,6 +643,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      redeem_promo: { Args: { _code: string }; Returns: Json }
       request_household_join: { Args: { _code: string }; Returns: string }
     }
     Enums: {
