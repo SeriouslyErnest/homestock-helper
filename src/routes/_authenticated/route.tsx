@@ -28,6 +28,9 @@ function AuthGate() {
         navigate({ to: "/auth", replace: true });
       } else {
         setReady(true);
+        // Keeps the operations directory current without ever storing a plain
+        // email address in the app's own tables.
+        void syncAccountDirectory().catch(() => undefined);
       }
     });
     const {
