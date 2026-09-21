@@ -66,16 +66,7 @@ function Console() {
   }
 
   if (session.isError) {
-    return (
-      <div className="grid min-h-dvh place-items-center px-6 text-center">
-        <div>
-          <h1 className="text-xl font-semibold">Not found</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            This page does not exist, or your account is not an operator.
-          </p>
-        </div>
-      </div>
-    );
+    return <Locked routeId={routeId} onClaimed={() => void session.refetch()} />;
   }
 
   const role = session.data.role;
