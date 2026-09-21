@@ -20,7 +20,7 @@ import { Route as AuthenticatedMoreRouteImport } from './routes/_authenticated/m
 import { Route as AuthenticatedScanRouteImport } from './routes/_authenticated/scan'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedShoppingRouteImport } from './routes/_authenticated/shopping'
-import { Route as OpsRouteIdRouteImport } from './routes/ops.$routeId'
+import { Route as OpsSplatRouteImport } from './routes/ops.$'
 import { Route as AuthenticatedItemItemIdRouteImport } from './routes/_authenticated/item/$itemId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -77,9 +77,9 @@ const AuthenticatedShoppingRoute = AuthenticatedShoppingRouteImport.update({
   path: '/shopping',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const OpsRouteIdRoute = OpsRouteIdRouteImport.update({
-  id: '/ops/$routeId',
-  path: '/ops/$routeId',
+const OpsSplatRoute = OpsSplatRouteImport.update({
+  id: '/ops/$',
+  path: '/ops/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedItemItemIdRoute = AuthenticatedItemItemIdRouteImport.update({
@@ -99,7 +99,7 @@ export interface FileRoutesByFullPath {
   '/scan': typeof AuthenticatedScanRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/shopping': typeof AuthenticatedShoppingRoute
-  '/ops/$routeId': typeof OpsRouteIdRoute
+  '/ops/$': typeof OpsSplatRoute
   '/item/$itemId': typeof AuthenticatedItemItemIdRoute
 }
 export interface FileRoutesByTo {
@@ -113,7 +113,7 @@ export interface FileRoutesByTo {
   '/scan': typeof AuthenticatedScanRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/shopping': typeof AuthenticatedShoppingRoute
-  '/ops/$routeId': typeof OpsRouteIdRoute
+  '/ops/$': typeof OpsSplatRoute
   '/item/$itemId': typeof AuthenticatedItemItemIdRoute
 }
 export interface FileRoutesById {
@@ -129,7 +129,7 @@ export interface FileRoutesById {
   '/_authenticated/scan': typeof AuthenticatedScanRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/shopping': typeof AuthenticatedShoppingRoute
-  '/ops/$routeId': typeof OpsRouteIdRoute
+  '/ops/$': typeof OpsSplatRoute
   '/_authenticated/item/$itemId': typeof AuthenticatedItemItemIdRoute
 }
 export interface FileRouteTypes {
@@ -145,7 +145,7 @@ export interface FileRouteTypes {
     | '/scan'
     | '/setup'
     | '/shopping'
-    | '/ops/$routeId'
+    | '/ops/$'
     | '/item/$itemId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -159,7 +159,7 @@ export interface FileRouteTypes {
     | '/scan'
     | '/setup'
     | '/shopping'
-    | '/ops/$routeId'
+    | '/ops/$'
     | '/item/$itemId'
   id:
     | '__root__'
@@ -174,7 +174,7 @@ export interface FileRouteTypes {
     | '/_authenticated/scan'
     | '/_authenticated/setup'
     | '/_authenticated/shopping'
-    | '/ops/$routeId'
+    | '/ops/$'
     | '/_authenticated/item/$itemId'
   fileRoutesById: FileRoutesById
 }
@@ -183,7 +183,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
-  OpsRouteIdRoute: typeof OpsRouteIdRoute
+  OpsSplatRoute: typeof OpsSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -265,11 +265,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedShoppingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/ops/$routeId': {
-      id: '/ops/$routeId'
-      path: '/ops/$routeId'
-      fullPath: '/ops/$routeId'
-      preLoaderRoute: typeof OpsRouteIdRouteImport
+    '/ops/$': {
+      id: '/ops/$'
+      path: '/ops/$'
+      fullPath: '/ops/$'
+      preLoaderRoute: typeof OpsSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/item/$itemId': {
@@ -312,7 +312,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
-  OpsRouteIdRoute: OpsRouteIdRoute,
+  OpsSplatRoute: OpsSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

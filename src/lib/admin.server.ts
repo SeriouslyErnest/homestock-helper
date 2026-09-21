@@ -26,11 +26,16 @@ export function maskEmail(email: string): string {
   return `${local.slice(0, 2)}…${local.slice(-2)}${domain}`;
 }
 
-/** Constant-time comparison for the hidden console path. */
+/**
+ * Constant-time comparison for the console path. The path comes from the
+ * ADMIN_CONSOLE_PATH environment variable; forks that don't set it fall back
+ * to the plain default "admin/admin" (served at /ops/admin/admin). Leading
+ * and trailing slashes are ignored.
+ */
 export function matchesConsoleRoute(candidate: string): boolean {
-  const expected = process.env["ADMIN_CONSOLE_PATH"];
-  if (!expected) return false;
-  const a = Buffer.from(candidate);
+  const expected = (process.env["ADMIN_CONSOLE_PATH"] ?? "admin/admin").replace(/^\/+|\/+$/g, "");
+  const given = candidate.replace(/^\/+|\/+$/g, "");
+  const a = Buffer.from(given);
   const b = Buffer.from(expected);
   return a.length === b.length && timingSafeEqual(a, b);
 }
