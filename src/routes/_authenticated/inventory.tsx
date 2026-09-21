@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { LayoutGrid, List, Plus, Minus } from "lucide-react";
+import { AlignJustify, LayoutGrid, List, Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import {
@@ -12,7 +12,9 @@ import {
   isExpiringSoon,
   isLow,
   productKey,
+  sortByExpiry,
   sortByProductThenLocation,
+  sortByRecentlyUpdated,
   useHousehold,
   useItems,
   type Item,
