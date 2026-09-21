@@ -363,6 +363,64 @@ function InventoryPage() {
             categoryEmoji(item.category)
           );
 
+          if (view === "compact") {
+            return (
+              <article
+                key={item.id}
+                className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-1 rounded-xl border border-border bg-card px-2.5 py-1.5"
+              >
+                <Link to="/item/$itemId" params={{ itemId: item.id }} className="min-w-0">
+                  <strong className="block truncate text-sm">
+                    {item.name}
+                    {place && (
+                      <span className="font-normal text-muted-foreground"> ({place})</span>
+                    )}
+                  </strong>
+                  <div className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-[11px]">
+                    <span
+                      className={`shrink-0 font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}
+                    >
+                      {status.label}
+                    </span>
+                    {item.expires_on && (
+                      <span
+                        className={`truncate ${isExpiringSoon(item) ? "text-destructive" : "text-muted-foreground"}`}
+                      >
+                        · Exp {formatLocalDate(item.expires_on, { day: "numeric", month: "short" })}
+                      </span>
+                    )}
+                    {leadsGroup && (
+                      <span className="truncate text-muted-foreground">
+                        · {group?.total} in {group?.places} places
+                      </span>
+                    )}
+                  </div>
+                </Link>
+                <div className="flex shrink-0 items-center gap-0.5">
+                  <button
+                    onClick={() => adjust(item, -1)}
+                    disabled={item.quantity <= 0 || busyId === item.id}
+                    aria-label={`Use one ${item.name}`}
+                    className="grid h-9 w-9 place-items-center rounded-lg border border-border text-muted-foreground active:bg-surface-2 disabled:opacity-40"
+                  >
+                    <Minus size={15} />
+                  </button>
+                  <strong className="w-9 text-center text-base leading-none">
+                    {item.quantity}
+                  </strong>
+                  <button
+                    onClick={() => adjust(item, 1)}
+                    disabled={busyId === item.id}
+                    aria-label={`Restock one ${item.name}`}
+                    className="grid h-9 w-9 place-items-center rounded-lg border border-border text-muted-foreground active:bg-surface-2 disabled:opacity-40"
+                  >
+                    <Plus size={15} />
+                  </button>
+                </div>
+              </article>
+            );
+          }
+
           if (view === "cards") {
             return (
               <Link
