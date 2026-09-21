@@ -94,6 +94,23 @@ function InventoryPage() {
     return map;
   }, [items]);
 
+  // The "3 in total · 2 places" note belongs on the first row of a product only.
+  // Sorting by expiry or updated can split a product's rows apart, so track the
+  // first appearance instead of comparing with the previous row.
+  const groupLeaders = useMemo(() => {
+    const seen = new Set<string>();
+    const leaders = new Set<string>();
+    for (const i of filtered) {
+      const key = productKey(i);
+      if (!seen.has(key)) {
+        seen.add(key);
+        leaders.add(i.id);
+      }
+    }
+    return leaders;
+  }, [filtered]);
+
+
   // Needs attention = out / below minimum, or expiring within 3 days.
   const attention = (items ?? []).filter(
     (i) => isLow(i) || i.quantity <= 0 || isExpiringInDays(i, 3),
@@ -338,13 +355,13 @@ function InventoryPage() {
               : "grid gap-2"
         }
       >
-        {filtered.map((item, index) => {
+        {filtered.map((item) => {
           const status = statusOf(item);
           const key = productKey(item);
           const group = spread.get(key);
           const multiPlace = (group?.places ?? 1) > 1;
           // Only the first row of a cluster carries the "3 total across 2 places" note.
-          const leadsGroup = multiPlace && (index === 0 || productKey(filtered[index - 1]!) !== key);
+          const leadsGroup = multiPlace && groupLeaders.has(item.id);
           const place = item.location?.trim();
           // updated_at is a UTC timestamp; render the calendar day in the viewer's own timezone.
           const updated = `Upd ${new Date(item.updated_at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`;
