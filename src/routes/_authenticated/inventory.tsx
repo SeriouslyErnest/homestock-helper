@@ -78,8 +78,10 @@ function InventoryPage() {
       );
     }
     // Same product in two places sits together, so "Milk (Fridge)" and "Milk (Garage)" read as one thing.
+    if (sort === "expiry") return sortByExpiry(list);
+    if (sort === "updated") return sortByRecentlyUpdated(list);
     return sortByProductThenLocation(list);
-  }, [items, search, category, showLow, showExpiring]);
+  }, [items, search, category, showLow, showExpiring, sort]);
 
   /** How many rows and how much stock each product has across every place. */
   const spread = useMemo(() => {
