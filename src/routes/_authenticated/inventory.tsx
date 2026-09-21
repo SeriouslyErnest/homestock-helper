@@ -50,13 +50,17 @@ function InventoryPage() {
   // Low-stock and expiring filters combine, so you can see either or both.
   const [showLow, setShowLow] = useState(false);
   const [showExpiring, setShowExpiring] = useState(false);
-  const [view, setView] = useState<"list" | "cards">("list");
+  const [view, setView] = useState<"list" | "cards" | "compact">("list");
+  const [sort, setSort] = useState<"name" | "expiry" | "updated">("name");
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  // Read the remembered view after mount so the first render always matches the server.
+  // Read the remembered view/sort after mount so the first render always matches the server.
   useEffect(() => {
     const stored = localStorage.getItem("homestock-view");
-    if (stored === "list" || stored === "cards") setView(stored);
+    if (stored === "list" || stored === "cards" || stored === "compact") setView(stored);
+    const storedSort = localStorage.getItem("homestock-sort");
+    if (storedSort === "name" || storedSort === "expiry" || storedSort === "updated")
+      setSort(storedSort);
   }, []);
 
   const filtered = useMemo(() => {
