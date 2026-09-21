@@ -361,7 +361,7 @@ function InventoryPage() {
           const group = spread.get(key);
           const multiPlace = (group?.places ?? 1) > 1;
           // Only the first row of a cluster carries the "3 total across 2 places" note.
-          const leadsGroup = multiPlace && (index === 0 || productKey(filtered[index - 1]!) !== key);
+          const leadsGroup = multiPlace && groupLeaders.has(item.id);
           const place = item.location?.trim();
           // updated_at is a UTC timestamp; render the calendar day in the viewer's own timezone.
           const updated = `Upd ${new Date(item.updated_at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`;
