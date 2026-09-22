@@ -480,6 +480,45 @@ export const adminSetPlanEnforcement = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Change what a plan allows: homes owned, people per home, and line items. */
+export const adminSetPlanLimits = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: {
+      routeId: string;
+      tier: string;
+      maxOwnedHouseholds: number;
+      maxMembers: number;
+      maxItems: number;
+    }) => input,
+  )
+  .handler(async ({ data, context }) => {
+    await guard(data.routeId, context.userId, ["SUPER_ADMIN"]);
+    const whole = (n: number, label: string) => {
+      if (!Number.isInteger(n) || n < 1 || n > 1_000_000)
+        throw new Error(`${label} must be a whole number between 1 and 1,000,000.`);
+      return n;
+    };
+    const after = {
+      max_owned_households: whole(data.maxOwnedHouseholds, "Homes owned"),
+      max_members: whole(data.maxMembers, "People per home"),
+      max_items: whole(data.maxItems, "Line items"),
+      updated_at: new Date().toISOString(),
+    };
+    const { writeAudit } = await import("./admin.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("app_plans").update(after).eq("tier", data.tier);
+    if (error) throw error;
+    await writeAudit({
+      adminUserId: context.userId,
+      actionType: "plan.limits",
+      targetType: "plan",
+      targetId: data.tier,
+      afterJson: after,
+    });
+    return { ok: true };
+  });
+
 /**
  * Break-glass bootstrap: the very first operator claims the console by signing
  * in and visiting the secret address while no operators exist yet.
