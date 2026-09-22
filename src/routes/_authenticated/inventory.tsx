@@ -126,11 +126,15 @@ function InventoryPage() {
 
 
   // Needs attention = out / below minimum, or expiring within 3 days.
+  // Used-up items without a minimum are retired, so they don't nag here.
   const attention = (items ?? []).filter(
-    (i) => isLow(i) || i.quantity <= 0 || isExpiringInDays(i, 3),
+    (i) => !isUsedUp(i) && (isLow(i) || i.quantity <= 0 || isExpiringInDays(i, 3)),
   ).length;
   // Expiring within a day gets its own card so it can't be missed.
   const expiringNow = (items ?? []).filter((i) => isExpiringInDays(i, 1)).length;
+  // "items tracked" mirrors what the list shows, so the number and the rows agree.
+  const trackedCount = (items ?? []).filter((i) => !isUsedUp(i)).length;
+  const hiddenCount = (items ?? []).filter(isUsedUp).length;
 
   function switchView(v: "list" | "cards" | "compact") {
     setView(v);
@@ -260,7 +264,7 @@ function InventoryPage() {
 
       <div className="mb-4 grid grid-cols-3 gap-2.5">
         <div className="rounded-2xl bg-success-soft p-3 text-success">
-          <strong className="block text-xl">{items?.length ?? 0}</strong>
+          <strong className="block text-xl">{trackedCount}</strong>
           <span className="text-xs font-bold">items tracked</span>
         </div>
         <button
