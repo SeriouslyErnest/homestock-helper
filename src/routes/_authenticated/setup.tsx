@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Home, KeyRound } from "lucide-react";
 import { LogoMark, LogoWordmark } from "@/components/logo";
+import { AskForMoreHomes } from "@/components/limit-request";
+
 import {
   createHousehold,
   planLimitMessage,
@@ -133,12 +135,8 @@ function SetupPage() {
                 </span>
               </span>
             </button>
-            {!canCreate && (
-              <p id="create-locked" className="text-xs text-muted-foreground">
-                Your plan includes {plan?.max_owned_households ?? 1} home. Ask the owner of the home
-                you want to share for their invite code, then use the option above.
-              </p>
-            )}
+            {!canCreate && <AskForMoreHomes limit={plan?.max_owned_households ?? 2} />}
+
           </div>
 
           {myPending.length > 0 && (

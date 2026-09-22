@@ -357,17 +357,49 @@ export function useMyJoinRequests() {
   });
 }
 
+/**
+ * A standing ask from this user for a higher limit. One open ask per kind, kept
+ * only until an operator clears it, so it never becomes a pile of stale rows.
+ */
+export type LimitRequest = { id: string; kind: string; created_at: string };
+
+export function useMyLimitRequest(kind = "households") {
+  return useQuery({
+    queryKey: ["my-limit-request", kind],
+    queryFn: async (): Promise<LimitRequest | null> => {
+      const { data } = await supabase
+        .from("limit_requests")
+        .select("id, kind, created_at")
+        .eq("kind", kind)
+        .maybeSingle();
+      return (data as LimitRequest | null) ?? null;
+    },
+    staleTime: 60_000,
+  });
+}
+
+/** Sends the operator a note asking for a higher limit. Sending twice is harmless. */
+export async function requestLimitIncrease(kind = "households"): Promise<void> {
+  const { data: auth } = await supabase.auth.getUser();
+  const uid = auth.user?.id;
+  if (!uid) throw new Error("Not signed in");
+  const { error } = await supabase.from("limit_requests").insert({ user_id: uid, kind });
+  // A duplicate simply means they already asked — that's a success, not a failure.
+  if (error && !error.message.includes("duplicate")) throw error;
+}
+
 /** Human wording for a refused action, so every screen says the same thing. */
 export function planLimitMessage(error: unknown): string | null {
   const message = (error as { message?: string } | null)?.message ?? "";
   if (message.includes("plan_limit_households")) {
-    return "Your plan includes one home. Ask a housemate for their invite code to join theirs.";
+    return "You've reached the number of homes your account can create right now.";
   }
   if (message.includes("plan_limit_members")) {
     return "This home is already full for its plan.";
   }
   return null;
 }
+
 
 /**
  * Create a household and join it as its owner. The server checks the plan
