@@ -99,6 +99,22 @@ function InventoryPage() {
     return sortByProductThenLocation(list);
   }, [items, search, category, showLow, showExpiring, sort]);
 
+  // Plan allowance: when a plan is enforced, only the first N items a home added
+  // stay visible. Nothing is deleted — raising the limit brings them straight back.
+  const cap = plan?.enforced ? plan.max_items : Infinity;
+  const allowedIds = useMemo(() => {
+    if (!Number.isFinite(cap)) return null;
+    const oldestFirst = [...(items ?? [])].sort((a, b) =>
+      (a.created_at ?? "").localeCompare(b.created_at ?? ""),
+    );
+    return new Set(oldestFirst.slice(0, cap).map((i) => i.id));
+  }, [items, cap]);
+  const visible = useMemo(
+    () => (allowedIds ? filtered.filter((i) => allowedIds.has(i.id)) : filtered),
+    [filtered, allowedIds],
+  );
+  const overCap = allowedIds ? Math.max((items ?? []).length - allowedIds.size, 0) : 0;
+
   /** How many rows and how much stock each product has across every place. */
   const spread = useMemo(() => {
     const map = new Map<string, { places: number; total: number }>();
