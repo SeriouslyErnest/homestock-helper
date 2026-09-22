@@ -221,41 +221,42 @@ function ScanPage() {
           </div>
           {message && <p className="mt-2 text-center text-sm text-destructive">{message}</p>}
         </section>
-      ) : (
-        <>
-          <div className="mx-auto w-full max-w-sm overflow-hidden rounded-3xl border border-border bg-foreground">
-            <video
-              ref={videoRef}
-              className="aspect-[4/3] max-h-[42dvh] w-full object-cover"
-              muted
-              playsInline
-            />
-          </div>
+      ) : null}
 
-          <p role="status" aria-live="polite" className="mt-3 text-center text-sm">
-            {phase === "looking-up" && (
-              <span className="font-semibold text-brand">Checking what's at home…</span>
-            )}
-            {message && <span className="text-muted-foreground">{message}</span>}
-          </p>
-          {phase === "error" && lastCode && (
-            <div className="mt-2 grid gap-2">
-              <button
-                onClick={retry}
-                className="mx-auto block rounded-2xl border border-border px-5 py-3 text-sm font-bold"
-              >
-                Try {lastCode} again
-              </button>
-              <Link
-                to="/inventory"
-                className="mx-auto block rounded-2xl px-5 py-2 text-sm font-semibold text-brand"
-              >
-                Search by name instead
-              </Link>
-            </div>
+      {/* Kept mounted while a result is showing so the camera keeps running. */}
+      <div className={phase === "result" ? "hidden" : ""}>
+        <div className="mx-auto w-full max-w-sm overflow-hidden rounded-3xl border border-border bg-foreground">
+          <video
+            ref={videoRef}
+            className="aspect-[4/3] max-h-[42dvh] w-full object-cover"
+            muted
+            playsInline
+          />
+        </div>
+
+        <p role="status" aria-live="polite" className="mt-3 text-center text-sm">
+          {phase === "looking-up" && (
+            <span className="font-semibold text-brand">Checking what's at home…</span>
           )}
-        </>
-      )}
+          {message && <span className="text-muted-foreground">{message}</span>}
+        </p>
+        {phase === "error" && lastCode && (
+          <div className="mt-2 grid gap-2">
+            <button
+              onClick={retry}
+              className="mx-auto block rounded-2xl border border-border px-5 py-3 text-sm font-bold"
+            >
+              Try {lastCode} again
+            </button>
+            <Link
+              to="/inventory"
+              className="mx-auto block rounded-2xl px-5 py-2 text-sm font-semibold text-brand"
+            >
+              Search by name instead
+            </Link>
+          </div>
+        )}
+      </div>
 
       <form onSubmit={submitManual} className="mt-4 flex gap-2">
         <input
