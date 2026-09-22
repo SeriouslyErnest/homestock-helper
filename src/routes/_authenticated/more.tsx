@@ -179,16 +179,17 @@ function MorePage() {
     queryClient.invalidateQueries({ queryKey: ["join-requests", household?.id] });
     queryClient.invalidateQueries({ queryKey: ["members", household?.id] });
     toast.success(
-      decision === "approved" ? "Approved — they're in" : decision === "blocked" ? "Blocked" : "Rejected",
+      decision === "approved"
+        ? "Approved — they're in"
+        : decision === "blocked"
+          ? "Blocked"
+          : "Rejected",
     );
   }
 
   async function unblock(requestId: string) {
     setDeciding(requestId);
-    const { error } = await supabase
-      .from("household_join_requests")
-      .delete()
-      .eq("id", requestId);
+    const { error } = await supabase.from("household_join_requests").delete().eq("id", requestId);
     setDeciding(null);
     if (error) {
       toast.error("Could not unblock them.");
@@ -259,7 +260,6 @@ function MorePage() {
         {!canCreateHome ? (
           <AskForMoreHomes limit={plan?.max_owned_households ?? 2} />
         ) : showCreateHome ? (
-
           <form onSubmit={createNewHome} className="mt-3 flex gap-2">
             <input
               value={newHomeName}
@@ -404,7 +404,6 @@ function MorePage() {
           )}
         </section>
       )}
-
 
       {myPending.length > 0 && (
         <section className="mb-6 rounded-2xl border border-border bg-card p-4">

@@ -36,10 +36,7 @@ export function AskForMoreHomes({ limit }: { limit: number }) {
         as many other homes as you like with an invite code.
       </p>
       {asked ? (
-        <p
-          role="status"
-          className="mt-3 flex items-center gap-2 text-xs font-semibold text-brand"
-        >
+        <p role="status" className="mt-3 flex items-center gap-2 text-xs font-semibold text-brand">
           <Check size={16} aria-hidden="true" />
           We've passed this on — we'll be in touch by email.
         </p>

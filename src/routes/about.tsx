@@ -75,10 +75,7 @@ function TopicNav() {
         const el = document.getElementById(t.id);
         if (el && el.getBoundingClientRect().top <= 160) current = t.id;
       }
-      if (
-        window.innerHeight + window.scrollY >=
-        document.documentElement.scrollHeight - 4
-      ) {
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) {
         current = TOPICS[TOPICS.length - 1]?.id ?? current;
       }
       setActive(current);
@@ -103,8 +100,7 @@ function TopicNav() {
     const container = scrollRef.current;
     const chip = chipRefs.current.get(active);
     if (!container || !chip) return;
-    const target =
-      chip.offsetLeft - container.clientWidth / 2 + chip.clientWidth / 2;
+    const target = chip.offsetLeft - container.clientWidth / 2 + chip.clientWidth / 2;
     container.scrollTo({ left: target, behavior: "smooth" });
   }, [active]);
 
