@@ -50,6 +50,13 @@
       "when": 1790044970481,
       "tag": "0006_tighten_function_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790045046488,
+      "tag": "0007_products_cache_server_writes_only",
+      "breakpoints": true
     }
   ]
 }
