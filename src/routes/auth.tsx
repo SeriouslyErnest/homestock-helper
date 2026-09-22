@@ -1,9 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { LogoMark, LogoWordmark } from "@/components/logo";
+import { getSignupPolicy } from "@/lib/signup-policy.functions";
 
 const searchSchema = z.object({
   mode: z.enum(["signin", "signup"]).optional(),
