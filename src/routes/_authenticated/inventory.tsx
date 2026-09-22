@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AlignJustify, ArrowDown, ArrowUp, LayoutGrid, List, Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
+import { CorrectQuantityDialog } from "@/components/correct-quantity";
 import { ProductPhotoDialog } from "@/components/product-photo-dialog";
 import {
   emojiFor,
@@ -650,16 +651,23 @@ function InventoryPage() {
                 >
                   <Minus size={18} />
                 </button>
-                <div className="min-w-0 text-center">
-                  <strong className="block truncate text-lg leading-tight">
-                    {item.quantity} {item.unit}
-                  </strong>
-                  <span
-                    className={`block truncate text-[9px] font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}
-                  >
-                    {status.label}
-                  </span>
-                </div>
+                <CorrectQuantityDialog
+                  item={item}
+                  triggerClassName="min-w-0 rounded-xl px-1 text-center active:bg-surface-2"
+                  trigger={
+                    <span className="block min-w-0">
+                      <strong className="block truncate text-lg leading-tight">
+                        {item.quantity} {item.unit}
+                      </strong>
+                      <span
+                        className={`block truncate text-[9px] font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}
+                      >
+                        {status.label}
+                      </span>
+                    </span>
+                  }
+                />
+
                 <button
                   onClick={() => adjust(item, 1)}
                   disabled={busyId === item.id}
