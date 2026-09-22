@@ -5,6 +5,8 @@ import { Ban, Check, Copy, LogOut, RotateCcw, UserMinus, X } from "lucide-react"
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { PromoCard } from "@/components/promo-code";
+import { AskForMoreHomes } from "@/components/limit-request";
+
 import {
   createHousehold,
   planLimitMessage,
