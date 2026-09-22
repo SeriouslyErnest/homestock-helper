@@ -82,7 +82,7 @@ function AddPage() {
         name: name.trim(),
         barcode: search.barcode ?? null,
         image_url: search.image ?? null,
-        category,
+        category: effectiveCategory,
         quantity: Math.max(0, quantity),
         unit: "pcs",
         min_quantity: Math.max(0, minQuantity),
