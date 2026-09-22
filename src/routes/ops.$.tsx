@@ -177,16 +177,70 @@ function Dashboard({ routeId }: { routeId: string }) {
   });
   if (!data) return <p className="text-sm text-muted-foreground">Loading…</p>;
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-      <Card label="Accounts signed up" value={data.accounts} />
-      <Card label="Households" value={data.households} />
-      <Card label="Active grants" value={data.activeGrants} />
-      <Card label="Expiring in 7 days" value={data.expiringSoon} />
-      <Card label="Active promotions" value={data.activePromotions} />
-      <Card label="Promo redemptions" value={data.redemptions} />
+    <div className="space-y-4">
+      <LimitRequests routeId={routeId} />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <Card label="Accounts signed up" value={data.accounts} />
+        <Card label="Households" value={data.households} />
+        <Card label="Active grants" value={data.activeGrants} />
+        <Card label="Expiring in 7 days" value={data.expiringSoon} />
+        <Card label="Active promotions" value={data.activePromotions} />
+        <Card label="Promo redemptions" value={data.redemptions} />
+      </div>
     </div>
   );
 }
+
+/** Transient inbox: disappears entirely once every request has been cleared. */
+function LimitRequests({ routeId }: { routeId: string }) {
+  const qc = useQueryClient();
+  const requests = useQuery({
+    queryKey: ["admin-limit-requests", routeId],
+    queryFn: () => adminLimitRequests({ data: { routeId } }),
+    refetchInterval: 60_000,
+  });
+  const dismiss = useMutation({
+    mutationFn: (id: string) => adminDismissLimitRequest({ data: { routeId, id } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-limit-requests", routeId] }),
+  });
+  const list = requests.data ?? [];
+  if (list.length === 0) return null;
+  return (
+    <section className="rounded-2xl border border-border bg-card p-4">
+      <h2 className="text-sm font-bold">Requests for more · {list.length}</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        People asking for a higher limit. Contact them, act if you agree, then dismiss — dismissed
+        requests are deleted.
+      </p>
+      <ul className="mt-3 grid gap-2">
+        {list.map((r) => (
+          <li
+            key={r.id}
+            className="flex items-center gap-3 rounded-xl border border-border bg-surface-2 p-3"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-semibold">
+                {r.email ?? "Unknown address"}
+              </span>
+              <span className="block truncate text-xs text-muted-foreground">
+                {r.displayName ?? "No name"} · wants more {r.kind} · {fmt(r.createdAt)}
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={() => dismiss.mutate(r.id)}
+              disabled={dismiss.isPending}
+              className="h-9 shrink-0 rounded-xl border border-border px-3 text-xs font-semibold disabled:opacity-50"
+            >
+              Dismiss
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 
 function Accounts({ routeId, role }: { routeId: string; role: string }) {
   const [search, setSearch] = useState("");
