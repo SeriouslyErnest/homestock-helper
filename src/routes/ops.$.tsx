@@ -18,6 +18,7 @@ import {
   adminRevokeGrant,
   adminSession,
   adminSetPlanEnforcement,
+  adminSetPlanLimits,
   adminSetPromotionStatus,
   adminSetSignupsEnabled,
   adminSignupSettings,
