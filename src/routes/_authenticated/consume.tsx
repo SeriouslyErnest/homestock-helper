@@ -66,7 +66,16 @@ function ConsumePage() {
   const list = useMemo(() => {
     const all = items ?? [];
     if (!search.trim()) {
-      return [...all].sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1)).slice(0, 12);
+      // Most reached-for first: how often it's been used lately, then how recently.
+      // Nothing with an empty shelf — a quick "take one" there would do nothing.
+      return [...all]
+        .filter((i) => Number(i.quantity) > 0)
+        .sort(
+          (a, b) =>
+            usageScore(usage?.get(b.id), b.updated_at) -
+            usageScore(usage?.get(a.id), a.updated_at),
+        )
+        .slice(0, 8);
     }
     const q = search.trim().toLowerCase();
     return all.filter(
@@ -75,7 +84,7 @@ function ConsumePage() {
         (i.location ?? "").toLowerCase().includes(q) ||
         i.category.toLowerCase().includes(q),
     );
-  }, [items, search]);
+  }, [items, search, usage]);
 
   return (
     <AppShell
