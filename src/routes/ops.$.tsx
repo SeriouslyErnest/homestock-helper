@@ -9,6 +9,9 @@ import {
   adminClaimConsole,
   adminConsoleUnclaimed,
   adminCreatePromotion,
+  adminDismissLimitRequest,
+  adminLimitRequests,
+
   adminGetCategories,
   adminGrantAccess,
   adminInviteUser,
