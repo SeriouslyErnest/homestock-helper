@@ -773,3 +773,68 @@ export const adminSetCategories = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+export type AdminLimitRequest = {
+  id: string;
+  userId: string;
+  kind: string;
+  email: string | null;
+  displayName: string | null;
+  createdAt: string;
+};
+
+/**
+ * People asking for a higher limit. Kept out of the app's own tables in plain
+ * form: the contact address is read from the auth system at view time, so
+ * nothing readable is ever stored alongside the request.
+ */
+export const adminLimitRequests = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string }) => input)
+  .handler(async ({ data, context }): Promise<AdminLimitRequest[]> => {
+    await guard(data.routeId, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows } = await supabaseAdmin
+      .from("limit_requests")
+      .select("*")
+      .order("created_at", { ascending: true })
+      .limit(200);
+    const list = rows ?? [];
+    return Promise.all(
+      list.map(async (r) => {
+        const { data: u } = await supabaseAdmin.auth.admin.getUserById(r.user_id);
+        const { data: p } = await supabaseAdmin
+          .from("profiles")
+          .select("display_name")
+          .eq("id", r.user_id)
+          .maybeSingle();
+        return {
+          id: r.id,
+          userId: r.user_id,
+          kind: r.kind,
+          email: u?.user?.email ?? null,
+          displayName: p?.display_name ?? null,
+          createdAt: r.created_at,
+        };
+      }),
+    );
+  });
+
+/** Clears a handled request so the inbox stays empty when there's nothing to do. */
+export const adminDismissLimitRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string; id: string }) => input)
+  .handler(async ({ data, context }) => {
+    await guard(data.routeId, context.userId, ["SUPER_ADMIN", "BILLING_ADMIN", "SUPPORT_ADMIN"]);
+    const { writeAudit } = await import("./admin.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("limit_requests").delete().eq("id", data.id);
+    if (error) throw error;
+    await writeAudit({
+      adminUserId: context.userId,
+      actionType: "limit_request.dismissed",
+      targetType: "limit_request",
+      targetId: data.id,
+    });
+    return { ok: true };
+  });
