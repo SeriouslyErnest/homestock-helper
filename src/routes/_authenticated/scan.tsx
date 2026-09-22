@@ -258,33 +258,37 @@ function ScanPage() {
         )}
       </div>
 
-      <form onSubmit={submitManual} className="mt-4 flex gap-2">
-        <input
-          value={manual}
-          onChange={(e) => setManual(e.target.value)}
-          inputMode="numeric"
-          placeholder="Or type the barcode number"
-          aria-label="Type the barcode number"
-          className="w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
-        />
-        <button
-          type="submit"
-          disabled={!manual.trim() || phase === "looking-up"}
-          className="shrink-0 rounded-2xl bg-primary px-5 font-semibold text-primary-foreground disabled:opacity-50"
-        >
-          Look up
-        </button>
-      </form>
+      {phase !== "result" && (
+        <>
+          <form onSubmit={submitManual} className="mt-4 flex gap-2">
+            <input
+              value={manual}
+              onChange={(e) => setManual(e.target.value)}
+              inputMode="numeric"
+              placeholder="Or type the barcode number"
+              aria-label="Type the barcode number"
+              className="w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
+            />
+            <button
+              type="submit"
+              disabled={!manual.trim() || phase === "looking-up"}
+              className="shrink-0 rounded-2xl bg-primary px-5 font-semibold text-primary-foreground disabled:opacity-50"
+            >
+              Look up
+            </button>
+          </form>
 
-      <Link
-        to="/add"
-        className="mt-4 block rounded-2xl border border-border bg-card py-4 text-center text-base font-semibold text-brand active:bg-surface-2"
-      >
-        Add without a barcode
-      </Link>
-      <p className="mt-2 text-center text-xs text-muted-foreground">
-        New products are saved to your shared cache, so the next scan is instant.
-      </p>
+          <Link
+            to="/add"
+            className="mt-4 block rounded-2xl border border-border bg-card py-4 text-center text-base font-semibold text-brand active:bg-surface-2"
+          >
+            Add without a barcode
+          </Link>
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            We remember every product you identify, so the next scan is instant.
+          </p>
+        </>
+      )}
     </AppShell>
   );
 }
