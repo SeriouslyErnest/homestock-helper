@@ -54,6 +54,7 @@ function isUsedUp(item: Item): boolean {
 function InventoryPage() {
   const { data: household } = useHousehold();
   const { data: items, isPending } = useItems(household?.id);
+  const { data: plan } = useEntitlements();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("All");
