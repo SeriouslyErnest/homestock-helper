@@ -137,8 +137,7 @@ function InventoryPage() {
       // Low-stock and expiring filters combine, so you can see either or both.
       if (showLow || showExpiring) {
         list = list.filter(
-          (i) =>
-            (showLow && (isLow(i) || i.quantity <= 0)) || (showExpiring && isExpiringSoon(i)),
+          (i) => (showLow && (isLow(i) || i.quantity <= 0)) || (showExpiring && isExpiringSoon(i)),
         );
       } else if (category !== "All") list = list.filter((i) => i.category === category);
     }
@@ -191,7 +190,6 @@ function InventoryPage() {
     }
     return leaders;
   }, [visible]);
-
 
   // Needs attention = out / below minimum, or expiring within 3 days.
   // Used-up items without a minimum are retired, so they don't nag here.
@@ -409,7 +407,9 @@ function InventoryPage() {
             onClick={flipSortDir}
             disabled={sort !== "name" && sort !== "location"}
             aria-label={
-              sortDir === "asc" ? "Sort A to Z first — tap for Z to A" : "Sort Z to A first — tap for A to Z"
+              sortDir === "asc"
+                ? "Sort A to Z first — tap for Z to A"
+                : "Sort Z to A first — tap for A to Z"
             }
             className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border bg-surface-2 text-muted-foreground outline-none focus:border-brand disabled:opacity-40"
           >
@@ -443,7 +443,6 @@ function InventoryPage() {
           </div>
         </div>
       </div>
-
 
       {isPending && <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>}
 
@@ -519,9 +518,7 @@ function InventoryPage() {
                 <Link to="/item/$itemId" params={{ itemId: item.id }} className="min-w-0">
                   <strong className="block truncate text-sm">
                     {item.name}
-                    {place && (
-                      <span className="font-normal text-muted-foreground"> ({place})</span>
-                    )}
+                    {place && <span className="font-normal text-muted-foreground"> ({place})</span>}
                   </strong>
                   <div className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-[11px]">
                     <span

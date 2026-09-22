@@ -45,7 +45,12 @@ export function ProductPhotoDialog({
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
             <Dialog.Title className="min-w-0 truncate text-base font-semibold">{name}</Dialog.Title>
             <Dialog.Close asChild>
-              <Button variant="secondary" size="icon" aria-label="Close full-screen picture" className="h-11 w-11 shrink-0 rounded-xl">
+              <Button
+                variant="secondary"
+                size="icon"
+                aria-label="Close full-screen picture"
+                className="h-11 w-11 shrink-0 rounded-xl"
+              >
                 <X size={20} />
               </Button>
             </Dialog.Close>

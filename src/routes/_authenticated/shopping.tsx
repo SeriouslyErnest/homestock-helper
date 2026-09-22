@@ -367,65 +367,65 @@ function ShoppingPage() {
           </div>
         )}
         <div className="grid gap-2">
-            {pending.map((entry) => {
-              const linkedItem = entry.item_id ? itemById.get(entry.item_id) : undefined;
-              return (
+          {pending.map((entry) => {
+            const linkedItem = entry.item_id ? itemById.get(entry.item_id) : undefined;
+            return (
               <div
-              key={entry.id}
-              className="flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-card p-2.5"
-            >
-              <button
-                onClick={() => toggle(entry)}
-                aria-label={`Mark ${entry.name} as bought`}
-                className="grid h-11 w-11 shrink-0 place-items-center rounded-full"
+                key={entry.id}
+                className="flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-card p-2.5"
               >
-                <span className="block h-7 w-7 rounded-full border-2 border-border" />
-              </button>
-              {linkedItem?.image_url && (
-                <ProductPhotoDialog
-                  src={linkedItem.image_url}
-                  name={entry.name}
-                  triggerClassName="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-surface-2"
+                <button
+                  onClick={() => toggle(entry)}
+                  aria-label={`Mark ${entry.name} as bought`}
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full"
                 >
-                  <img
+                  <span className="block h-7 w-7 rounded-full border-2 border-border" />
+                </button>
+                {linkedItem?.image_url && (
+                  <ProductPhotoDialog
                     src={linkedItem.image_url}
-                    alt={entry.name}
-                    loading="lazy"
-                    className="block h-full max-h-full w-full max-w-full object-contain"
-                  />
-                </ProductPhotoDialog>
-              )}
-              <div className="min-w-0 flex-1 py-1">
-                <strong className="block text-sm break-words">{entry.name}</strong>
-                <span className="text-xs text-muted-foreground">×{entry.quantity}</span>
-                {(entry.tags?.length ?? 0) > 0 && (
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {entry.tags!.map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-bold text-brand"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
+                    name={entry.name}
+                    triggerClassName="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-surface-2"
+                  >
+                    <img
+                      src={linkedItem.image_url}
+                      alt={entry.name}
+                      loading="lazy"
+                      className="block h-full max-h-full w-full max-w-full object-contain"
+                    />
+                  </ProductPhotoDialog>
                 )}
-                {entry.note && (
-                  <p className="mt-1 rounded-lg bg-warning-soft px-2 py-1 text-xs font-semibold break-words text-warning">
-                    {entry.note}
-                  </p>
-                )}
+                <div className="min-w-0 flex-1 py-1">
+                  <strong className="block text-sm break-words">{entry.name}</strong>
+                  <span className="text-xs text-muted-foreground">×{entry.quantity}</span>
+                  {(entry.tags?.length ?? 0) > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {entry.tags!.map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-bold text-brand"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {entry.note && (
+                    <p className="mt-1 rounded-lg bg-warning-soft px-2 py-1 text-xs font-semibold break-words text-warning">
+                      {entry.note}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => remove(entry.id)}
+                  aria-label={`Remove ${entry.name}`}
+                  className="p-2 text-muted-foreground"
+                >
+                  <Trash2 size={16} />
+                </button>
               </div>
-              <button
-                onClick={() => remove(entry.id)}
-                aria-label={`Remove ${entry.name}`}
-                className="p-2 text-muted-foreground"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-              );
-            })}
+            );
+          })}
         </div>
       </section>
 
@@ -444,49 +444,49 @@ function ShoppingPage() {
             {bought.map((entry) => {
               const linkedItem = entry.item_id ? itemById.get(entry.item_id) : undefined;
               return (
-              <div
-                key={entry.id}
-                className="flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-card p-2.5"
-              >
-                <button
-                  onClick={() => toggle(entry)}
-                  aria-label={`Move ${entry.name} back to the list`}
-                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full"
+                <div
+                  key={entry.id}
+                  className="flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-card p-2.5"
                 >
-                  <span className="grid h-7 w-7 place-items-center rounded-full bg-success text-xs font-bold text-white">
-                    ✓
-                  </span>
-                </button>
-                {linkedItem?.image_url && (
-                  <ProductPhotoDialog
-                    src={linkedItem.image_url}
-                    name={entry.name}
-                    triggerClassName="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-surface-2"
+                  <button
+                    onClick={() => toggle(entry)}
+                    aria-label={`Move ${entry.name} back to the list`}
+                    className="grid h-11 w-11 shrink-0 place-items-center rounded-full"
                   >
-                    <img
-                      src={linkedItem.image_url}
-                      alt={entry.name}
-                      loading="lazy"
-                      className="block h-full max-h-full w-full max-w-full object-contain"
-                    />
-                  </ProductPhotoDialog>
-                )}
-                <div className="min-w-0 flex-1">
-                  <strong className="block text-sm break-words line-through">{entry.name}</strong>
-                  {entry.bought_at && (
-                    <span className="text-xs text-muted-foreground">
-                      {formatLocalDateTime(entry.bought_at)}
+                    <span className="grid h-7 w-7 place-items-center rounded-full bg-success text-xs font-bold text-white">
+                      ✓
                     </span>
+                  </button>
+                  {linkedItem?.image_url && (
+                    <ProductPhotoDialog
+                      src={linkedItem.image_url}
+                      name={entry.name}
+                      triggerClassName="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-surface-2"
+                    >
+                      <img
+                        src={linkedItem.image_url}
+                        alt={entry.name}
+                        loading="lazy"
+                        className="block h-full max-h-full w-full max-w-full object-contain"
+                      />
+                    </ProductPhotoDialog>
                   )}
+                  <div className="min-w-0 flex-1">
+                    <strong className="block text-sm break-words line-through">{entry.name}</strong>
+                    {entry.bought_at && (
+                      <span className="text-xs text-muted-foreground">
+                        {formatLocalDateTime(entry.bought_at)}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => remove(entry.id)}
+                    aria-label={`Remove ${entry.name}`}
+                    className="p-2 text-muted-foreground"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
-                <button
-                  onClick={() => remove(entry.id)}
-                  aria-label={`Remove ${entry.name}`}
-                  className="p-2 text-muted-foreground"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
               );
             })}
           </div>

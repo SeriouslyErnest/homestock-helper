@@ -343,7 +343,6 @@ function ItemPage() {
         </div>
       </section>
 
-
       <h2 className="mb-2 text-sm font-bold">Details</h2>
       <div className="grid gap-3">
         <div>
