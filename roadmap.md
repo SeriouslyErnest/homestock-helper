@@ -24,6 +24,10 @@
 - "Use up" ranks by how often and how recently the household uses each item (in-stock only)
 - Shared product catalogue: a manually identified unknown barcode is remembered for everyone (first save wins, never overwritten)
 
+## Open
+- Decide safeguards against bad/offensive names entering the shared barcode catalogue (word filter / report button / admin approval / two-household agreement) — awaiting user's choice
+- Consider recording who last edited an item's details (name, place, expiry), not just stock changes
+
 ## Later (beyond MVP)
 - Multi-location stock records, inventory event history, buy-request tags
 - Household switching for multi-household users
