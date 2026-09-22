@@ -41,6 +41,15 @@ function statusOf(item: Item): { label: string; low: boolean } {
   return { label: "In stock", low: false };
 }
 
+/**
+ * Fully consumed with no minimum set — nothing left and nothing we're
+ * tracking to rebuy. These quietly leave the everyday inventory list;
+ * searching still finds them.
+ */
+function isUsedUp(item: Item): boolean {
+  return item.quantity <= 0 && item.min_quantity <= 0;
+}
+
 function InventoryPage() {
   const { data: household } = useHousehold();
   const { data: items, isPending } = useItems(household?.id);
@@ -65,17 +74,22 @@ function InventoryPage() {
 
   const filtered = useMemo(() => {
     let list = items ?? [];
-    if (showLow || showExpiring) {
-      list = list.filter(
-        (i) =>
-          (showLow && (isLow(i) || i.quantity <= 0)) || (showExpiring && isExpiringSoon(i)),
-      );
-    } else if (category !== "All") list = list.filter((i) => i.category === category);
     if (search.trim()) {
+      // Searching looks through everything, including used-up items, so an
+      // item that's hidden from the everyday list is still findable.
       const q = search.trim().toLowerCase();
       list = list.filter(
         (i) => i.name.toLowerCase().includes(q) || (i.location ?? "").toLowerCase().includes(q),
       );
+    } else {
+      list = list.filter((i) => !isUsedUp(i));
+      // Low-stock and expiring filters combine, so you can see either or both.
+      if (showLow || showExpiring) {
+        list = list.filter(
+          (i) =>
+            (showLow && (isLow(i) || i.quantity <= 0)) || (showExpiring && isExpiringSoon(i)),
+        );
+      } else if (category !== "All") list = list.filter((i) => i.category === category);
     }
     // Same product in two places sits together, so "Milk (Fridge)" and "Milk (Garage)" read as one thing.
     if (sort === "expiry") return sortByExpiry(list);
