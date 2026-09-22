@@ -312,7 +312,7 @@ function InventoryPage() {
       </div>
 
       {overCap > 0 && (
-        <p className="mb-3 rounded-2xl bg-warning-soft px-3 py-2 text-xs font-medium text-warning-foreground">
+        <p className="mb-3 rounded-2xl bg-warning-soft px-3 py-2 text-xs font-medium text-warning">
           Your plan shows {plan?.max_items} items — {overCap} more {overCap === 1 ? "is" : "are"}{" "}
           saved but hidden.
         </p>
