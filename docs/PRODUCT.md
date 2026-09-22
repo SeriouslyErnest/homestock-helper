@@ -30,7 +30,11 @@ Running low / buy request → Shop → Restock.
    custom User-Agent) supplies name/brand/image only. Quantity and expiry
    are always HomeStock's own. Lookup order: household items → shared cache
    table → OFF. A miss means "we haven't seen this", never an error, and
-   manual entry always works.
+   manual entry always works. A manual identification of an unknown barcode
+   is written to the shared cache by a server function — **first save wins**:
+   the barcode is the primary key, later saves are ignored
+   (`ignoreDuplicates`), never overwriting an existing record
+   (`source = 'manual'`; corrections are an explicit future flow).
 5. **Expiry is light-touch.** Optional, multiple per product conceptually;
    surfaced as "Exp 3 Oct" with a ⚠ within 14 days. Inventory shows
    "need attention" (low stock or expiring ≤ 3 days) and a separate

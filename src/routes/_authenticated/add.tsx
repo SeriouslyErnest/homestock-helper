@@ -3,6 +3,7 @@ import { Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { ProductPhotoDialog } from "@/components/product-photo-dialog";
+import { cacheManualProduct } from "@/lib/product-lookup.functions";
 import { useCategories, useHousehold } from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -107,6 +108,16 @@ function AddPage() {
         requested_by: user?.id ?? null,
       });
     }
+    // First save wins: this manual identification joins the shared catalogue,
+    // so the next scan of this code resolves instantly for anyone. Best
+    // effort — the item is saved either way.
+    if (search.barcode && search.notFound) {
+      try {
+        await cacheManualProduct({ data: { barcode: search.barcode, name: name.trim() } });
+      } catch {
+        // Catalogue write failed; never block the save on it.
+      }
+    }
     navigate({ to: "/item/$itemId", params: { itemId: data.id } });
   }
 
@@ -118,8 +129,8 @@ function AddPage() {
     <AppShell title="Add an item" subtitle="Only the name is required — add the rest anytime.">
       {search.notFound && (
         <div className="mb-4 rounded-2xl bg-warning-soft p-3.5 text-sm text-warning">
-          <strong>We haven't seen barcode {search.barcode} before.</strong> Give it a name and it'll
-          be saved for everyone in your household.
+          <strong>We haven't seen barcode {search.barcode} before.</strong> Give it a name and the
+          next person to scan it — in any home — will see it straight away.
         </div>
       )}
       {search.name && (
