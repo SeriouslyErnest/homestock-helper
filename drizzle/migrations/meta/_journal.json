@@ -43,6 +43,13 @@
       "when": 1790044303428,
       "tag": "0005_limit_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790044970481,
+      "tag": "0006_tighten_function_grants",
+      "breakpoints": true
     }
   ]
 }
