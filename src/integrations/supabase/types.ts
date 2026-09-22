@@ -105,6 +105,7 @@ export type Database = {
         Row: {
           created_at: string
           enforced: boolean
+          max_items: number
           max_members: number
           max_owned_households: number
           tier: string
@@ -113,6 +114,7 @@ export type Database = {
         Insert: {
           created_at?: string
           enforced?: boolean
+          max_items?: number
           max_members: number
           max_owned_households: number
           tier: string
@@ -121,6 +123,7 @@ export type Database = {
         Update: {
           created_at?: string
           enforced?: boolean
+          max_items?: number
           max_members?: number
           max_owned_households?: number
           tier?: string
@@ -688,6 +691,7 @@ export type Database = {
         Returns: {
           created_at: string
           enforced: boolean
+          max_items: number
           max_members: number
           max_owned_households: number
           tier: string
