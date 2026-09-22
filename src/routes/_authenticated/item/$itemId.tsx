@@ -5,7 +5,8 @@ import { ArrowLeft, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import {
-  CATEGORIES,
+  emojiFor,
+  useCategories,
   formatLocalDate,
   isExpiringSoon,
   isLow,
@@ -35,6 +36,7 @@ function ItemPage() {
   const { itemId } = Route.useParams();
   const navigate = useNavigate();
   const { data: household } = useHousehold();
+  const categories = useCategories();
   const queryClient = useQueryClient();
 
   const { data: item, isPending } = useQuery({
@@ -230,7 +232,7 @@ function ItemPage() {
               className="block h-full max-h-full w-full max-w-full object-contain"
             />
           ) : (
-            (CATEGORIES.find((c) => c.id === item.category)?.emoji ?? "📦")
+            emojiFor(item.category, categories)
           )}
         </div>
         <div className="text-sm">
@@ -359,7 +361,7 @@ function ItemPage() {
               onChange={(e) => setCategory(e.target.value)}
               className={field}
             >
-              {CATEGORIES.map((c) => (
+              {categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.emoji} {c.id}
                 </option>
