@@ -132,7 +132,7 @@ function InventoryPage() {
   const groupLeaders = useMemo(() => {
     const seen = new Set<string>();
     const leaders = new Set<string>();
-    for (const i of filtered) {
+    for (const i of visible) {
       const key = productKey(i);
       if (!seen.has(key)) {
         seen.add(key);
@@ -140,7 +140,7 @@ function InventoryPage() {
       }
     }
     return leaders;
-  }, [filtered]);
+  }, [visible]);
 
 
   // Needs attention = out / below minimum, or expiring within 3 days.
@@ -322,7 +322,7 @@ function InventoryPage() {
         <div className="flex min-w-0 items-center gap-2">
           <h2 className="truncate text-lg font-semibold">Inventory</h2>
           <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs text-muted-foreground">
-            {filtered.length}
+            {visible.length}
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -367,7 +367,7 @@ function InventoryPage() {
 
       {isPending && <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>}
 
-      {!isPending && filtered.length === 0 && (
+      {!isPending && visible.length === 0 && (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center">
           <p className="text-3xl">🧺</p>
           <p className="mt-2 font-semibold">
@@ -398,7 +398,7 @@ function InventoryPage() {
               : "grid gap-2"
         }
       >
-        {filtered.map((item) => {
+        {visible.map((item) => {
           const status = statusOf(item);
           const key = productKey(item);
           const group = spread.get(key);
