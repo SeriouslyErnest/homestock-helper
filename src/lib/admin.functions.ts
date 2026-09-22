@@ -61,16 +61,23 @@ export const syncAccountDirectory = createServerFn({ method: "POST" })
       .select("display_name")
       .eq("id", context.userId)
       .maybeSingle();
+    const emailHash = hashEmail(email);
     await supabaseAdmin.from("account_directory").upsert(
       {
         user_id: context.userId,
-        email_hash: hashEmail(email),
+        email_hash: emailHash,
         email_masked: maskEmail(email),
         display_name: profile?.display_name ?? null,
         last_seen_at: new Date().toISOString(),
       },
       { onConflict: "user_id" },
     );
+    // Closes the loop on an invitation once that person actually signs in.
+    await supabaseAdmin
+      .from("signup_invites")
+      .update({ accepted_at: new Date().toISOString(), user_id: context.userId })
+      .eq("email_hash", emailHash)
+      .is("accepted_at", null);
     return { ok: true };
   });
 
