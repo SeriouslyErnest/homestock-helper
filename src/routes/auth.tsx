@@ -1,9 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { LogoMark, LogoWordmark } from "@/components/logo";
+import { getSignupPolicy } from "@/lib/signup-policy.functions";
 
 const searchSchema = z.object({
   mode: z.enum(["signin", "signup"]).optional(),
@@ -35,6 +37,11 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
+  const { data: policy } = useQuery({
+    queryKey: ["signup-policy"],
+    queryFn: () => getSignupPolicy(),
+  });
+  const signupsOpen = policy?.signupsEnabled ?? true;
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -57,14 +64,18 @@ function AuthPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email: address,
       options: {
-        shouldCreateUser: true,
+        shouldCreateUser: signupsOpen,
         emailRedirectTo: `${window.location.origin}/inventory`,
         ...(name.trim() ? { data: { display_name: name.trim() } } : {}),
       },
     });
     setBusy(false);
     if (error) {
-      setMessage(error.message);
+      setMessage(
+        !signupsOpen && /not allowed|signups/i.test(error.message)
+          ? "New accounts are invite only at the moment. If you've been invited, use the link in your invitation email."
+          : error.message,
+      );
       return;
     }
     setStep("sent");
@@ -100,13 +111,21 @@ function AuthPage() {
 
       {step === "email" ? (
         <form onSubmit={sendLink} className="flex flex-col gap-3">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Your name (new here? optional)"
-            autoComplete="name"
-            className="rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
-          />
+          {!signupsOpen && (
+            <p className="rounded-2xl bg-surface-2 px-4 py-3 text-center text-sm text-muted-foreground">
+              HomeStock is invite only right now. Sign in below if you already have an account, or
+              use the link in your invitation email.
+            </p>
+          )}
+          {signupsOpen && (
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your name (new here? optional)"
+              autoComplete="name"
+              className="rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
+            />
+          )}
           <input
             type="email"
             required
@@ -154,18 +173,22 @@ function AuthPage() {
         </div>
       )}
 
-      <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
-        <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
-      </div>
+      {signupsOpen && (
+        <>
+          <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+          </div>
 
-      <button
-        type="button"
-        onClick={google}
-        disabled={busy}
-        className="rounded-2xl border border-border bg-card px-4 py-3.5 font-semibold disabled:opacity-60"
-      >
-        Continue with Google
-      </button>
+          <button
+            type="button"
+            onClick={google}
+            disabled={busy}
+            className="rounded-2xl border border-border bg-card px-4 py-3.5 font-semibold disabled:opacity-60"
+          >
+            Continue with Google
+          </button>
+        </>
+      )}
 
       {message && (
         <p className="mt-4 text-center text-sm text-muted-foreground" aria-live="polite">
