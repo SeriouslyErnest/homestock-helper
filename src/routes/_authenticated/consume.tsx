@@ -41,6 +41,7 @@ function ConsumePage() {
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
+    queryClient.invalidateQueries({ queryKey: ["item-usage", household?.id] });
   };
 
   async function take(item: Item) {
@@ -120,7 +121,7 @@ function ConsumePage() {
       }
     >
       <h2 className="mb-2 text-sm font-bold text-muted-foreground">
-        {search.trim() ? `Matches · ${list.length}` : "Recently used"}
+        {search.trim() ? `Matches · ${list.length}` : "What you reach for most"}
       </h2>
 
       {isPending && <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>}
