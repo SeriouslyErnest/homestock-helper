@@ -2,12 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useEffect } from "react";
 import {
   adminAccountDetail,
   adminAuditLog,
   adminClaimConsole,
   adminConsoleUnclaimed,
   adminCreatePromotion,
+  adminGetCategories,
   adminGrantAccess,
   adminInviteUser,
   adminListAccounts,
@@ -17,12 +19,14 @@ import {
   adminPlans,
   adminRevokeGrant,
   adminSession,
+  adminSetCategories,
   adminSetPlanEnforcement,
   adminSetPlanLimits,
   adminSetPromotionStatus,
   adminSetSignupsEnabled,
   adminSignupSettings,
 } from "@/lib/admin.functions";
+import { CATEGORIES } from "@/lib/homestock";
 
 export const Route = createFileRoute("/ops/$")({
   ssr: false,
@@ -36,7 +40,7 @@ export const Route = createFileRoute("/ops/$")({
   }),
 });
 
-type Tab = "dashboard" | "accounts" | "signups" | "promotions" | "plans" | "audit";
+type Tab = "dashboard" | "accounts" | "signups" | "promotions" | "plans" | "places" | "audit";
 
 function Card({ label, value }: { label: string; value: number | string }) {
   return (
@@ -77,7 +81,15 @@ function Console() {
   }
 
   const role = session.data.role;
-  const tabs: Tab[] = ["dashboard", "accounts", "signups", "promotions", "plans", "audit"];
+  const tabs: Tab[] = [
+    "dashboard",
+    "accounts",
+    "signups",
+    "promotions",
+    "plans",
+    "places",
+    "audit",
+  ];
 
   return (
     <div className="mx-auto min-h-dvh w-full max-w-5xl px-5 py-6">
@@ -114,6 +126,7 @@ function Console() {
         {tab === "signups" && <Signups routeId={routeId} />}
         {tab === "promotions" && <Promotions routeId={routeId} />}
         {tab === "plans" && <Plans routeId={routeId} />}
+        {tab === "places" && <Places routeId={routeId} />}
         {tab === "audit" && <Audit routeId={routeId} />}
       </main>
     </div>
