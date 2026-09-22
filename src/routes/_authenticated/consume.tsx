@@ -5,7 +5,15 @@ import { Minus, ScanBarcode } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { ProductPhotoDialog } from "@/components/product-photo-dialog";
-import { emojiFor, useCategories, useHousehold, useItems, type Item } from "@/lib/homestock";
+import {
+  emojiFor,
+  useCategories,
+  useHousehold,
+  useItemUsage,
+  useItems,
+  usageScore,
+  type Item,
+} from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/consume")({
@@ -27,6 +35,7 @@ function ConsumePage() {
   const categories = useCategories();
   const { data: items, isPending } = useItems(household?.id);
   const queryClient = useQueryClient();
+  const { data: usage } = useItemUsage(household?.id);
   const [search, setSearch] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
 
