@@ -1,7 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LogoMark, LogoWordmark } from "@/components/logo";
+import { getSignupPolicy } from "@/lib/signup-policy.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -26,6 +28,11 @@ export const Route = createFileRoute("/")({
 
 function Landing() {
   const navigate = useNavigate();
+  const { data: policy } = useQuery({
+    queryKey: ["signup-policy"],
+    queryFn: () => getSignupPolicy(),
+  });
+  const signupsOpen = policy?.signupsEnabled ?? true;
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -41,19 +48,31 @@ function Landing() {
         A shared memory for your household. Know what you have, what's running low, and what to buy.
       </p>
       <div className="mt-8 flex w-full flex-col gap-3">
-        <Link
-          to="/auth"
-          className="rounded-2xl bg-primary px-4 py-3.5 font-semibold text-primary-foreground"
-        >
-          Get started
-        </Link>
+        {signupsOpen && (
+          <Link
+            to="/auth"
+            className="rounded-2xl bg-primary px-4 py-3.5 font-semibold text-primary-foreground"
+          >
+            Get started
+          </Link>
+        )}
         <Link
           to="/auth"
           search={{ mode: "signin" }}
-          className="rounded-2xl border border-border bg-card px-4 py-3.5 font-semibold"
+          className={
+            signupsOpen
+              ? "rounded-2xl border border-border bg-card px-4 py-3.5 font-semibold"
+              : "rounded-2xl bg-primary px-4 py-3.5 font-semibold text-primary-foreground"
+          }
         >
-          I already have an account
+          {signupsOpen ? "I already have an account" : "Sign in"}
         </Link>
+        {!signupsOpen && (
+          <p className="text-sm text-muted-foreground">
+            HomeStock is invite only right now. If someone has invited you, use the link in your
+            email to set up your account.
+          </p>
+        )}
         <Link to="/about" className="px-4 py-3 font-semibold text-muted-foreground">
           Find out more about HomeStock
         </Link>
