@@ -311,6 +311,13 @@ function InventoryPage() {
         </button>
       </div>
 
+      {overCap > 0 && (
+        <p className="mb-3 rounded-2xl bg-warning-soft px-3 py-2 text-xs font-medium text-warning-foreground">
+          Your plan shows {plan?.max_items} items — {overCap} more {overCap === 1 ? "is" : "are"}{" "}
+          saved but hidden.
+        </p>
+      )}
+
       {hiddenCount > 0 && !search.trim() && (
         <p className="mb-3 text-xs text-muted-foreground">
           {hiddenCount} fully used-up item{hiddenCount === 1 ? "" : "s"} hidden — search to find{" "}
