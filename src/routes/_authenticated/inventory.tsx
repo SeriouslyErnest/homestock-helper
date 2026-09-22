@@ -5,8 +5,8 @@ import { AlignJustify, ArrowDown, ArrowUp, LayoutGrid, List, Plus, Minus } from 
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import {
-  CATEGORIES,
-  categoryEmoji,
+  emojiFor,
+  useCategories,
   formatLocalDate,
   isExpiringInDays,
   isExpiringSoon,
@@ -98,6 +98,7 @@ function InventoryPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("All");
   // Low-stock and expiring filters combine, so you can see either or both.
+  const categories = useCategories();
   const [showLow, setShowLow] = useState(false);
   const [showExpiring, setShowExpiring] = useState(false);
   const [view, setView] = useState<"list" | "cards" | "compact">("list");
@@ -246,7 +247,7 @@ function InventoryPage() {
     });
   }
 
-  const chips = CATEGORIES.map((c) => c.id);
+  const chips = categories;
 
   function pickCategory(c: string) {
     setCategory(c);
@@ -322,15 +323,15 @@ function InventoryPage() {
         </button>
         {chips.map((c) => (
           <button
-            key={c}
-            onClick={() => pickCategory(c)}
+            key={c.id}
+            onClick={() => pickCategory(c.id)}
             className={`rounded-full border px-3.5 py-2 text-sm whitespace-nowrap ${
-              category === c && !showLow && !showExpiring
+              category === c.id && !showLow && !showExpiring
                 ? "border-transparent bg-brand-soft font-bold text-brand"
                 : "border-border bg-card text-muted-foreground"
             }`}
           >
-            {`${categoryEmoji(c)} ${c}`}
+            {`${c.emoji} ${c.id}`}
           </button>
         ))}
       </div>
@@ -506,7 +507,7 @@ function InventoryPage() {
               className="block h-full max-h-full w-full max-w-full object-contain"
             />
           ) : (
-            categoryEmoji(item.category)
+            emojiFor(item.category, categories)
           );
 
           if (view === "compact") {

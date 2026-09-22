@@ -686,3 +686,90 @@ export const adminInviteUser = createServerFn({ method: "POST" })
     });
     return { ok: true, emailMasked: maskEmail(email) };
   });
+
+export type AdminCategory = { id: string; emoji: string };
+
+/** The saved place list, or null when the app is still using its built-in one. */
+export const adminGetCategories = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string }) => input)
+  .handler(async ({ data, context }): Promise<{ categories: AdminCategory[] | null }> => {
+    await guard(data.routeId, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin
+      .from("app_settings")
+      .select("value")
+      .eq("key", "categories")
+      .maybeSingle();
+    const list = row?.value as AdminCategory[] | undefined;
+    return { categories: Array.isArray(list) && list.length > 0 ? list : null };
+  });
+
+/**
+ * Save the place list. Renames move existing items onto the new label; a
+ * removed place leaves its items on the old label (they still show under
+ * "All items" in the app).
+ */
+export const adminSetCategories = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: { routeId: string; categories: AdminCategory[]; renames: { from: string; to: string }[] }) =>
+      input,
+  )
+  .handler(async ({ data, context }) => {
+    await guard(data.routeId, context.userId, ["SUPER_ADMIN"]);
+    const { writeAudit } = await import("./admin.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    if (data.categories.length < 1 || data.categories.length > 16)
+      throw new Error("Keep between 1 and 16 places.");
+    const seen = new Set<string>();
+    const clean = data.categories.map((c) => {
+      const id = c.id.trim();
+      const emoji = c.emoji.trim();
+      if (id.length < 1 || id.length > 20) throw new Error("Place names must be 1–20 characters.");
+      if (emoji.length < 1 || emoji.length > 8) throw new Error("Pick an emoji for every place.");
+      const key = id.toLowerCase();
+      if (seen.has(key)) throw new Error(`"${id}" appears twice.`);
+      seen.add(key);
+      return { id, emoji };
+    });
+
+    // A rename must move items from a place that actually existed before.
+    const { data: row } = await supabaseAdmin
+      .from("app_settings")
+      .select("value")
+      .eq("key", "categories")
+      .maybeSingle();
+    const before = (row?.value as AdminCategory[] | undefined) ?? [];
+    const beforeIds = new Set(before.map((c) => c.id));
+    const afterIds = new Set(clean.map((c) => c.id));
+    const renames = data.renames.filter(
+      (r) => beforeIds.has(r.from) && afterIds.has(r.to) && r.from !== r.to,
+    );
+
+    for (const r of renames) {
+      const { error } = await supabaseAdmin.from("items").update({ category: r.to }).eq("category", r.from);
+      if (error) throw error;
+    }
+
+    const { error } = await supabaseAdmin.from("app_settings").upsert(
+      {
+        key: "categories",
+        value: clean as never,
+        updated_at: new Date().toISOString(),
+        updated_by: context.userId,
+      },
+      { onConflict: "key" },
+    );
+    if (error) throw error;
+
+    await writeAudit({
+      adminUserId: context.userId,
+      actionType: "categories.updated",
+      targetType: "setting",
+      targetId: "categories",
+      afterJson: { categories: clean, renamed: renames },
+    });
+    return { ok: true };
+  });

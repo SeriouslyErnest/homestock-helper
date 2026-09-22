@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Minus, ScanBarcode } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
-import { categoryEmoji, useHousehold, useItems, type Item } from "@/lib/homestock";
+import { emojiFor, useCategories, useHousehold, useItems, type Item } from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/consume")({
@@ -23,6 +23,7 @@ export const Route = createFileRoute("/_authenticated/consume")({
 
 function ConsumePage() {
   const { data: household } = useHousehold();
+  const categories = useCategories();
   const { data: items, isPending } = useItems(household?.id);
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
@@ -140,7 +141,7 @@ function ConsumePage() {
                   className="block h-full max-h-full w-full max-w-full object-contain"
                 />
               ) : (
-                categoryEmoji(item.category)
+                emojiFor(item.category, categories)
               )}
             </Link>
             <Link to="/item/$itemId" params={{ itemId: item.id }} className="min-w-0 flex-1">

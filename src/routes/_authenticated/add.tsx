@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { AppShell } from "@/components/app-shell";
-import { CATEGORIES, useHousehold } from "@/lib/homestock";
+import { useCategories, useHousehold } from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
 
 type AddSearch = {
@@ -49,12 +49,15 @@ function AddPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const { data: household } = useHousehold();
+  const categories = useCategories();
 
   const fullName = [search.name, search.brand].filter(Boolean).join(" — ");
   const [name, setName] = useState(fullName);
-  const [category, setCategory] = useState(
-    CATEGORIES.some((c) => c.id === search.category) ? search.category! : "Pantry",
-  );
+  const [category, setCategory] = useState(search.category ?? "Pantry");
+  // If the pre-filled place was renamed or removed, fall back to the first one.
+  const effectiveCategory = categories.some((c) => c.id === category)
+    ? category
+    : (categories[0]?.id ?? "Pantry");
   const [quantity, setQuantity] = useState(1);
   const [minQuantity, setMinQuantity] = useState(0);
   const [location, setLocation] = useState("");
@@ -79,7 +82,7 @@ function AddPage() {
         name: name.trim(),
         barcode: search.barcode ?? null,
         image_url: search.image ?? null,
-        category,
+        category: effectiveCategory,
         quantity: Math.max(0, quantity),
         unit: "pcs",
         min_quantity: Math.max(0, minQuantity),
@@ -194,11 +197,11 @@ function AddPage() {
             </label>
             <select
               id="category"
-              value={category}
+              value={effectiveCategory}
               onChange={(e) => setCategory(e.target.value)}
               className={field}
             >
-              {CATEGORIES.map((c) => (
+              {categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.emoji} {c.id}
                 </option>

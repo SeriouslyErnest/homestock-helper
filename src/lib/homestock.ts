@@ -59,17 +59,47 @@ export const REQUEST_TAGS = [
   "Call if unavailable",
 ] as const;
 
-export const CATEGORIES = [
+/** A place an item can live in — the emoji chips like 🍜 Pantry, 🧺 Laundry. */
+export type CategoryDef = { id: string; emoji: string };
+
+/** The built-in list, used until the admin console has saved its own. */
+export const CATEGORIES: CategoryDef[] = [
   { id: "Pantry", emoji: "🍜" },
   { id: "Fridge", emoji: "🥛" },
   { id: "Bathroom", emoji: "🧴" },
   { id: "Cleaning", emoji: "🧻" },
   { id: "Laundry", emoji: "🧺" },
   { id: "Other", emoji: "📦" },
-] as const;
+];
+
+/** Emoji for a category, from a given list (so admin edits show everywhere). */
+export function emojiFor(category: string | null | undefined, cats: CategoryDef[]): string {
+  return cats.find((c) => c.id === category)?.emoji ?? "📦";
+}
 
 export function categoryEmoji(category: string | null | undefined): string {
-  return CATEGORIES.find((c) => c.id === category)?.emoji ?? "📦";
+  return emojiFor(category, CATEGORIES);
+}
+
+/**
+ * The household's place list. Edited in the admin console and stored as a
+ * setting; falls back to the built-in list until (or if) that was never saved.
+ */
+export function useCategories(): CategoryDef[] {
+  const { data } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async (): Promise<CategoryDef[]> => {
+      const { data } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "categories")
+        .maybeSingle();
+      const list = data?.value as CategoryDef[] | undefined;
+      return Array.isArray(list) && list.length > 0 ? list : CATEGORIES;
+    },
+    staleTime: 5 * 60_000,
+  });
+  return data ?? CATEGORIES;
 }
 
 export function isLow(item: Item): boolean {

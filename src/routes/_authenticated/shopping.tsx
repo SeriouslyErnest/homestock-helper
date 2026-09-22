@@ -5,11 +5,12 @@ import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import {
-  categoryEmoji,
+  emojiFor,
   formatLocalDateTime,
   isLow,
   nowUtc,
   REQUEST_TAGS,
+  useCategories,
   useHousehold,
   useItems,
   useShopping,
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/_authenticated/shopping")({
 function ShoppingPage() {
   const { data: household } = useHousehold();
   const { data: shopping, isPending } = useShopping(household?.id);
+  const categories = useCategories();
   const { data: items } = useItems(household?.id);
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
@@ -331,7 +333,7 @@ function ShoppingPage() {
                 className="flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-card p-2.5"
               >
                 <div className="grid h-10 w-10 place-items-center rounded-xl bg-warning-soft text-xl">
-                  {categoryEmoji(item.category)}
+                  {emojiFor(item.category, categories)}
                 </div>
                 <div className="min-w-0 flex-1">
                   <strong className="block truncate text-sm">{item.name}</strong>
