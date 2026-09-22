@@ -111,13 +111,21 @@ function AuthPage() {
 
       {step === "email" ? (
         <form onSubmit={sendLink} className="flex flex-col gap-3">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Your name (new here? optional)"
-            autoComplete="name"
-            className="rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
-          />
+          {!signupsOpen && (
+            <p className="rounded-2xl bg-surface-2 px-4 py-3 text-center text-sm text-muted-foreground">
+              HomeStock is invite only right now. Sign in below if you already have an account, or
+              use the link in your invitation email.
+            </p>
+          )}
+          {signupsOpen && (
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your name (new here? optional)"
+              autoComplete="name"
+              className="rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
+            />
+          )}
           <input
             type="email"
             required
