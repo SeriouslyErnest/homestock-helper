@@ -1,4 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAndCacheProduct } from "@/lib/product-lookup.functions";
+
 
 export type ProductInfo = {
   barcode: string;
@@ -37,36 +39,12 @@ export async function lookupProduct(barcode: string): Promise<ProductInfo | null
   }
 
   try {
-    const res = await fetch(
-      `https://world.openfoodfacts.org/api/v3/product/${encodeURIComponent(code)}?fields=${OFF_FIELDS}`,
-      { headers: { "User-Agent": "HomeStock/1.0 (household inventory app)" } },
-    );
-    if (res.ok) {
-      const json = await res.json();
-      if (json.status === "success" && json.product) {
-        const p = json.product;
-        const info: ProductInfo = {
-          barcode: code,
-          name: p.product_name || null,
-          brand: p.brands || null,
-          image_url: p.image_front_small_url || null,
-          quantity_label: p.quantity || null,
-          source: "openfoodfacts",
-        };
-        await supabase.from("products").upsert({
-          barcode: info.barcode,
-          name: info.name,
-          brand: info.brand,
-          image_url: info.image_url,
-          quantity_label: info.quantity_label,
-          source: "openfoodfacts",
-        });
-        return info;
-      }
-    }
+    const info = await fetchAndCacheProduct({ data: { barcode: code } });
+    if (info) return { ...info, source: "openfoodfacts" };
   } catch {
-    // Network failure: fall through to manual entry.
+    // Network failure or unusable barcode: fall through to manual entry.
   }
 
   return null;
 }
+
