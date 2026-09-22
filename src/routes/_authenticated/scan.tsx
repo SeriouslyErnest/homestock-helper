@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/scan")({
   component: ScanPage,
 });
 
-type Phase = "scanning" | "looking-up" | "error";
+type Phase = "scanning" | "looking-up" | "error" | "result";
 
 function ScanPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -32,6 +32,8 @@ function ScanPage() {
   const [manual, setManual] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const handled = useRef(false);
+  // "Do we have this?" answered first — the scan result, before any next step.
+  const [found, setFound] = useState<Item[] | null>(null);
 
   const [lastCode, setLastCode] = useState<string | null>(null);
 
@@ -40,20 +42,20 @@ function ScanPage() {
     setPhase("looking-up");
     setMessage(null);
     setLastCode(code);
+    setFound(null);
 
     try {
-      // Already on the shelf? Go straight to the item so scanning doubles as "do we have this?".
+      // Already on the shelf? Answer "do we have this?" right here — no workflow.
       if (household) {
         const { data: existing, error } = await supabase
           .from("items")
-          .select("id")
+          .select("*")
           .eq("household_id", household.id)
-          .eq("barcode", code)
-          .limit(1)
-          .maybeSingle();
+          .eq("barcode", code);
         if (error) throw error;
-        if (existing) {
-          navigate({ to: "/item/$itemId", params: { itemId: existing.id } });
+        if (existing && existing.length > 0) {
+          setFound(existing as Item[]);
+          setPhase("result");
           return;
         }
       }
@@ -81,6 +83,32 @@ function ScanPage() {
     if (!lastCode) return;
     handled.current = true;
     await handleCode.current(lastCode);
+  }
+
+  function scanAnother() {
+    setFound(null);
+    setLastCode(null);
+    setMessage(null);
+    setPhase("scanning");
+    handled.current = false;
+  }
+
+  async function addFoundToShopping(item: Item, need: number) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const { error } = await supabase.from("shopping_items").insert({
+      household_id: item.household_id,
+      item_id: item.id,
+      name: item.name,
+      quantity: Math.max(1, need),
+      requested_by: user?.id ?? null,
+    });
+    if (error) {
+      setMessage("Couldn't add it to the shopping list. Try again.");
+      return;
+    }
+    navigate({ to: "/shopping" });
   }
 
   useEffect(() => {
