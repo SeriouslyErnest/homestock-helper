@@ -312,6 +312,60 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_events: {
+        Row: {
+          created_at: string
+          delta: number
+          household_id: string
+          id: string
+          item_id: string | null
+          kind: string
+          new_quantity: number | null
+          note: string | null
+          previous_quantity: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          delta?: number
+          household_id: string
+          id?: string
+          item_id?: string | null
+          kind: string
+          new_quantity?: number | null
+          note?: string | null
+          previous_quantity?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          delta?: number
+          household_id?: string
+          id?: string
+          item_id?: string | null
+          kind?: string
+          new_quantity?: number | null
+          note?: string | null
+          previous_quantity?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_events_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_events_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       items: {
         Row: {
           barcode: string | null
@@ -730,6 +784,10 @@ export type Database = {
       }
       redeem_promo: { Args: { _code: string }; Returns: Json }
       request_household_join: { Args: { _code: string }; Returns: string }
+      set_item_quantity: {
+        Args: { _item_id: string; _note?: string; _quantity: number }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
