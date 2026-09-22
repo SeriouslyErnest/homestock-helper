@@ -381,26 +381,41 @@ function InventoryPage() {
         </p>
       )}
 
-      <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+      {/* Heading on its own line; sort + view controls get a full-width row
+          underneath so neither is squeezed on a narrow phone. */}
+      <div className="mb-3">
         <div className="flex min-w-0 items-center gap-2">
           <h2 className="truncate text-lg font-semibold">Inventory</h2>
           <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs text-muted-foreground">
             {visible.length}
           </span>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="mt-2 flex items-center gap-2">
           <select
             value={sort}
-            onChange={(e) => switchSort(e.target.value as "name" | "expiry" | "updated")}
+            onChange={(e) =>
+              switchSort(e.target.value as "name" | "location" | "expiry" | "updated")
+            }
             aria-label="Sort inventory by"
-            className="h-9 max-w-[7.5rem] rounded-xl border border-border bg-surface-2 px-2 text-xs outline-none focus:border-brand"
+            className="h-9 min-w-0 flex-1 rounded-xl border border-border bg-surface-2 px-2.5 text-xs outline-none focus:border-brand"
           >
             <option value="name">Sort: Name</option>
+            <option value="location">Sort: Location</option>
             <option value="expiry">Sort: Expiry</option>
             <option value="updated">Sort: Updated</option>
           </select>
+          <button
+            onClick={flipSortDir}
+            disabled={sort !== "name" && sort !== "location"}
+            aria-label={
+              sortDir === "asc" ? "Sort A to Z first — tap for Z to A" : "Sort Z to A first — tap for A to Z"
+            }
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border bg-surface-2 text-muted-foreground outline-none focus:border-brand disabled:opacity-40"
+          >
+            {sortDir === "asc" ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
+          </button>
           <div
-            className="flex rounded-xl border border-border bg-surface-2 p-1"
+            className="flex shrink-0 rounded-xl border border-border bg-surface-2 p-1"
             aria-label="Choose inventory view"
           >
             <button
@@ -427,6 +442,7 @@ function InventoryPage() {
           </div>
         </div>
       </div>
+
 
       {isPending && <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>}
 
