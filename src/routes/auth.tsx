@@ -35,6 +35,11 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
+  const { data: policy } = useQuery({
+    queryKey: ["signup-policy"],
+    queryFn: () => getSignupPolicy(),
+  });
+  const signupsOpen = policy?.signupsEnabled ?? true;
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -57,14 +62,18 @@ function AuthPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email: address,
       options: {
-        shouldCreateUser: true,
+        shouldCreateUser: signupsOpen,
         emailRedirectTo: `${window.location.origin}/inventory`,
         ...(name.trim() ? { data: { display_name: name.trim() } } : {}),
       },
     });
     setBusy(false);
     if (error) {
-      setMessage(error.message);
+      setMessage(
+        !signupsOpen && /not allowed|signups/i.test(error.message)
+          ? "New accounts are invite only at the moment. If you've been invited, use the link in your invitation email."
+          : error.message,
+      );
       return;
     }
     setStep("sent");
