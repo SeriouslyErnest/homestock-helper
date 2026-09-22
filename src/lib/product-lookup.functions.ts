@@ -66,3 +66,33 @@ export const fetchAndCacheProduct = createServerFn({ method: "POST" })
     });
     return info;
   });
+
+/**
+ * First save wins: when someone identifies an unknown barcode by typing its
+ * name, that identification joins the shared catalogue, so the next person to
+ * scan the same code — in any household — resolves instantly. The barcode is
+ * the unique key, so 100 households scanning one code share one row; later
+ * saves are ignored rather than overwriting the first (real corrections are an
+ * explicit future flow, never a silent rewrite).
+ */
+export const cacheManualProduct = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { barcode: string; name: string }) => {
+    const barcode = String(input?.barcode ?? "").trim();
+    const name = String(input?.name ?? "")
+      .trim()
+      .slice(0, 300);
+    if (!/^[0-9]{6,18}$/.test(barcode) || !name) return null;
+    return { barcode, name };
+  })
+  .handler(async ({ data }): Promise<boolean> => {
+    if (!data) return false;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("products")
+      .upsert(
+        { barcode: data.barcode, name: data.name, source: "manual" },
+        { onConflict: "barcode", ignoreDuplicates: true },
+      );
+    return !error;
+  });

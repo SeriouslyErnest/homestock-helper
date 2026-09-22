@@ -22,6 +22,7 @@
 - Correct the count: tap the quantity in inventory or the item page, enter the real number, optional note, Undo
 - Scan to check: scanning something already at home answers "do we have this?" with totals per place, need, and next actions
 - "Use up" ranks by how often and how recently the household uses each item (in-stock only)
+- Shared product catalogue: a manually identified unknown barcode is remembered for everyone (first save wins, never overwritten)
 
 ## Later (beyond MVP)
 - Multi-location stock records, inventory event history, buy-request tags
