@@ -173,18 +173,22 @@ function AuthPage() {
         </div>
       )}
 
-      <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
-        <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
-      </div>
+      {signupsOpen && (
+        <>
+          <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+          </div>
 
-      <button
-        type="button"
-        onClick={google}
-        disabled={busy}
-        className="rounded-2xl border border-border bg-card px-4 py-3.5 font-semibold disabled:opacity-60"
-      >
-        Continue with Google
-      </button>
+          <button
+            type="button"
+            onClick={google}
+            disabled={busy}
+            className="rounded-2xl border border-border bg-card px-4 py-3.5 font-semibold disabled:opacity-60"
+          >
+            Continue with Google
+          </button>
+        </>
+      )}
 
       {message && (
         <p className="mt-4 text-center text-sm text-muted-foreground" aria-live="polite">
