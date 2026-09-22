@@ -9,7 +9,9 @@ import {
   adminConsoleUnclaimed,
   adminCreatePromotion,
   adminGrantAccess,
+  adminInviteUser,
   adminListAccounts,
+  adminListInvites,
   adminListPromotions,
   adminOverview,
   adminPlans,
@@ -17,6 +19,8 @@ import {
   adminSession,
   adminSetPlanEnforcement,
   adminSetPromotionStatus,
+  adminSetSignupsEnabled,
+  adminSignupSettings,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/ops/$")({
@@ -31,7 +35,7 @@ export const Route = createFileRoute("/ops/$")({
   }),
 });
 
-type Tab = "dashboard" | "accounts" | "promotions" | "plans" | "audit";
+type Tab = "dashboard" | "accounts" | "signups" | "promotions" | "plans" | "audit";
 
 function Card({ label, value }: { label: string; value: number | string }) {
   return (
@@ -72,7 +76,7 @@ function Console() {
   }
 
   const role = session.data.role;
-  const tabs: Tab[] = ["dashboard", "accounts", "promotions", "plans", "audit"];
+  const tabs: Tab[] = ["dashboard", "accounts", "signups", "promotions", "plans", "audit"];
 
   return (
     <div className="mx-auto min-h-dvh w-full max-w-5xl px-5 py-6">
@@ -106,6 +110,7 @@ function Console() {
       <main className="mt-6">
         {tab === "dashboard" && <Dashboard routeId={routeId} />}
         {tab === "accounts" && <Accounts routeId={routeId} role={role} />}
+        {tab === "signups" && <Signups routeId={routeId} />}
         {tab === "promotions" && <Promotions routeId={routeId} />}
         {tab === "plans" && <Plans routeId={routeId} />}
         {tab === "audit" && <Audit routeId={routeId} />}
