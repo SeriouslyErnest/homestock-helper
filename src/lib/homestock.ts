@@ -288,6 +288,8 @@ export type Entitlements = {
   enforced: boolean;
   max_owned_households: number;
   max_members: number;
+  /** How many inventory rows a home may show on this plan. */
+  max_items: number;
   owned_households: number;
   can_create_household: boolean;
 };

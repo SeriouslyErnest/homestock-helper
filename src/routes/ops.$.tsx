@@ -18,6 +18,7 @@ import {
   adminRevokeGrant,
   adminSession,
   adminSetPlanEnforcement,
+  adminSetPlanLimits,
   adminSetPromotionStatus,
   adminSetSignupsEnabled,
   adminSignupSettings,
@@ -545,46 +546,107 @@ function Promotions({ routeId }: { routeId: string }) {
   );
 }
 
-function Plans({ routeId }: { routeId: string }) {
+function PlanRow({
+  routeId,
+  plan,
+}: {
+  routeId: string;
+  plan: {
+    tier: string;
+    enforced: boolean;
+    max_owned_households: number;
+    max_members: number;
+    max_items: number;
+  };
+}) {
   const qc = useQueryClient();
+  const [homes, setHomes] = useState(String(plan.max_owned_households));
+  const [members, setMembers] = useState(String(plan.max_members));
+  const [items, setItems] = useState(String(plan.max_items));
+  const refresh = () => void qc.invalidateQueries({ queryKey: ["admin-plans", routeId] });
+
+  const toggle = useMutation({
+    mutationFn: () =>
+      adminSetPlanEnforcement({ data: { routeId, tier: plan.tier, enforced: !plan.enforced } }),
+    onSuccess: refresh,
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const save = useMutation({
+    mutationFn: () =>
+      adminSetPlanLimits({
+        data: {
+          routeId,
+          tier: plan.tier,
+          maxOwnedHouseholds: Number(homes),
+          maxMembers: Number(members),
+          maxItems: Number(items),
+        },
+      }),
+    onSuccess: () => {
+      toast.success("Limits saved");
+      refresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const field = (label: string, value: string, set: (v: string) => void) => (
+    <label className="text-xs text-muted-foreground">
+      {label}
+      <input
+        type="number"
+        min={1}
+        value={value}
+        onChange={(e) => set(e.target.value)}
+        className="mt-1 h-10 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground"
+      />
+    </label>
+  );
+
+  return (
+    <div className="space-y-3 rounded-2xl border border-border bg-card px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="text-sm font-semibold capitalize">{plan.tier}</div>
+        <button
+          type="button"
+          onClick={() => toggle.mutate()}
+          className={`h-10 rounded-xl border px-4 text-sm font-semibold ${
+            plan.enforced ? "border-brand bg-brand-soft text-brand" : "border-border"
+          }`}
+        >
+          {plan.enforced ? "Enforced" : "Not enforced"}
+        </button>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {field("Homes owned", homes, setHomes)}
+        {field("People per home", members, setMembers)}
+        {field("Line items", items, setItems)}
+      </div>
+      <button
+        type="button"
+        onClick={() => save.mutate()}
+        disabled={save.isPending}
+        className="h-10 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+      >
+        {save.isPending ? "Saving…" : "Save limits"}
+      </button>
+    </div>
+  );
+}
+
+function Plans({ routeId }: { routeId: string }) {
   const plans = useQuery({
     queryKey: ["admin-plans", routeId],
     queryFn: () => adminPlans({ data: { routeId } }),
-  });
-  const toggle = useMutation({
-    mutationFn: (v: { tier: string; enforced: boolean }) =>
-      adminSetPlanEnforcement({ data: { routeId, ...v } }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["admin-plans", routeId] }),
-    onError: (e: Error) => toast.error(e.message),
   });
 
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
         Limits only apply when a plan is switched on. Everything stays unlimited while enforcement
-        is off.
+        is off. "Line items" is how many inventory rows a home may show.
       </p>
       {(plans.data ?? []).map((p) => (
-        <div
-          key={p.tier}
-          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3"
-        >
-          <div>
-            <div className="text-sm font-semibold capitalize">{p.tier}</div>
-            <div className="text-xs text-muted-foreground">
-              {p.max_owned_households} homes owned · {p.max_members} people per home
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => toggle.mutate({ tier: p.tier, enforced: !p.enforced })}
-            className={`h-10 rounded-xl border px-4 text-sm font-semibold ${
-              p.enforced ? "border-brand bg-brand-soft text-brand" : "border-border"
-            }`}
-          >
-            {p.enforced ? "Enforced" : "Not enforced"}
-          </button>
-        </div>
+        <PlanRow key={p.tier} routeId={routeId} plan={p} />
       ))}
     </div>
   );

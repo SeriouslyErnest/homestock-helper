@@ -15,6 +15,7 @@ import {
   sortByExpiry,
   sortByProductThenLocation,
   sortByRecentlyUpdated,
+  useEntitlements,
   useHousehold,
   useItems,
   type Item,
@@ -53,6 +54,7 @@ function isUsedUp(item: Item): boolean {
 function InventoryPage() {
   const { data: household } = useHousehold();
   const { data: items, isPending } = useItems(household?.id);
+  const { data: plan } = useEntitlements();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("All");
@@ -97,6 +99,22 @@ function InventoryPage() {
     return sortByProductThenLocation(list);
   }, [items, search, category, showLow, showExpiring, sort]);
 
+  // Plan allowance: when a plan is enforced, only the first N items a home added
+  // stay visible. Nothing is deleted — raising the limit brings them straight back.
+  const cap = plan?.enforced ? plan.max_items : Infinity;
+  const allowedIds = useMemo(() => {
+    if (!Number.isFinite(cap)) return null;
+    const oldestFirst = [...(items ?? [])].sort((a, b) =>
+      (a.created_at ?? "").localeCompare(b.created_at ?? ""),
+    );
+    return new Set(oldestFirst.slice(0, cap).map((i) => i.id));
+  }, [items, cap]);
+  const visible = useMemo(
+    () => (allowedIds ? filtered.filter((i) => allowedIds.has(i.id)) : filtered),
+    [filtered, allowedIds],
+  );
+  const overCap = allowedIds ? Math.max((items ?? []).length - allowedIds.size, 0) : 0;
+
   /** How many rows and how much stock each product has across every place. */
   const spread = useMemo(() => {
     const map = new Map<string, { places: number; total: number }>();
@@ -114,7 +132,7 @@ function InventoryPage() {
   const groupLeaders = useMemo(() => {
     const seen = new Set<string>();
     const leaders = new Set<string>();
-    for (const i of filtered) {
+    for (const i of visible) {
       const key = productKey(i);
       if (!seen.has(key)) {
         seen.add(key);
@@ -122,7 +140,7 @@ function InventoryPage() {
       }
     }
     return leaders;
-  }, [filtered]);
+  }, [visible]);
 
 
   // Needs attention = out / below minimum, or expiring within 3 days.
@@ -293,6 +311,13 @@ function InventoryPage() {
         </button>
       </div>
 
+      {overCap > 0 && (
+        <p className="mb-3 rounded-2xl bg-warning-soft px-3 py-2 text-xs font-medium text-warning">
+          Your plan shows {plan?.max_items} items — {overCap} more {overCap === 1 ? "is" : "are"}{" "}
+          saved but hidden.
+        </p>
+      )}
+
       {hiddenCount > 0 && !search.trim() && (
         <p className="mb-3 text-xs text-muted-foreground">
           {hiddenCount} fully used-up item{hiddenCount === 1 ? "" : "s"} hidden — search to find{" "}
@@ -304,7 +329,7 @@ function InventoryPage() {
         <div className="flex min-w-0 items-center gap-2">
           <h2 className="truncate text-lg font-semibold">Inventory</h2>
           <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs text-muted-foreground">
-            {filtered.length}
+            {visible.length}
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -349,7 +374,7 @@ function InventoryPage() {
 
       {isPending && <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>}
 
-      {!isPending && filtered.length === 0 && (
+      {!isPending && visible.length === 0 && (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center">
           <p className="text-3xl">🧺</p>
           <p className="mt-2 font-semibold">
@@ -380,7 +405,7 @@ function InventoryPage() {
               : "grid gap-2"
         }
       >
-        {filtered.map((item) => {
+        {visible.map((item) => {
           const status = statusOf(item);
           const key = productKey(item);
           const group = spread.get(key);
