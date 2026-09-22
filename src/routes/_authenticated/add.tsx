@@ -197,11 +197,11 @@ function AddPage() {
             </label>
             <select
               id="category"
-              value={category}
+              value={effectiveCategory}
               onChange={(e) => setCategory(e.target.value)}
               className={field}
             >
-              {CATEGORIES.map((c) => (
+              {categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.emoji} {c.id}
                 </option>
