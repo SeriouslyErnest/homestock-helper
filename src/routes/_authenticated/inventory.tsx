@@ -102,7 +102,8 @@ function InventoryPage() {
   const [showLow, setShowLow] = useState(false);
   const [showExpiring, setShowExpiring] = useState(false);
   const [view, setView] = useState<"list" | "cards" | "compact">("list");
-  const [sort, setSort] = useState<"name" | "expiry" | "updated">("name");
+  const [sort, setSort] = useState<"name" | "location" | "expiry" | "updated">("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [busyId, setBusyId] = useState<string | null>(null);
 
   // Read the remembered view/sort after mount so the first render always matches the server.
@@ -110,8 +111,15 @@ function InventoryPage() {
     const stored = localStorage.getItem("homestock-view");
     if (stored === "list" || stored === "cards" || stored === "compact") setView(stored);
     const storedSort = localStorage.getItem("homestock-sort");
-    if (storedSort === "name" || storedSort === "expiry" || storedSort === "updated")
+    if (
+      storedSort === "name" ||
+      storedSort === "location" ||
+      storedSort === "expiry" ||
+      storedSort === "updated"
+    )
       setSort(storedSort);
+    const storedDir = localStorage.getItem("homestock-sort-dir");
+    if (storedDir === "asc" || storedDir === "desc") setSortDir(storedDir);
   }, []);
 
   const filtered = useMemo(() => {
@@ -136,8 +144,9 @@ function InventoryPage() {
     // Same product in two places sits together, so "Milk (Fridge)" and "Milk (Garage)" read as one thing.
     if (sort === "expiry") return sortByExpiry(list);
     if (sort === "updated") return sortByRecentlyUpdated(list);
-    return sortByProductThenLocation(list);
-  }, [items, search, category, showLow, showExpiring, sort]);
+    if (sort === "location") return sortByLocationThenName(list, sortDir);
+    return sortByNameThenPlace(list, sortDir);
+  }, [items, search, category, showLow, showExpiring, sort, sortDir]);
 
   // Plan allowance: when a plan is enforced, only the first N items a home added
   // stay visible. Nothing is deleted — raising the limit brings them straight back.
