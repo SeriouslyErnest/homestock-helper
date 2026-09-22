@@ -212,19 +212,17 @@ export const adminAccountDetail = createServerFn({ method: "POST" })
             tier: (tier.data as string | null) ?? "free",
           }
         : null,
-      grants: (grants.data ?? []).map(
-        (g): AdminGrant => ({
-          id: g.id,
-          tier: g.tier,
-          source: g.source,
-          promoCode: g.promo_code,
-          startsAt: g.starts_at,
-          endsAt: g.ends_at,
-          revokedAt: g.revoked_at,
-          reason: g.reason,
-          createdAt: g.created_at,
-        }),
-      ),
+      grants: (grants.data ?? []).map((g): AdminGrant => ({
+        id: g.id,
+        tier: g.tier,
+        source: g.source,
+        promoCode: g.promo_code,
+        startsAt: g.starts_at,
+        endsAt: g.ends_at,
+        revokedAt: g.revoked_at,
+        reason: g.reason,
+        createdAt: g.created_at,
+      })),
       households: (memberships.data ?? []).map((m) => ({
         id: m.household_id,
         role: m.role,
@@ -366,11 +364,7 @@ export const adminCreatePromotion = createServerFn({ method: "POST" })
     const code = data.code.trim().toUpperCase();
     if (code.length < 3) throw new Error("Code must be at least 3 characters");
     if (!data.campaignName.trim()) throw new Error("A campaign name is required");
-    if (
-      !Number.isInteger(data.durationDays) ||
-      data.durationDays < 1 ||
-      data.durationDays > 3650
-    ) {
+    if (!Number.isInteger(data.durationDays) || data.durationDays < 1 || data.durationDays > 3650) {
       throw new Error("Length must be a whole number of days between 1 and 3650");
     }
     if (
@@ -667,17 +661,15 @@ export const adminInviteUser = createServerFn({ method: "POST" })
 
     const hash = hashEmail(email);
     const nowIso = new Date().toISOString();
-    await supabaseAdmin
-      .from("signup_invites")
-      .upsert(
-        {
-          email_hash: hash,
-          email_masked: maskEmail(email),
-          invited_by: context.userId,
-          last_sent_at: nowIso,
-        },
-        { onConflict: "email_hash" },
-      );
+    await supabaseAdmin.from("signup_invites").upsert(
+      {
+        email_hash: hash,
+        email_masked: maskEmail(email),
+        invited_by: context.userId,
+        last_sent_at: nowIso,
+      },
+      { onConflict: "email_hash" },
+    );
     await writeAudit({
       adminUserId: context.userId,
       actionType: "invite.sent",
@@ -713,8 +705,11 @@ export const adminGetCategories = createServerFn({ method: "POST" })
 export const adminSetCategories = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (input: { routeId: string; categories: AdminCategory[]; renames: { from: string; to: string }[] }) =>
-      input,
+    (input: {
+      routeId: string;
+      categories: AdminCategory[];
+      renames: { from: string; to: string }[];
+    }) => input,
   )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context.userId, ["SUPER_ADMIN"]);
@@ -749,7 +744,10 @@ export const adminSetCategories = createServerFn({ method: "POST" })
     );
 
     for (const r of renames) {
-      const { error } = await supabaseAdmin.from("items").update({ category: r.to }).eq("category", r.from);
+      const { error } = await supabaseAdmin
+        .from("items")
+        .update({ category: r.to })
+        .eq("category", r.from);
       if (error) throw error;
     }
 

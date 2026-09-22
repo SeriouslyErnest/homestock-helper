@@ -101,8 +101,8 @@ function SetupPage() {
         <>
           <h1 className="text-[26px] leading-tight font-semibold">Set up your home</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            HomeStock keeps one shared list per home. Join someone else's with their invite code,
-            or start a fresh one.
+            HomeStock keeps one shared list per home. Join someone else's with their invite code, or
+            start a fresh one.
           </p>
           <div className="mt-6 grid gap-3">
             <button
@@ -136,7 +136,6 @@ function SetupPage() {
               </span>
             </button>
             {!canCreate && <AskForMoreHomes limit={plan?.max_owned_households ?? 2} />}
-
           </div>
 
           {myPending.length > 0 && (

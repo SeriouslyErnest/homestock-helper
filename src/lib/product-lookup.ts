@@ -1,7 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAndCacheProduct } from "@/lib/product-lookup.functions";
 
-
 export type ProductInfo = {
   barcode: string;
   name: string | null;
@@ -47,4 +46,3 @@ export async function lookupProduct(barcode: string): Promise<ProductInfo | null
 
   return null;
 }
-

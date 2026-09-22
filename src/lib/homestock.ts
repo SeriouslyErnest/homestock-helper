@@ -176,9 +176,9 @@ export function sortByProductThenLocation<T extends Pick<Item, "barcode" | "name
 }
 
 /** Sort so the soonest-to-expire items come first; items with no expiry go last. */
-export function sortByExpiry<
-  T extends Pick<Item, "expires_on" | "barcode" | "name" | "location">,
->(items: T[]): T[] {
+export function sortByExpiry<T extends Pick<Item, "expires_on" | "barcode" | "name" | "location">>(
+  items: T[],
+): T[] {
   const days = (i: T): number =>
     i.expires_on ? daysUntilExpiry(i.expires_on) : Number.POSITIVE_INFINITY;
   return [...items].sort(
@@ -299,11 +299,7 @@ export function useHouseholds() {
 export function useHousehold() {
   const query = useHouseholds();
   const households = query.data;
-  const activeId = useSyncExternalStore(
-    subscribeActiveHousehold,
-    getActiveHouseholdId,
-    () => null,
-  );
+  const activeId = useSyncExternalStore(subscribeActiveHousehold, getActiveHouseholdId, () => null);
   const active = households?.find((h) => h.id === activeId) ?? households?.[0] ?? undefined;
   return { ...query, data: active, households: households ?? [] };
 }
@@ -399,7 +395,6 @@ export function planLimitMessage(error: unknown): string | null {
   }
   return null;
 }
-
 
 /**
  * Create a household and join it as its owner. The server checks the plan

@@ -11,7 +11,6 @@ import {
   adminCreatePromotion,
   adminDismissLimitRequest,
   adminLimitRequests,
-
   adminGetCategories,
   adminGrantAccess,
   adminInviteUser,
@@ -244,7 +243,6 @@ function LimitRequests({ routeId }: { routeId: string }) {
   );
 }
 
-
 function Accounts({ routeId, role }: { routeId: string; role: string }) {
   const [search, setSearch] = useState("");
   const [applied, setApplied] = useState("");
@@ -270,7 +268,10 @@ function Accounts({ routeId, role }: { routeId: string; role: string }) {
           placeholder="Search full email address or display name"
           className="h-11 flex-1 rounded-2xl border border-border bg-card px-4 text-sm"
         />
-        <button type="submit" className="h-11 rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground">
+        <button
+          type="submit"
+          className="h-11 rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground"
+        >
           Search
         </button>
       </form>
@@ -880,8 +881,7 @@ function Signups({ routeId }: { routeId: string }) {
   });
 
   const invite = useMutation({
-    mutationFn: () =>
-      adminInviteUser({ data: { routeId, email, origin: window.location.origin } }),
+    mutationFn: () => adminInviteUser({ data: { routeId, email, origin: window.location.origin } }),
     onSuccess: (r) => {
       toast.success(`Invitation sent to ${r.emailMasked}`);
       setEmail("");
