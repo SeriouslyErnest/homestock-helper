@@ -13,7 +13,6 @@ import {
   isLow,
   productKey,
   sortByExpiry,
-  sortByProductThenLocation,
   sortByRecentlyUpdated,
   useEntitlements,
   useHousehold,
