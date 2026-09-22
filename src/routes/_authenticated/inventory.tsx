@@ -293,6 +293,13 @@ function InventoryPage() {
         </button>
       </div>
 
+      {hiddenCount > 0 && !search.trim() && (
+        <p className="mb-3 text-xs text-muted-foreground">
+          {hiddenCount} fully used-up item{hiddenCount === 1 ? "" : "s"} hidden — search to find{" "}
+          {hiddenCount === 1 ? "it" : "them"}.
+        </p>
+      )}
+
       <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
         <div className="flex min-w-0 items-center gap-2">
           <h2 className="truncate text-lg font-semibold">Inventory</h2>
