@@ -128,6 +128,27 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       entitlement_grants: {
         Row: {
           created_at: string
@@ -549,6 +570,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      signup_invites: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email_hash: string
+          email_masked: string
+          id: string
+          invited_by: string | null
+          last_sent_at: string
+          user_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email_hash: string
+          email_masked: string
+          id?: string
+          invited_by?: string | null
+          last_sent_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email_hash?: string
+          email_masked?: string
+          id?: string
+          invited_by?: string | null
+          last_sent_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       user_plans: {
         Row: {
