@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { AppShell } from "@/components/app-shell";
+import { ProductPhotoDialog } from "@/components/product-photo-dialog";
 import { useCategories, useHousehold } from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -124,13 +125,17 @@ function AddPage() {
       {search.name && (
         <div className="mb-4 flex items-center gap-3 rounded-2xl bg-success-soft p-3.5 text-success">
           {search.image && (
-            <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-card">
+            <ProductPhotoDialog
+              src={search.image}
+              name={search.name ?? name ?? "Product"}
+              triggerClassName="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-card"
+            >
               <img
                 src={search.image}
-                alt=""
+                alt={search.name ?? "Product"}
                 className="block h-full max-h-full w-full max-w-full object-contain"
               />
-            </span>
+            </ProductPhotoDialog>
           )}
           <div className="text-sm">
             <strong className="block">{search.name}</strong>

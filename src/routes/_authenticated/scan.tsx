@@ -135,8 +135,13 @@ function ScanPage() {
 
   return (
     <AppShell title="Scan a barcode" subtitle="Point the camera at a product barcode.">
-      <div className="overflow-hidden rounded-3xl border border-border bg-black">
-        <video ref={videoRef} className="aspect-[3/4] w-full object-cover" muted playsInline />
+      <div className="mx-auto w-full max-w-sm overflow-hidden rounded-3xl border border-border bg-foreground">
+        <video
+          ref={videoRef}
+          className="aspect-[4/3] max-h-[42dvh] w-full object-cover"
+          muted
+          playsInline
+        />
       </div>
 
       <p role="status" aria-live="polite" className="mt-3 text-center text-sm">

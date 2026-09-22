@@ -17,6 +17,7 @@
   balanced nav with a new "Use up" page, clear-bought, save confirmation,
   leave household / owner removes member, view toggle read after mount
 - Barcode add flow uses a quick minus / editable quantity / plus stepper; inventory rows and navigation stay aligned on narrow phones
+- Product pictures open full-screen from item previews; long shopping/inventory names wrap, and the scanner adapts to short screens
 
 ## Later (beyond MVP)
 - Multi-location stock records, inventory event history, buy-request tags
