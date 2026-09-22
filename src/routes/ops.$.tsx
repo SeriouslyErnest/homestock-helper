@@ -614,3 +614,115 @@ function Audit({ routeId }: { routeId: string }) {
     </div>
   );
 }
+
+function Signups({ routeId }: { routeId: string }) {
+  const qc = useQueryClient();
+  const [email, setEmail] = useState("");
+
+  const settings = useQuery({
+    queryKey: ["admin-signups", routeId],
+    queryFn: () => adminSignupSettings({ data: { routeId } }),
+  });
+  const invites = useQuery({
+    queryKey: ["admin-invites", routeId],
+    queryFn: () => adminListInvites({ data: { routeId } }),
+  });
+
+  const toggle = useMutation({
+    mutationFn: (enabled: boolean) => adminSetSignupsEnabled({ data: { routeId, enabled } }),
+    onSuccess: (_r, enabled) => {
+      toast.success(enabled ? "Open sign-ups are on" : "Sign-ups are now invite only");
+      void qc.invalidateQueries({ queryKey: ["admin-signups", routeId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const invite = useMutation({
+    mutationFn: () =>
+      adminInviteUser({ data: { routeId, email, origin: window.location.origin } }),
+    onSuccess: (r) => {
+      toast.success(`Invitation sent to ${r.emailMasked}`);
+      setEmail("");
+      void qc.invalidateQueries({ queryKey: ["admin-invites", routeId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const open = settings.data?.signupsEnabled ?? true;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3">
+        <div>
+          <div className="text-sm font-semibold">New account sign-ups</div>
+          <div className="text-xs text-muted-foreground">
+            {open
+              ? "Anyone can create an account from the landing page."
+              : "Invite only — the “Get started” button is hidden and only invited addresses can register."}
+          </div>
+        </div>
+        <button
+          type="button"
+          disabled={settings.isPending || toggle.isPending}
+          onClick={() => toggle.mutate(!open)}
+          className={`h-10 rounded-xl border px-4 text-sm font-semibold disabled:opacity-50 ${
+            open ? "border-brand bg-brand-soft text-brand" : "border-border"
+          }`}
+        >
+          {open ? "Open to everyone" : "Invite only"}
+        </button>
+      </div>
+
+      <form
+        className="space-y-2 rounded-2xl border border-border bg-card p-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          invite.mutate();
+        }}
+      >
+        <h2 className="text-sm font-semibold">Invite someone by email</h2>
+        <p className="text-xs text-muted-foreground">
+          Sends a one-time sign-up link. Works whether sign-ups are open or closed.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="name@example.com"
+            className="h-10 min-w-0 flex-1 rounded-xl border border-border bg-background px-3 text-sm"
+          />
+          <button
+            type="submit"
+            disabled={!email.trim() || invite.isPending}
+            className="h-10 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+          >
+            {invite.isPending ? "Sending…" : "Send invitation"}
+          </button>
+        </div>
+      </form>
+
+      <div className="overflow-hidden rounded-2xl border border-border">
+        {(invites.data ?? []).map((i) => (
+          <div
+            key={i.id}
+            className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-4 py-3 last:border-0"
+          >
+            <div className="min-w-0">
+              <div className="truncate text-sm font-semibold">{i.emailMasked}</div>
+              <div className="text-xs text-muted-foreground">Last sent {fmt(i.lastSentAt)}</div>
+            </div>
+            <span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-brand">
+              {i.acceptedAt ? "Joined" : "Invited"}
+            </span>
+          </div>
+        ))}
+        {invites.data?.length === 0 && (
+          <p className="bg-card px-4 py-6 text-center text-sm text-muted-foreground">
+            No invitations sent yet.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
