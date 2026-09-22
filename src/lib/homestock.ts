@@ -549,4 +549,3 @@ export function usageScore(usage: ItemUsage | undefined, fallbackUpdatedAt: stri
   const recency = 10 / (1 + daysAgo);
   return (usage?.consumeCount ?? 0) + recency;
 }
-

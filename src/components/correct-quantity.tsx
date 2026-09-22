@@ -78,7 +78,10 @@ export function CorrectQuantityDialog({
         <button
           type="button"
           aria-label={`Correct the count for ${item.name}`}
-          className={cn("outline-none focus-visible:ring-2 focus-visible:ring-ring", triggerClassName)}
+          className={cn(
+            "outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            triggerClassName,
+          )}
         >
           {trigger}
         </button>
@@ -92,7 +95,10 @@ export function CorrectQuantityDialog({
             there?
           </Dialog.Description>
 
-          <label htmlFor="cq-value" className="mt-4 mb-1 block text-xs font-bold text-muted-foreground">
+          <label
+            htmlFor="cq-value"
+            className="mt-4 mb-1 block text-xs font-bold text-muted-foreground"
+          >
             Actual quantity
           </label>
           <div className="flex items-center gap-2">
@@ -124,7 +130,10 @@ export function CorrectQuantityDialog({
             </button>
           </div>
 
-          <label htmlFor="cq-note" className="mt-3 mb-1 block text-xs font-bold text-muted-foreground">
+          <label
+            htmlFor="cq-note"
+            className="mt-3 mb-1 block text-xs font-bold text-muted-foreground"
+          >
             Note (optional)
           </label>
           <input
@@ -137,7 +146,10 @@ export function CorrectQuantityDialog({
 
           <div className="mt-4 grid grid-cols-2 gap-2">
             <Dialog.Close asChild>
-              <button type="button" className="rounded-2xl border border-border py-3 text-sm font-bold">
+              <button
+                type="button"
+                className="rounded-2xl border border-border py-3 text-sm font-bold"
+              >
                 Cancel
               </button>
             </Dialog.Close>

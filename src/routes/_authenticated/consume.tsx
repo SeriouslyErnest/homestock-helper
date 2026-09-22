@@ -82,8 +82,7 @@ function ConsumePage() {
         .filter((i) => Number(i.quantity) > 0)
         .sort(
           (a, b) =>
-            usageScore(usage?.get(b.id), b.updated_at) -
-            usageScore(usage?.get(a.id), a.updated_at),
+            usageScore(usage?.get(b.id), b.updated_at) - usageScore(usage?.get(a.id), a.updated_at),
         )
         .slice(0, 8);
     }
