@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlignJustify, LayoutGrid, List, Plus, Minus } from "lucide-react";
+import { AlignJustify, ArrowDown, ArrowUp, LayoutGrid, List, Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import {
@@ -13,7 +13,6 @@ import {
   isLow,
   productKey,
   sortByExpiry,
-  sortByProductThenLocation,
   sortByRecentlyUpdated,
   useEntitlements,
   useHousehold,
@@ -51,6 +50,46 @@ function isUsedUp(item: Item): boolean {
   return item.quantity <= 0 && item.min_quantity <= 0;
 }
 
+/**
+ * Name order, either way round. Rows of the same product stay clustered
+ * together (same name ties through to the product key), and rows sharing a
+ * product read cupboard-before-fridge consistently.
+ */
+function sortByNameThenPlace<T extends Pick<Item, "barcode" | "name" | "location">>(
+  items: T[],
+  dir: "asc" | "desc",
+): T[] {
+  return [...items].sort(
+    (a, b) =>
+      (dir === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)) ||
+      productKey(a).localeCompare(productKey(b)) ||
+      (a.location ?? "").localeCompare(b.location ?? ""),
+  );
+}
+
+/**
+ * Place order, either way round. Items kept nowhere always sink to the
+ * bottom, whatever the direction — they have nothing to sort against.
+ */
+function sortByLocationThenName<T extends Pick<Item, "barcode" | "name" | "location">>(
+  items: T[],
+  dir: "asc" | "desc",
+): T[] {
+  const place = (i: T) => i.location?.trim() ?? "";
+  return [...items].sort((a, b) => {
+    const la = place(a);
+    const lb = place(b);
+    if (!la && !lb) return a.name.localeCompare(b.name);
+    if (!la) return 1;
+    if (!lb) return -1;
+    return (
+      (dir === "asc" ? la.localeCompare(lb) : lb.localeCompare(la)) ||
+      a.name.localeCompare(b.name) ||
+      productKey(a).localeCompare(productKey(b))
+    );
+  });
+}
+
 function InventoryPage() {
   const { data: household } = useHousehold();
   const { data: items, isPending } = useItems(household?.id);
@@ -62,7 +101,8 @@ function InventoryPage() {
   const [showLow, setShowLow] = useState(false);
   const [showExpiring, setShowExpiring] = useState(false);
   const [view, setView] = useState<"list" | "cards" | "compact">("list");
-  const [sort, setSort] = useState<"name" | "expiry" | "updated">("name");
+  const [sort, setSort] = useState<"name" | "location" | "expiry" | "updated">("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [busyId, setBusyId] = useState<string | null>(null);
 
   // Read the remembered view/sort after mount so the first render always matches the server.
@@ -70,8 +110,15 @@ function InventoryPage() {
     const stored = localStorage.getItem("homestock-view");
     if (stored === "list" || stored === "cards" || stored === "compact") setView(stored);
     const storedSort = localStorage.getItem("homestock-sort");
-    if (storedSort === "name" || storedSort === "expiry" || storedSort === "updated")
+    if (
+      storedSort === "name" ||
+      storedSort === "location" ||
+      storedSort === "expiry" ||
+      storedSort === "updated"
+    )
       setSort(storedSort);
+    const storedDir = localStorage.getItem("homestock-sort-dir");
+    if (storedDir === "asc" || storedDir === "desc") setSortDir(storedDir);
   }, []);
 
   const filtered = useMemo(() => {
@@ -96,8 +143,9 @@ function InventoryPage() {
     // Same product in two places sits together, so "Milk (Fridge)" and "Milk (Garage)" read as one thing.
     if (sort === "expiry") return sortByExpiry(list);
     if (sort === "updated") return sortByRecentlyUpdated(list);
-    return sortByProductThenLocation(list);
-  }, [items, search, category, showLow, showExpiring, sort]);
+    if (sort === "location") return sortByLocationThenName(list, sortDir);
+    return sortByNameThenPlace(list, sortDir);
+  }, [items, search, category, showLow, showExpiring, sort, sortDir]);
 
   // Plan allowance: when a plan is enforced, only the first N items a home added
   // stay visible. Nothing is deleted — raising the limit brings them straight back.
@@ -159,9 +207,16 @@ function InventoryPage() {
     localStorage.setItem("homestock-view", v);
   }
 
-  function switchSort(s: "name" | "expiry" | "updated") {
+  function switchSort(s: "name" | "location" | "expiry" | "updated") {
     setSort(s);
     localStorage.setItem("homestock-sort", s);
+  }
+
+  /** Name and Location sorts run either way round; the button flips them. */
+  function flipSortDir() {
+    const next = sortDir === "asc" ? "desc" : "asc";
+    setSortDir(next);
+    localStorage.setItem("homestock-sort-dir", next);
   }
 
   async function apply(item: Item, delta: number) {
@@ -325,26 +380,41 @@ function InventoryPage() {
         </p>
       )}
 
-      <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+      {/* Heading on its own line; sort + view controls get a full-width row
+          underneath so neither is squeezed on a narrow phone. */}
+      <div className="mb-3">
         <div className="flex min-w-0 items-center gap-2">
           <h2 className="truncate text-lg font-semibold">Inventory</h2>
           <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs text-muted-foreground">
             {visible.length}
           </span>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="mt-2 flex items-center gap-2">
           <select
             value={sort}
-            onChange={(e) => switchSort(e.target.value as "name" | "expiry" | "updated")}
+            onChange={(e) =>
+              switchSort(e.target.value as "name" | "location" | "expiry" | "updated")
+            }
             aria-label="Sort inventory by"
-            className="h-9 max-w-[7.5rem] rounded-xl border border-border bg-surface-2 px-2 text-xs outline-none focus:border-brand"
+            className="h-9 min-w-0 flex-1 rounded-xl border border-border bg-surface-2 px-2.5 text-xs outline-none focus:border-brand"
           >
             <option value="name">Sort: Name</option>
+            <option value="location">Sort: Location</option>
             <option value="expiry">Sort: Expiry</option>
             <option value="updated">Sort: Updated</option>
           </select>
+          <button
+            onClick={flipSortDir}
+            disabled={sort !== "name" && sort !== "location"}
+            aria-label={
+              sortDir === "asc" ? "Sort A to Z first — tap for Z to A" : "Sort Z to A first — tap for A to Z"
+            }
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border bg-surface-2 text-muted-foreground outline-none focus:border-brand disabled:opacity-40"
+          >
+            {sortDir === "asc" ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
+          </button>
           <div
-            className="flex rounded-xl border border-border bg-surface-2 p-1"
+            className="flex shrink-0 rounded-xl border border-border bg-surface-2 p-1"
             aria-label="Choose inventory view"
           >
             <button
@@ -371,6 +441,7 @@ function InventoryPage() {
           </div>
         </div>
       </div>
+
 
       {isPending && <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>}
 
