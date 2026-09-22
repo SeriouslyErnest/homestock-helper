@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
+import { ArrowLeft, Minus, Pencil, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
+import { CorrectQuantityDialog } from "@/components/correct-quantity";
 import { ProductPhotoDialog } from "@/components/product-photo-dialog";
 import {
   emojiFor,
@@ -291,12 +292,23 @@ function ItemPage() {
         </button>
       )}
 
-      <button
-        onClick={addToShopping}
-        className="mb-6 flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card py-3.5 text-sm font-bold"
-      >
-        <ShoppingCart size={16} /> Add to shopping list
-      </button>
+      <div className="mb-6 grid gap-2">
+        <CorrectQuantityDialog
+          item={item}
+          triggerClassName="w-full rounded-2xl border border-border bg-card py-3.5 text-sm font-bold"
+          trigger={
+            <span className="flex items-center justify-center gap-2">
+              <Pencil size={15} /> Correct the count
+            </span>
+          }
+        />
+        <button
+          onClick={addToShopping}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card py-3.5 text-sm font-bold"
+        >
+          <ShoppingCart size={16} /> Add to shopping list
+        </button>
+      </div>
 
       <section className="mb-6">
         <h2 className="mb-2 text-sm font-bold">Where it's kept</h2>
