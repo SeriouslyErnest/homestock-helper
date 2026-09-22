@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Home, KeyRound } from "lucide-react";
 import { LogoMark, LogoWordmark } from "@/components/logo";
+import { AskForMoreHomes } from "@/components/limit-request";
+
 import {
   createHousehold,
   planLimitMessage,
