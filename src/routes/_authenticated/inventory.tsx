@@ -41,6 +41,15 @@ function statusOf(item: Item): { label: string; low: boolean } {
   return { label: "In stock", low: false };
 }
 
+/**
+ * Fully consumed with no minimum set — nothing left and nothing we're
+ * tracking to rebuy. These quietly leave the everyday inventory list;
+ * searching still finds them.
+ */
+function isUsedUp(item: Item): boolean {
+  return item.quantity <= 0 && item.min_quantity <= 0;
+}
+
 function InventoryPage() {
   const { data: household } = useHousehold();
   const { data: items, isPending } = useItems(household?.id);
@@ -65,17 +74,22 @@ function InventoryPage() {
 
   const filtered = useMemo(() => {
     let list = items ?? [];
-    if (showLow || showExpiring) {
-      list = list.filter(
-        (i) =>
-          (showLow && (isLow(i) || i.quantity <= 0)) || (showExpiring && isExpiringSoon(i)),
-      );
-    } else if (category !== "All") list = list.filter((i) => i.category === category);
     if (search.trim()) {
+      // Searching looks through everything, including used-up items, so an
+      // item that's hidden from the everyday list is still findable.
       const q = search.trim().toLowerCase();
       list = list.filter(
         (i) => i.name.toLowerCase().includes(q) || (i.location ?? "").toLowerCase().includes(q),
       );
+    } else {
+      list = list.filter((i) => !isUsedUp(i));
+      // Low-stock and expiring filters combine, so you can see either or both.
+      if (showLow || showExpiring) {
+        list = list.filter(
+          (i) =>
+            (showLow && (isLow(i) || i.quantity <= 0)) || (showExpiring && isExpiringSoon(i)),
+        );
+      } else if (category !== "All") list = list.filter((i) => i.category === category);
     }
     // Same product in two places sits together, so "Milk (Fridge)" and "Milk (Garage)" read as one thing.
     if (sort === "expiry") return sortByExpiry(list);
@@ -112,11 +126,15 @@ function InventoryPage() {
 
 
   // Needs attention = out / below minimum, or expiring within 3 days.
+  // Used-up items without a minimum are retired, so they don't nag here.
   const attention = (items ?? []).filter(
-    (i) => isLow(i) || i.quantity <= 0 || isExpiringInDays(i, 3),
+    (i) => !isUsedUp(i) && (isLow(i) || i.quantity <= 0 || isExpiringInDays(i, 3)),
   ).length;
   // Expiring within a day gets its own card so it can't be missed.
   const expiringNow = (items ?? []).filter((i) => isExpiringInDays(i, 1)).length;
+  // "items tracked" mirrors what the list shows, so the number and the rows agree.
+  const trackedCount = (items ?? []).filter((i) => !isUsedUp(i)).length;
+  const hiddenCount = (items ?? []).filter(isUsedUp).length;
 
   function switchView(v: "list" | "cards" | "compact") {
     setView(v);
@@ -246,7 +264,7 @@ function InventoryPage() {
 
       <div className="mb-4 grid grid-cols-3 gap-2.5">
         <div className="rounded-2xl bg-success-soft p-3 text-success">
-          <strong className="block text-xl">{items?.length ?? 0}</strong>
+          <strong className="block text-xl">{trackedCount}</strong>
           <span className="text-xs font-bold">items tracked</span>
         </div>
         <button
@@ -274,6 +292,13 @@ function InventoryPage() {
           <span className="text-xs font-bold">expiring soon</span>
         </button>
       </div>
+
+      {hiddenCount > 0 && !search.trim() && (
+        <p className="mb-3 text-xs text-muted-foreground">
+          {hiddenCount} fully used-up item{hiddenCount === 1 ? "" : "s"} hidden — search to find{" "}
+          {hiddenCount === 1 ? "it" : "them"}.
+        </p>
+      )}
 
       <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
         <div className="flex min-w-0 items-center gap-2">
