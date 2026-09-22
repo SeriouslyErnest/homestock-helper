@@ -520,3 +520,123 @@ export const adminConsoleUnclaimed = createServerFn({ method: "POST" })
       .select("user_id", { count: "exact", head: true });
     return { unclaimed: (count ?? 0) === 0 };
   });
+
+export type AdminInvite = {
+  id: string;
+  emailMasked: string;
+  createdAt: string;
+  lastSentAt: string;
+  acceptedAt: string | null;
+};
+
+/** Current state of the "anyone can sign up" switch, for the console. */
+export const adminSignupSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string }) => input)
+  .handler(async ({ data, context }) => {
+    await guard(data.routeId, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin
+      .from("app_settings")
+      .select("value")
+      .eq("key", "signups_enabled")
+      .maybeSingle();
+    return { signupsEnabled: row?.value === false ? false : true };
+  });
+
+export const adminSetSignupsEnabled = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string; enabled: boolean }) => input)
+  .handler(async ({ data, context }) => {
+    await guard(data.routeId, context.userId, ["SUPER_ADMIN"]);
+    const { writeAudit } = await import("./admin.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("app_settings").upsert(
+      {
+        key: "signups_enabled",
+        value: data.enabled as never,
+        updated_at: new Date().toISOString(),
+        updated_by: context.userId,
+      },
+      { onConflict: "key" },
+    );
+    if (error) throw error;
+    await writeAudit({
+      adminUserId: context.userId,
+      actionType: "signups.toggled",
+      targetType: "setting",
+      targetId: "signups_enabled",
+      afterJson: { enabled: data.enabled },
+    });
+    return { ok: true };
+  });
+
+export const adminListInvites = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string }) => input)
+  .handler(async ({ data, context }): Promise<AdminInvite[]> => {
+    await guard(data.routeId, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from("signup_invites")
+      .select("id, email_masked, created_at, last_sent_at, accepted_at")
+      .order("last_sent_at", { ascending: false })
+      .limit(100);
+    if (error) throw error;
+    return (rows ?? []).map((r) => ({
+      id: r.id,
+      emailMasked: r.email_masked,
+      createdAt: r.created_at,
+      lastSentAt: r.last_sent_at,
+      acceptedAt: r.accepted_at,
+    }));
+  });
+
+/**
+ * Emails a one-time sign-up link. The address itself is never stored in the
+ * app's tables — only a salted fingerprint and a masked form for display.
+ */
+export const adminInviteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string; email: string; origin: string }) => input)
+  .handler(async ({ data, context }) => {
+    await guard(data.routeId, context.userId, ["SUPER_ADMIN", "SUPPORT_ADMIN"]);
+    const email = data.email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Enter a valid email address");
+    if (!/^https?:\/\//.test(data.origin)) throw new Error("Invalid redirect address");
+
+    const { hashEmail, maskEmail, writeAudit } = await import("./admin.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+      redirectTo: `${data.origin.replace(/\/+$/, "")}/inventory`,
+    });
+    if (error) {
+      throw new Error(
+        error.message.toLowerCase().includes("already")
+          ? "That address already has an account."
+          : error.message,
+      );
+    }
+
+    const hash = hashEmail(email);
+    const nowIso = new Date().toISOString();
+    await supabaseAdmin
+      .from("signup_invites")
+      .upsert(
+        {
+          email_hash: hash,
+          email_masked: maskEmail(email),
+          invited_by: context.userId,
+          last_sent_at: nowIso,
+        },
+        { onConflict: "email_hash" },
+      );
+    await writeAudit({
+      adminUserId: context.userId,
+      actionType: "invite.sent",
+      targetType: "invite",
+      targetId: hash.slice(0, 12),
+    });
+    return { ok: true, emailMasked: maskEmail(email) };
+  });
