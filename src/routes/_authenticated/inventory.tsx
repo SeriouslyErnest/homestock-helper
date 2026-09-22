@@ -5,8 +5,8 @@ import { AlignJustify, ArrowDown, ArrowUp, LayoutGrid, List, Plus, Minus } from 
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import {
-  CATEGORIES,
-  categoryEmoji,
+  emojiFor,
+  useCategories,
   formatLocalDate,
   isExpiringInDays,
   isExpiringSoon,
@@ -98,6 +98,7 @@ function InventoryPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("All");
   // Low-stock and expiring filters combine, so you can see either or both.
+  const categories = useCategories();
   const [showLow, setShowLow] = useState(false);
   const [showExpiring, setShowExpiring] = useState(false);
   const [view, setView] = useState<"list" | "cards" | "compact">("list");
