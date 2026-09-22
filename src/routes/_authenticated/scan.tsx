@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { lookupProduct } from "@/lib/product-lookup";
-import { useHousehold } from "@/lib/homestock";
+import { useHousehold, type Item } from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/scan")({
