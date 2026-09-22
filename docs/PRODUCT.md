@@ -35,6 +35,8 @@ Running low / buy request → Shop → Restock.
    surfaced as "Exp 3 Oct" with a ⚠ within 14 days. Inventory shows
    "need attention" (low stock or expiring ≤ 3 days) and a separate
    "expiring soon" card (≤ 1 day), plus combinable Low / Expiring filters.
+   Items fully consumed with no minimum set leave the everyday list (search
+   still finds them), so "items tracked" counts only what's shown.
 6. **Time is UTC inside, local outside.** All timestamps are stored in UTC
    (`nowUtc()`); display helpers (`formatLocalDate`, `daysUntilExpiry`)
    render in the viewer's device timezone. Daylight saving can never shift
