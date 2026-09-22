@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlignJustify, LayoutGrid, List, Plus, Minus } from "lucide-react";
+import { AlignJustify, ArrowDown, ArrowUp, LayoutGrid, List, Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import {
@@ -49,6 +49,46 @@ function statusOf(item: Item): { label: string; low: boolean } {
  */
 function isUsedUp(item: Item): boolean {
   return item.quantity <= 0 && item.min_quantity <= 0;
+}
+
+/**
+ * Name order, either way round. Rows of the same product stay clustered
+ * together (same name ties through to the product key), and rows sharing a
+ * product read cupboard-before-fridge consistently.
+ */
+function sortByNameThenPlace<T extends Pick<Item, "barcode" | "name" | "location">>(
+  items: T[],
+  dir: "asc" | "desc",
+): T[] {
+  return [...items].sort(
+    (a, b) =>
+      (dir === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)) ||
+      productKey(a).localeCompare(productKey(b)) ||
+      (a.location ?? "").localeCompare(b.location ?? ""),
+  );
+}
+
+/**
+ * Place order, either way round. Items kept nowhere always sink to the
+ * bottom, whatever the direction — they have nothing to sort against.
+ */
+function sortByLocationThenName<T extends Pick<Item, "barcode" | "name" | "location">>(
+  items: T[],
+  dir: "asc" | "desc",
+): T[] {
+  const place = (i: T) => i.location?.trim() ?? "";
+  return [...items].sort((a, b) => {
+    const la = place(a);
+    const lb = place(b);
+    if (!la && !lb) return a.name.localeCompare(b.name);
+    if (!la) return 1;
+    if (!lb) return -1;
+    return (
+      (dir === "asc" ? la.localeCompare(lb) : lb.localeCompare(la)) ||
+      a.name.localeCompare(b.name) ||
+      productKey(a).localeCompare(productKey(b))
+    );
+  });
 }
 
 function InventoryPage() {
