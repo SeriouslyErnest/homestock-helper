@@ -497,7 +497,7 @@ export async function correctQuantity(
   const { error } = await supabase.rpc("set_item_quantity", {
     _item_id: itemId,
     _quantity: quantity,
-    _note: note?.trim() ? note.trim() : undefined,
+    ...(note?.trim() ? { _note: note.trim() } : {}),
   });
   if (error) throw error;
 }
