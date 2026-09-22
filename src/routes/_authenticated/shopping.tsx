@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
+import { ProductPhotoDialog } from "@/components/product-photo-dialog";
 import {
   emojiFor,
   formatLocalDateTime,
@@ -62,6 +63,7 @@ function ShoppingPage() {
   const suggested = (items ?? []).filter(
     (i) => (isLow(i) || i.quantity <= 0) && i.min_quantity > 0 && !listedItemIds.has(i.id),
   );
+  const itemById = new Map((items ?? []).map((item) => [item.id, item]));
 
   async function addQuick(e?: React.FormEvent) {
     e?.preventDefault();
@@ -365,8 +367,10 @@ function ShoppingPage() {
           </div>
         )}
         <div className="grid gap-2">
-          {pending.map((entry) => (
-            <div
+            {pending.map((entry) => {
+              const linkedItem = entry.item_id ? itemById.get(entry.item_id) : undefined;
+              return (
+              <div
               key={entry.id}
               className="flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-card p-2.5"
             >
@@ -377,8 +381,22 @@ function ShoppingPage() {
               >
                 <span className="block h-7 w-7 rounded-full border-2 border-border" />
               </button>
+              {linkedItem?.image_url && (
+                <ProductPhotoDialog
+                  src={linkedItem.image_url}
+                  name={entry.name}
+                  triggerClassName="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-surface-2"
+                >
+                  <img
+                    src={linkedItem.image_url}
+                    alt={entry.name}
+                    loading="lazy"
+                    className="block h-full max-h-full w-full max-w-full object-contain"
+                  />
+                </ProductPhotoDialog>
+              )}
               <div className="min-w-0 flex-1 py-1">
-                <strong className="block truncate text-sm">{entry.name}</strong>
+                <strong className="block text-sm break-words">{entry.name}</strong>
                 <span className="text-xs text-muted-foreground">×{entry.quantity}</span>
                 {(entry.tags?.length ?? 0) > 0 && (
                   <div className="mt-1 flex flex-wrap gap-1">
@@ -406,7 +424,8 @@ function ShoppingPage() {
                 <Trash2 size={16} />
               </button>
             </div>
-          ))}
+              );
+            })}
         </div>
       </section>
 
@@ -422,7 +441,9 @@ function ShoppingPage() {
             </button>
           </div>
           <div className="grid gap-2 opacity-70">
-            {bought.map((entry) => (
+            {bought.map((entry) => {
+              const linkedItem = entry.item_id ? itemById.get(entry.item_id) : undefined;
+              return (
               <div
                 key={entry.id}
                 className="flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-card p-2.5"
@@ -436,8 +457,22 @@ function ShoppingPage() {
                     ✓
                   </span>
                 </button>
+                {linkedItem?.image_url && (
+                  <ProductPhotoDialog
+                    src={linkedItem.image_url}
+                    name={entry.name}
+                    triggerClassName="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-surface-2"
+                  >
+                    <img
+                      src={linkedItem.image_url}
+                      alt={entry.name}
+                      loading="lazy"
+                      className="block h-full max-h-full w-full max-w-full object-contain"
+                    />
+                  </ProductPhotoDialog>
+                )}
                 <div className="min-w-0 flex-1">
-                  <strong className="block truncate text-sm line-through">{entry.name}</strong>
+                  <strong className="block text-sm break-words line-through">{entry.name}</strong>
                   {entry.bought_at && (
                     <span className="text-xs text-muted-foreground">
                       {formatLocalDateTime(entry.bought_at)}
@@ -452,7 +487,8 @@ function ShoppingPage() {
                   <Trash2 size={16} />
                 </button>
               </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}

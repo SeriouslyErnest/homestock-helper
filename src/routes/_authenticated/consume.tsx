@@ -148,7 +148,7 @@ function ConsumePage() {
                 params={{ itemId: item.id }}
                 className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-surface-2 text-2xl"
               >
-                emojiFor(item.category, categories)
+                {emojiFor(item.category, categories)}
               </Link>
             )}
             <Link to="/item/$itemId" params={{ itemId: item.id }} className="min-w-0 flex-1">

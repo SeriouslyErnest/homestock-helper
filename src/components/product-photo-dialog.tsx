@@ -1,6 +1,6 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { Maximize2, X } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -15,8 +15,10 @@ export function ProductPhotoDialog({
   children: ReactNode;
   triggerClassName?: string;
 }) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Dialog.Root>
+    <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
         <button
           type="button"
@@ -34,7 +36,12 @@ export function ProductPhotoDialog({
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/90 backdrop-blur-sm data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <Dialog.Content className="fixed inset-0 z-50 grid h-dvh w-screen grid-rows-[auto_minmax(0,1fr)_auto] gap-3 bg-background p-4 outline-none sm:p-6">
+        <Dialog.Content
+          onPointerDown={(event) => {
+            if (event.target === event.currentTarget) setOpen(false);
+          }}
+          className="fixed inset-0 z-50 grid h-dvh w-screen grid-rows-[auto_minmax(0,1fr)_auto] gap-3 bg-background p-4 outline-none sm:p-6"
+        >
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
             <Dialog.Title className="min-w-0 truncate text-base font-semibold">{name}</Dialog.Title>
             <Dialog.Close asChild>
@@ -43,7 +50,12 @@ export function ProductPhotoDialog({
               </Button>
             </Dialog.Close>
           </div>
-          <div className="grid min-h-0 place-items-center overflow-hidden rounded-xl bg-card">
+          <div
+            onPointerDown={(event) => {
+              if (event.target === event.currentTarget) setOpen(false);
+            }}
+            className="grid min-h-0 place-items-center overflow-hidden rounded-xl bg-card"
+          >
             <img src={src} alt={name} className="block max-h-full max-w-full object-contain" />
           </div>
           <Dialog.Description className="truncate text-center text-sm text-muted-foreground">

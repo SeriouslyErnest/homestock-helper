@@ -127,7 +127,7 @@ function AddPage() {
           {search.image && (
             <ProductPhotoDialog
               src={search.image}
-              name={search.name ?? name || "Product"}
+              name={search.name ?? name ?? "Product"}
               triggerClassName="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-card"
             >
               <img

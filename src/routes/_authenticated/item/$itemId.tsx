@@ -239,7 +239,7 @@ function ItemPage() {
           </ProductPhotoDialog>
         ) : (
           <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface-2 text-4xl">
-            emojiFor(item.category, categories)
+            {emojiFor(item.category, categories)}
           </div>
         )}
         <div className="text-sm">
