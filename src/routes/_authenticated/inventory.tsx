@@ -208,9 +208,16 @@ function InventoryPage() {
     localStorage.setItem("homestock-view", v);
   }
 
-  function switchSort(s: "name" | "expiry" | "updated") {
+  function switchSort(s: "name" | "location" | "expiry" | "updated") {
     setSort(s);
     localStorage.setItem("homestock-sort", s);
+  }
+
+  /** Name and Location sorts run either way round; the button flips them. */
+  function flipSortDir() {
+    const next = sortDir === "asc" ? "desc" : "asc";
+    setSortDir(next);
+    localStorage.setItem("homestock-sort-dir", next);
   }
 
   async function apply(item: Item, delta: number) {
