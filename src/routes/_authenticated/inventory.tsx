@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AlignJustify, ArrowDown, ArrowUp, LayoutGrid, List, Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
+import { ProductPhotoDialog } from "@/components/product-photo-dialog";
 import {
   emojiFor,
   useCategories,
@@ -499,16 +500,15 @@ function InventoryPage() {
             .slice(0, 3)
             .join(" · ");
 
-          const thumb = item.image_url ? (
+          const image = item.image_url ? (
             <img
               src={item.image_url}
-              alt=""
+              alt={item.name}
               loading="lazy"
               className="block h-full max-h-full w-full max-w-full object-contain"
             />
-          ) : (
-            emojiFor(item.category, categories)
-          );
+          ) : null;
+          const thumb = image ?? emojiFor(item.category, categories);
 
           if (view === "compact") {
             return (
@@ -570,31 +570,45 @@ function InventoryPage() {
 
           if (view === "cards") {
             return (
-              <Link
+              <article
                 key={item.id}
-                to="/item/$itemId"
-                params={{ itemId: item.id }}
                 className="block min-w-0 rounded-2xl border border-border bg-card p-3"
               >
-                <div className="mb-2 grid h-20 w-full place-items-center overflow-hidden rounded-xl bg-surface-2 text-3xl">
-                  {thumb}
-                </div>
-                <strong className="block truncate text-sm">
-                  {item.name}
-                  {place && <span className="font-normal text-muted-foreground"> ({place})</span>}
-                </strong>
-                <div className="mt-1 h-4 truncate text-xs text-muted-foreground">
-                  {multiPlace ? `${group?.total} in total · ${group?.places} places` : meta}
-                </div>
-                <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1">
-                  <span className="text-lg font-bold">{item.quantity}</span>
-                  <span
-                    className={`truncate text-right text-[10px] font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}
+                {item.image_url ? (
+                  <ProductPhotoDialog
+                    src={item.image_url}
+                    name={item.name}
+                    triggerClassName="mb-2 grid h-20 w-full place-items-center rounded-xl bg-surface-2"
                   >
-                    {status.label}
-                  </span>
-                </div>
-              </Link>
+                    {image}
+                  </ProductPhotoDialog>
+                ) : (
+                  <Link
+                    to="/item/$itemId"
+                    params={{ itemId: item.id }}
+                    className="mb-2 grid h-20 w-full place-items-center overflow-hidden rounded-xl bg-surface-2 text-3xl"
+                  >
+                    {thumb}
+                  </Link>
+                )}
+                <Link to="/item/$itemId" params={{ itemId: item.id }} className="block min-w-0">
+                  <strong className="block line-clamp-2 min-h-10 text-sm break-words">
+                    {item.name}
+                    {place && <span className="font-normal text-muted-foreground"> ({place})</span>}
+                  </strong>
+                  <div className="mt-1 h-4 truncate text-xs text-muted-foreground">
+                    {multiPlace ? `${group?.total} in total · ${group?.places} places` : meta}
+                  </div>
+                  <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1">
+                    <span className="text-lg font-bold">{item.quantity}</span>
+                    <span
+                      className={`truncate text-right text-[10px] font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}
+                    >
+                      {status.label}
+                    </span>
+                  </div>
+                </Link>
+              </article>
             );
           }
 
@@ -603,15 +617,25 @@ function InventoryPage() {
               key={item.id}
               className="grid min-w-0 grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-2xl border border-border bg-card p-2.5"
             >
-              <Link
-                to="/item/$itemId"
-                params={{ itemId: item.id }}
-                className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-surface-2 text-2xl"
-              >
-                {thumb}
-              </Link>
+              {item.image_url ? (
+                <ProductPhotoDialog
+                  src={item.image_url}
+                  name={item.name}
+                  triggerClassName="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-surface-2"
+                >
+                  {image}
+                </ProductPhotoDialog>
+              ) : (
+                <Link
+                  to="/item/$itemId"
+                  params={{ itemId: item.id }}
+                  className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-surface-2 text-2xl"
+                >
+                  {thumb}
+                </Link>
+              )}
               <Link to="/item/$itemId" params={{ itemId: item.id }} className="min-w-0 flex-1">
-                <strong className="block truncate text-sm">
+                <strong className="block line-clamp-2 text-sm break-words">
                   {item.name}
                   {place && <span className="font-normal text-muted-foreground"> ({place})</span>}
                 </strong>

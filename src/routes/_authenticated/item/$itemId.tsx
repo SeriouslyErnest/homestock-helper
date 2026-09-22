@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
+import { ProductPhotoDialog } from "@/components/product-photo-dialog";
 import {
   emojiFor,
   useCategories,
@@ -224,17 +225,23 @@ function ItemPage() {
       }
     >
       <div className="mb-4 flex items-center gap-4 rounded-2xl border border-border bg-card p-4">
-        <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface-2 text-4xl">
-          {item.image_url ? (
+        {item.image_url ? (
+          <ProductPhotoDialog
+            src={item.image_url}
+            name={item.name}
+            triggerClassName="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-surface-2"
+          >
             <img
               src={item.image_url}
-              alt=""
+              alt={item.name}
               className="block h-full max-h-full w-full max-w-full object-contain"
             />
-          ) : (
+          </ProductPhotoDialog>
+        ) : (
+          <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface-2 text-4xl">
             emojiFor(item.category, categories)
-          )}
-        </div>
+          </div>
+        )}
         <div className="text-sm">
           <span
             className={`inline-block rounded-full px-2.5 py-1 text-xs font-bold ${low ? "bg-warning-soft text-warning" : "bg-success-soft text-success"}`}

@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Minus, ScanBarcode } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
+import { ProductPhotoDialog } from "@/components/product-photo-dialog";
 import { emojiFor, useCategories, useHousehold, useItems, type Item } from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -128,24 +129,30 @@ function ConsumePage() {
             key={item.id}
             className="flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-card p-2.5"
           >
-            <Link
-              to="/item/$itemId"
-              params={{ itemId: item.id }}
-              className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-surface-2 text-2xl"
-            >
-              {item.image_url ? (
+            {item.image_url ? (
+              <ProductPhotoDialog
+                src={item.image_url}
+                name={item.name}
+                triggerClassName="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-surface-2"
+              >
                 <img
                   src={item.image_url}
-                  alt=""
+                  alt={item.name}
                   loading="lazy"
                   className="block h-full max-h-full w-full max-w-full object-contain"
                 />
-              ) : (
+              </ProductPhotoDialog>
+            ) : (
+              <Link
+                to="/item/$itemId"
+                params={{ itemId: item.id }}
+                className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-surface-2 text-2xl"
+              >
                 emojiFor(item.category, categories)
-              )}
-            </Link>
+              </Link>
+            )}
             <Link to="/item/$itemId" params={{ itemId: item.id }} className="min-w-0 flex-1">
-              <strong className="block truncate text-sm">{item.name}</strong>
+              <strong className="block line-clamp-2 text-sm break-words">{item.name}</strong>
               <span className="text-xs text-muted-foreground">
                 {item.quantity} {item.unit} left
               </span>
