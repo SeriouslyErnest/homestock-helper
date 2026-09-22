@@ -79,7 +79,9 @@ export const cacheManualProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { barcode: string; name: string }) => {
     const barcode = String(input?.barcode ?? "").trim();
-    const name = String(input?.name ?? "").trim().slice(0, 300);
+    const name = String(input?.name ?? "")
+      .trim()
+      .slice(0, 300);
     if (!/^[0-9]{6,18}$/.test(barcode) || !name) return null;
     return { barcode, name };
   })
