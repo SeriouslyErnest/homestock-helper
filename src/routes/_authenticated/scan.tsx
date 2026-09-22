@@ -161,30 +161,100 @@ function ScanPage() {
     await handleCode.current(code);
   }
 
+  const total = (found ?? []).reduce((sum, i) => sum + Number(i.quantity), 0);
+  const desired = Math.max(0, ...(found ?? []).map((i) => Number(i.min_quantity)));
+  const need = Math.max(desired - total, 0);
+  const first = found?.[0];
+
   return (
     <AppShell title="Scan a barcode" subtitle="Point the camera at a product barcode.">
-      <div className="mx-auto w-full max-w-sm overflow-hidden rounded-3xl border border-border bg-foreground">
-        <video
-          ref={videoRef}
-          className="aspect-[4/3] max-h-[42dvh] w-full object-cover"
-          muted
-          playsInline
-        />
-      </div>
+      {phase === "result" && first ? (
+        <section className="rounded-3xl border border-border bg-card p-4">
+          <h2 className="text-lg font-bold break-words">{first.name}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            You have <strong className="text-foreground">{total}</strong> at home
+            {desired > 0 ? ` · you like to keep ${desired}` : ""}
+          </p>
+          <ul className="mt-3 grid gap-1 text-sm">
+            {found!.map((row) => (
+              <li key={row.id} className="flex justify-between gap-2 border-t border-border pt-1">
+                <span className="truncate">{row.location?.trim() || "No place set"}</span>
+                <strong className="shrink-0">
+                  {Number(row.quantity)} {row.unit}
+                </strong>
+              </li>
+            ))}
+          </ul>
+          <p
+            className={`mt-3 rounded-2xl px-3 py-2 text-sm font-bold ${
+              need > 0 || total <= 0
+                ? "bg-warning-soft text-warning"
+                : "bg-success-soft text-success"
+            }`}
+          >
+            {total <= 0
+              ? "You're out of this one"
+              : need > 0
+                ? `Need ${need} more`
+                : "You're stocked"}
+          </p>
+          <div className="mt-3 grid gap-2">
+            <button
+              onClick={() => addFoundToShopping(first, need || 1)}
+              className="rounded-2xl border border-border py-3 text-sm font-bold"
+            >
+              Add to shopping list
+            </button>
+            <Link
+              to="/item/$itemId"
+              params={{ itemId: first.id }}
+              className="rounded-2xl border border-border py-3 text-center text-sm font-bold"
+            >
+              View details
+            </Link>
+            <button
+              onClick={scanAnother}
+              className="rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground"
+            >
+              Scan another
+            </button>
+          </div>
+          {message && <p className="mt-2 text-center text-sm text-destructive">{message}</p>}
+        </section>
+      ) : (
+        <>
+          <div className="mx-auto w-full max-w-sm overflow-hidden rounded-3xl border border-border bg-foreground">
+            <video
+              ref={videoRef}
+              className="aspect-[4/3] max-h-[42dvh] w-full object-cover"
+              muted
+              playsInline
+            />
+          </div>
 
-      <p role="status" aria-live="polite" className="mt-3 text-center text-sm">
-        {phase === "looking-up" && (
-          <span className="font-semibold text-brand">Looking up product…</span>
-        )}
-        {message && <span className="text-muted-foreground">{message}</span>}
-      </p>
-      {phase === "error" && lastCode && (
-        <button
-          onClick={retry}
-          className="mx-auto mt-2 block rounded-2xl border border-border px-5 py-3 text-sm font-bold"
-        >
-          Try {lastCode} again
-        </button>
+          <p role="status" aria-live="polite" className="mt-3 text-center text-sm">
+            {phase === "looking-up" && (
+              <span className="font-semibold text-brand">Checking what's at home…</span>
+            )}
+            {message && <span className="text-muted-foreground">{message}</span>}
+          </p>
+          {phase === "error" && lastCode && (
+            <div className="mt-2 grid gap-2">
+              <button
+                onClick={retry}
+                className="mx-auto block rounded-2xl border border-border px-5 py-3 text-sm font-bold"
+              >
+                Try {lastCode} again
+              </button>
+              <Link
+                to="/inventory"
+                className="mx-auto block rounded-2xl px-5 py-2 text-sm font-semibold text-brand"
+              >
+                Search by name instead
+              </Link>
+            </div>
+          )}
+        </>
       )}
 
       <form onSubmit={submitManual} className="mt-4 flex gap-2">
