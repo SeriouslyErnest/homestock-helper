@@ -484,3 +484,68 @@ export function useShopping(householdId: string | undefined) {
     },
   });
 }
+
+/**
+ * Set an item to the count that's really on the shelf. Recorded as a
+ * correction (with the before/after figures) rather than a silent overwrite.
+ */
+export async function correctQuantity(
+  itemId: string,
+  quantity: number,
+  note?: string,
+): Promise<void> {
+  const { error } = await supabase.rpc("set_item_quantity", {
+    _item_id: itemId,
+    _quantity: quantity,
+    ...(note?.trim() ? { _note: note.trim() } : {}),
+  });
+  if (error) throw error;
+}
+
+/** How often and how recently an item has been used — plain counting, no guessing. */
+export type ItemUsage = { consumeCount: number; lastConsumedAt: string | null };
+
+/**
+ * Recent household activity, summarised per item. Used to put the things a
+ * household reaches for most at the top of the "use up" screen.
+ */
+export function useItemUsage(householdId: string | undefined) {
+  return useQuery({
+    queryKey: ["item-usage", householdId],
+    enabled: !!householdId,
+    staleTime: 60_000,
+    queryFn: async (): Promise<Map<string, ItemUsage>> => {
+      const since = new Date(Date.now() - 60 * 86400000).toISOString();
+      const { data, error } = await supabase
+        .from("inventory_events")
+        .select("item_id, kind, created_at")
+        .eq("household_id", householdId!)
+        .eq("kind", "consume")
+        .gte("created_at", since)
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      const map = new Map<string, ItemUsage>();
+      for (const row of data ?? []) {
+        if (!row.item_id) continue;
+        const current = map.get(row.item_id) ?? { consumeCount: 0, lastConsumedAt: null };
+        map.set(row.item_id, {
+          consumeCount: current.consumeCount + 1,
+          lastConsumedAt: current.lastConsumedAt ?? row.created_at,
+        });
+      }
+      return map;
+    },
+  });
+}
+
+/**
+ * Deterministic "reach for this often" score: how many times it was used in the
+ * last two months, plus a bonus that fades as the last use gets older.
+ */
+export function usageScore(usage: ItemUsage | undefined, fallbackUpdatedAt: string): number {
+  const last = usage?.lastConsumedAt ?? fallbackUpdatedAt;
+  const daysAgo = Math.max(0, (Date.now() - new Date(last).getTime()) / 86400000);
+  const recency = 10 / (1 + daysAgo);
+  return (usage?.consumeCount ?? 0) + recency;
+}

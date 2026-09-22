@@ -5,7 +5,15 @@ import { Minus, ScanBarcode } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { ProductPhotoDialog } from "@/components/product-photo-dialog";
-import { emojiFor, useCategories, useHousehold, useItems, type Item } from "@/lib/homestock";
+import {
+  emojiFor,
+  useCategories,
+  useHousehold,
+  useItemUsage,
+  useItems,
+  usageScore,
+  type Item,
+} from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/consume")({
@@ -27,11 +35,13 @@ function ConsumePage() {
   const categories = useCategories();
   const { data: items, isPending } = useItems(household?.id);
   const queryClient = useQueryClient();
+  const { data: usage } = useItemUsage(household?.id);
   const [search, setSearch] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
+    queryClient.invalidateQueries({ queryKey: ["item-usage", household?.id] });
   };
 
   async function take(item: Item) {
@@ -66,7 +76,15 @@ function ConsumePage() {
   const list = useMemo(() => {
     const all = items ?? [];
     if (!search.trim()) {
-      return [...all].sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1)).slice(0, 12);
+      // Most reached-for first: how often it's been used lately, then how recently.
+      // Nothing with an empty shelf — a quick "take one" there would do nothing.
+      return [...all]
+        .filter((i) => Number(i.quantity) > 0)
+        .sort(
+          (a, b) =>
+            usageScore(usage?.get(b.id), b.updated_at) - usageScore(usage?.get(a.id), a.updated_at),
+        )
+        .slice(0, 8);
     }
     const q = search.trim().toLowerCase();
     return all.filter(
@@ -75,7 +93,7 @@ function ConsumePage() {
         (i.location ?? "").toLowerCase().includes(q) ||
         i.category.toLowerCase().includes(q),
     );
-  }, [items, search]);
+  }, [items, search, usage]);
 
   return (
     <AppShell
@@ -102,7 +120,7 @@ function ConsumePage() {
       }
     >
       <h2 className="mb-2 text-sm font-bold text-muted-foreground">
-        {search.trim() ? `Matches · ${list.length}` : "Recently used"}
+        {search.trim() ? `Matches · ${list.length}` : "What you reach for most"}
       </h2>
 
       {isPending && <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>}
