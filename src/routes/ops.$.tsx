@@ -665,6 +665,116 @@ function Plans({ routeId }: { routeId: string }) {
   );
 }
 
+type PlaceRow = { id: string; emoji: string; originalId: string };
+
+function Places({ routeId }: { routeId: string }) {
+  const qc = useQueryClient();
+  const saved = useQuery({
+    queryKey: ["admin-categories", routeId],
+    queryFn: () => adminGetCategories({ data: { routeId } }),
+  });
+  const [rows, setRows] = useState<PlaceRow[]>([]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!saved.data) return;
+    const list = saved.data.categories ?? CATEGORIES;
+    setRows(list.map((c) => ({ id: c.id, emoji: c.emoji, originalId: c.id })));
+  }, [saved.data]);
+
+  const save = useMutation({
+    mutationFn: () => {
+      const renames = rows
+        .filter((r) => r.originalId !== r.id)
+        .map((r) => ({ from: r.originalId, to: r.id }));
+      return adminSetCategories({
+        data: { routeId, categories: rows.map(({ id, emoji }) => ({ id, emoji })), renames },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Places saved");
+      qc.invalidateQueries({ queryKey: ["admin-categories", routeId] });
+      qc.invalidateQueries({ queryKey: ["categories"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSettled: () => setSaving(false),
+  });
+
+  function setRow(index: number, patch: Partial<PlaceRow>) {
+    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+  }
+
+  const duplicate = (name: string, index: number) =>
+    rows.some((r, i) => i !== index && r.id.trim().toLowerCase() === name.trim().toLowerCase());
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-muted-foreground">
+        The places people can sort items into. Renaming one moves existing items with it. Removing
+        one leaves its items on the old label — they still show under "All items" in the app.
+      </p>
+      <div className="space-y-2">
+        {rows.map((r, i) => (
+          <div key={r.originalId + i} className="flex items-center gap-2">
+            <input
+              value={r.emoji}
+              onChange={(e) => setRow(i, { emoji: e.target.value })}
+              maxLength={4}
+              aria-label={`Emoji for place ${i + 1}`}
+              className="h-11 w-14 rounded-xl border border-border bg-card px-2 text-center text-lg outline-none focus:border-brand"
+            />
+            <input
+              value={r.id}
+              maxLength={20}
+              onChange={(e) => setRow(i, { id: e.target.value })}
+              aria-label={`Name of place ${i + 1}`}
+              placeholder="Place name"
+              className={`h-11 min-w-0 flex-1 rounded-xl border bg-card px-3 outline-none focus:border-brand ${
+                r.id.trim() && duplicate(r.id, i) ? "border-destructive" : "border-border"
+              }`}
+            />
+            <button
+              type="button"
+              onClick={() => setRows((prev) => prev.filter((_, j) => j !== i))}
+              aria-label={`Remove place ${r.id || i + 1}`}
+              disabled={rows.length <= 1}
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border bg-card text-muted-foreground outline-none focus:border-brand disabled:opacity-40"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setRows((prev) => [...prev, { id: "", emoji: "📦", originalId: "" }])}
+          disabled={rows.length >= 16}
+          className="h-11 rounded-full border border-border bg-card px-4 text-sm font-semibold outline-none focus:border-brand disabled:opacity-40"
+        >
+          + Add a place
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            if (rows.some((r) => !r.id.trim() || duplicate(r.id, rows.indexOf(r)))) {
+              toast.error("Every place needs a unique name.");
+              return;
+            }
+            setSaving(true);
+            save.mutate();
+          }}
+          disabled={saving || rows.some((r) => !r.id.trim())}
+          className="h-11 rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground outline-none focus:border-brand disabled:opacity-40"
+        >
+          {saving ? "Saving…" : "Save places"}
+        </button>
+        {saved.isPending && <span className="text-sm text-muted-foreground">Loading…</span>}
+      </div>
+    </div>
+  );
+}
+
 function Audit({ routeId }: { routeId: string }) {
   const { data } = useQuery({
     queryKey: ["admin-audit", routeId],
