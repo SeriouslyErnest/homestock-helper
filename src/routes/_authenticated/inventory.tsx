@@ -15,6 +15,7 @@ import {
   sortByExpiry,
   sortByProductThenLocation,
   sortByRecentlyUpdated,
+  useEntitlements,
   useHousehold,
   useItems,
   type Item,
