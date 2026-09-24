@@ -3,7 +3,36 @@ import { Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { ProductPhotoDialog } from "@/components/product-photo-dialog";
-import { cacheManualProduct } from "@/lib/product-lookup.functions";
+import { cacheManualProduct, reportProductName } from "@/lib/product-lookup.functions";
+
+/** Flags a shared, typed-in name. One tap; hidden for everyone immediately. */
+function ReportName({ barcode }: { barcode: string }) {
+  const [state, setState] = useState<"idle" | "busy" | "done" | "error">("idle");
+  if (state === "done")
+    return (
+      <span className="shrink-0 text-xs font-semibold" role="status">
+        Reported — thanks
+      </span>
+    );
+  return (
+    <button
+      type="button"
+      disabled={state === "busy"}
+      onClick={async () => {
+        setState("busy");
+        try {
+          await reportProductName({ data: { barcode } });
+          setState("done");
+        } catch {
+          setState("error");
+        }
+      }}
+      className="min-h-11 shrink-0 rounded-xl px-2 text-xs font-semibold underline disabled:opacity-50"
+    >
+      {state === "error" ? "Try again" : "Wrong or rude name?"}
+    </button>
+  );
+}
 import { useCategories, useHousehold } from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -150,10 +179,13 @@ function AddPage() {
               />
             </ProductPhotoDialog>
           )}
-          <div className="text-sm">
-            <strong className="block">{search.name}</strong>
+          <div className="min-w-0 flex-1 text-sm">
+            <strong className="block break-words">{search.name}</strong>
             {search.brand && <span>{search.brand}</span>}
           </div>
+          {search.shared && search.barcode && (
+            <ReportName barcode={search.barcode} />
+          )}
         </div>
       )}
 
