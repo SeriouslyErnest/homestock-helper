@@ -85,14 +85,49 @@ export const cacheManualProduct = createServerFn({ method: "POST" })
     if (!/^[0-9]{6,18}$/.test(barcode) || !name) return null;
     return { barcode, name };
   })
-  .handler(async ({ data }): Promise<boolean> => {
+  .handler(async ({ data, context }): Promise<boolean> => {
     if (!data) return false;
+    const { isNameAllowed } = await import("./name-filter.server");
+    // Rude names stay private to the household that typed them.
+    if (!isNameAllowed(data.name)) return false;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("products")
       .upsert(
-        { barcode: data.barcode, name: data.name, source: "manual" },
+        { barcode: data.barcode, name: data.name, source: "manual", created_by: context.userId },
         { onConflict: "barcode", ignoreDuplicates: true },
       );
     return !error;
+  });
+
+/**
+ * Anyone can flag a shared, typed-in name. One flag hides it for everyone
+ * straight away and puts it in the admin console queue — no paid scanning.
+ */
+export const reportProductName = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { barcode: string }) => {
+    const barcode = String(input?.barcode ?? "").trim();
+    if (!/^[0-9]{6,18}$/.test(barcode)) throw new Error("Invalid barcode");
+    return { barcode };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: product } = await supabaseAdmin
+      .from("products")
+      .select("barcode, name, source")
+      .eq("barcode", data.barcode)
+      .maybeSingle();
+    if (!product || product.source !== "manual") return { ok: false };
+    await supabaseAdmin
+      .from("product_reports")
+      .upsert(
+        { barcode: data.barcode, reporter_id: context.userId, reported_name: product.name },
+        { onConflict: "barcode,reporter_id", ignoreDuplicates: true },
+      );
+    await supabaseAdmin
+      .from("products")
+      .update({ hidden_at: new Date().toISOString() })
+      .eq("barcode", data.barcode);
+    return { ok: true };
   });
