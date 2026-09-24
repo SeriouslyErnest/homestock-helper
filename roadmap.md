@@ -23,9 +23,10 @@
 - Scan to check: scanning something already at home answers "do we have this?" with totals per place, need, and next actions
 - "Use up" ranks by how often and how recently the household uses each item (in-stock only)
 - Shared product catalogue: a manually identified unknown barcode is remembered for everyone (first save wins, never overwritten)
+- Shared catalogue safeguards: word filter on save + one-tap report (hides name, admin keep/remove/ban)
+- Account approval switch in admin console (default off); newcomers wait on a pending screen
 
 ## Open
-- Decide safeguards against bad/offensive names entering the shared barcode catalogue (word filter / report button / admin approval / two-household agreement) — awaiting user's choice
 - Consider recording who last edited an item's details (name, place, expiry), not just stock changes
 
 ## Later (beyond MVP)

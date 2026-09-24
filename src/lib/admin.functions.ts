@@ -836,3 +836,235 @@ export const adminDismissLimitRequest = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+// ---------------------------------------------------------------------------
+// Shared catalogue reports
+// ---------------------------------------------------------------------------
+
+export type AdminProductReport = {
+  barcode: string;
+  name: string | null;
+  reports: number;
+  contributorId: string | null;
+  contributorEmail: string | null;
+  firstReportedAt: string;
+};
+
+export const adminProductReports = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string }) => input)
+  .handler(async ({ data, context }): Promise<AdminProductReport[]> => {
+    await guard(data.routeId, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows } = await supabaseAdmin
+      .from("product_reports")
+      .select("barcode, created_at")
+      .order("created_at", { ascending: true })
+      .limit(500);
+    const grouped = new Map<string, { count: number; first: string }>();
+    for (const r of rows ?? []) {
+      const g = grouped.get(r.barcode);
+      if (g) g.count += 1;
+      else grouped.set(r.barcode, { count: 1, first: r.created_at });
+    }
+    return Promise.all(
+      [...grouped.entries()].map(async ([barcode, g]) => {
+        const { data: p } = await supabaseAdmin
+          .from("products")
+          .select("name, created_by")
+          .eq("barcode", barcode)
+          .maybeSingle();
+        let email: string | null = null;
+        if (p?.created_by) {
+          const { data: u } = await supabaseAdmin.auth.admin.getUserById(p.created_by);
+          email = u?.user?.email ?? null;
+        }
+        return {
+          barcode,
+          name: p?.name ?? null,
+          reports: g.count,
+          contributorId: p?.created_by ?? null,
+          contributorEmail: email,
+          firstReportedAt: g.first,
+        };
+      }),
+    );
+  });
+
+/** keep = name was fine, show it again; remove = forget it; ban = remove and ban whoever typed it. */
+export const adminResolveProductReport = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: { routeId: string; barcode: string; action: "keep" | "remove" | "ban" }) => input,
+  )
+  .handler(async ({ data, context }) => {
+    await guard(data.routeId, context.userId, ["SUPER_ADMIN", "SUPPORT_ADMIN"]);
+    const { writeAudit } = await import("./admin.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: p } = await supabaseAdmin
+      .from("products")
+      .select("name, created_by")
+      .eq("barcode", data.barcode)
+      .maybeSingle();
+    if (data.action === "keep") {
+      await supabaseAdmin.from("products").update({ hidden_at: null }).eq("barcode", data.barcode);
+      await supabaseAdmin.from("product_reports").delete().eq("barcode", data.barcode);
+    } else {
+      // Deleting the product also clears its reports; the barcode can be named afresh.
+      await supabaseAdmin.from("products").delete().eq("barcode", data.barcode);
+      if (data.action === "ban" && p?.created_by) {
+        const { error } = await supabaseAdmin.auth.admin.updateUserById(p.created_by, {
+          ban_duration: "876000h",
+        });
+        if (error) throw error;
+      }
+    }
+    await writeAudit({
+      adminUserId: context.userId,
+      actionType: `product_report.${data.action}`,
+      targetType: "product",
+      targetId: data.barcode,
+      beforeJson: { name: p?.name ?? null, contributor: p?.created_by ?? null },
+    });
+    return { ok: true };
+  });
+
+// ---------------------------------------------------------------------------
+// Account approval
+// ---------------------------------------------------------------------------
+
+async function approvalEnabled(): Promise<boolean> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("app_settings")
+    .select("value")
+    .eq("key", "account_approval")
+    .maybeSingle();
+  const v = data?.value as { enabled?: boolean } | null;
+  return v?.enabled === true;
+}
+
+/** Called by the app after sign-in. Registers a pending application when needed. */
+export const myApprovalStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ status: "approved" | "pending" | "rejected" }> => {
+    if (!(await approvalEnabled())) return { status: "approved" };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin
+      .from("account_approvals")
+      .select("status")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (!row) {
+      await supabaseAdmin
+        .from("account_approvals")
+        .upsert(
+          { user_id: context.userId, status: "pending" },
+          { onConflict: "user_id", ignoreDuplicates: true },
+        );
+      return { status: "pending" };
+    }
+    return { status: row.status as "approved" | "pending" | "rejected" };
+  });
+
+export const adminApprovalSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string }) => input)
+  .handler(async ({ data, context }) => {
+    await guard(data.routeId, context.userId);
+    return { enabled: await approvalEnabled() };
+  });
+
+export const adminSetApprovalEnabled = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string; enabled: boolean }) => input)
+  .handler(async ({ data, context }) => {
+    await guard(data.routeId, context.userId, ["SUPER_ADMIN"]);
+    const { writeAudit } = await import("./admin.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Everyone already signed up stays in — approval only applies to newcomers.
+    if (data.enabled) {
+      const { error } = await supabaseAdmin.rpc("approve_existing_accounts" as never);
+      if (error) throw error;
+    }
+    const { error } = await supabaseAdmin.from("app_settings").upsert(
+      {
+        key: "account_approval",
+        value: { enabled: data.enabled } as never,
+        updated_at: new Date().toISOString(),
+        updated_by: context.userId,
+      },
+      { onConflict: "key" },
+    );
+    if (error) throw error;
+    await writeAudit({
+      adminUserId: context.userId,
+      actionType: "account_approval.toggled",
+      targetType: "setting",
+      targetId: "account_approval",
+      afterJson: { enabled: data.enabled },
+    });
+    return { ok: true };
+  });
+
+export type AdminApplication = {
+  userId: string;
+  email: string | null;
+  displayName: string | null;
+  status: string;
+  createdAt: string;
+};
+
+export const adminListApplications = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string }) => input)
+  .handler(async ({ data, context }): Promise<AdminApplication[]> => {
+    await guard(data.routeId, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows } = await supabaseAdmin
+      .from("account_approvals")
+      .select("*")
+      .in("status", ["pending", "rejected"])
+      .order("created_at", { ascending: true })
+      .limit(200);
+    return Promise.all(
+      (rows ?? []).map(async (r) => {
+        const { data: u } = await supabaseAdmin.auth.admin.getUserById(r.user_id);
+        const meta = u?.user?.user_metadata as { display_name?: string } | undefined;
+        return {
+          userId: r.user_id,
+          email: u?.user?.email ?? null,
+          displayName: meta?.display_name ?? null,
+          status: r.status,
+          createdAt: r.created_at,
+        };
+      }),
+    );
+  });
+
+export const adminDecideApplication = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: { routeId: string; userId: string; decision: "approved" | "rejected" }) => input,
+  )
+  .handler(async ({ data, context }) => {
+    await guard(data.routeId, context.userId, ["SUPER_ADMIN", "SUPPORT_ADMIN"]);
+    const { writeAudit } = await import("./admin.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("account_approvals")
+      .update({
+        status: data.decision,
+        decided_by: context.userId,
+        decided_at: new Date().toISOString(),
+      })
+      .eq("user_id", data.userId);
+    if (error) throw error;
+    await writeAudit({
+      adminUserId: context.userId,
+      actionType: `account.${data.decision}`,
+      targetType: "user",
+      targetId: data.userId,
+    });
+    return { ok: true };
+  });

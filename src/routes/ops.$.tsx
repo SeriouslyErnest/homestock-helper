@@ -27,6 +27,12 @@ import {
   adminSetPromotionStatus,
   adminSetSignupsEnabled,
   adminSignupSettings,
+  adminApprovalSettings,
+  adminSetApprovalEnabled,
+  adminListApplications,
+  adminDecideApplication,
+  adminProductReports,
+  adminResolveProductReport,
 } from "@/lib/admin.functions";
 import { CATEGORIES } from "@/lib/homestock";
 
@@ -180,6 +186,8 @@ function Dashboard({ routeId }: { routeId: string }) {
   if (!data) return <p className="text-sm text-muted-foreground">Loading…</p>;
   return (
     <div className="space-y-4">
+      <Applications routeId={routeId} />
+      <ProductReports routeId={routeId} />
       <LimitRequests routeId={routeId} />
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Card label="Accounts signed up" value={data.accounts} />
@@ -894,6 +902,7 @@ function Signups({ routeId }: { routeId: string }) {
 
   return (
     <div className="space-y-4">
+      <ApprovalSwitch routeId={routeId} />
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3">
         <div>
           <div className="text-sm font-semibold">New account sign-ups</div>
@@ -965,6 +974,170 @@ function Signups({ routeId }: { routeId: string }) {
           </p>
         )}
       </div>
+    </div>
+  );
+}
+
+/** Newcomers waiting for approval. Hidden when there's nothing to decide. */
+function Applications({ routeId }: { routeId: string }) {
+  const qc = useQueryClient();
+  const list = useQuery({
+    queryKey: ["admin-applications", routeId],
+    queryFn: () => adminListApplications({ data: { routeId } }),
+    refetchInterval: 60_000,
+  });
+  const decide = useMutation({
+    mutationFn: (v: { userId: string; decision: "approved" | "rejected" }) =>
+      adminDecideApplication({ data: { routeId, ...v } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-applications", routeId] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const rows = list.data ?? [];
+  if (rows.length === 0) return null;
+  return (
+    <section className="rounded-2xl border border-border bg-card p-4">
+      <h2 className="text-sm font-bold">
+        Account applications · {rows.filter((r) => r.status === "pending").length} waiting
+      </h2>
+      <ul className="mt-3 grid gap-2">
+        {rows.map((r) => (
+          <li
+            key={r.userId}
+            className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface-2 p-3"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-semibold">
+                {r.email ?? "Unknown address"}
+              </span>
+              <span className="block truncate text-xs text-muted-foreground">
+                {r.displayName ?? "No name"} · {r.status === "rejected" ? "rejected" : "applied"}{" "}
+                {fmt(r.createdAt)}
+              </span>
+            </span>
+            <button
+              type="button"
+              disabled={decide.isPending}
+              onClick={() => decide.mutate({ userId: r.userId, decision: "approved" })}
+              className="h-9 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground disabled:opacity-50"
+            >
+              Approve
+            </button>
+            {r.status === "pending" && (
+              <button
+                type="button"
+                disabled={decide.isPending}
+                onClick={() => decide.mutate({ userId: r.userId, decision: "rejected" })}
+                className="h-9 rounded-xl border border-border px-3 text-xs font-semibold disabled:opacity-50"
+              >
+                Reject
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** Reported shared product names. Hidden for everyone until resolved here. */
+function ProductReports({ routeId }: { routeId: string }) {
+  const qc = useQueryClient();
+  const list = useQuery({
+    queryKey: ["admin-product-reports", routeId],
+    queryFn: () => adminProductReports({ data: { routeId } }),
+    refetchInterval: 60_000,
+  });
+  const resolve = useMutation({
+    mutationFn: (v: { barcode: string; action: "keep" | "remove" | "ban" }) =>
+      adminResolveProductReport({ data: { routeId, ...v } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-product-reports", routeId] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const rows = list.data ?? [];
+  if (rows.length === 0) return null;
+  const btn = "h-9 rounded-xl border border-border px-3 text-xs font-semibold disabled:opacity-50";
+  return (
+    <section className="rounded-2xl border border-border bg-card p-4">
+      <h2 className="text-sm font-bold">Reported product names · {rows.length}</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Already hidden from everyone. Keep it if it's fine, remove it so the barcode can be named
+        again, or remove it and ban whoever typed it.
+      </p>
+      <ul className="mt-3 grid gap-2">
+        {rows.map((r) => (
+          <li
+            key={r.barcode}
+            className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface-2 p-3"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block break-words text-sm font-semibold">
+                “{r.name ?? "(no name)"}”
+              </span>
+              <span className="block truncate text-xs text-muted-foreground">
+                {r.barcode} · {r.reports} report{r.reports === 1 ? "" : "s"} · by{" "}
+                {r.contributorEmail ?? "unknown"}
+              </span>
+            </span>
+            <button type="button" disabled={resolve.isPending} className={btn}
+              onClick={() => resolve.mutate({ barcode: r.barcode, action: "keep" })}>
+              Keep
+            </button>
+            <button type="button" disabled={resolve.isPending} className={btn}
+              onClick={() => resolve.mutate({ barcode: r.barcode, action: "remove" })}>
+              Remove
+            </button>
+            {r.contributorId && (
+              <button type="button" disabled={resolve.isPending}
+                className="h-9 rounded-xl bg-destructive px-3 text-xs font-semibold text-destructive-foreground disabled:opacity-50"
+                onClick={() => {
+                  if (window.confirm(`Remove this name and ban ${r.contributorEmail ?? "this account"}?`))
+                    resolve.mutate({ barcode: r.barcode, action: "ban" });
+                }}>
+                Remove &amp; ban
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function ApprovalSwitch({ routeId }: { routeId: string }) {
+  const qc = useQueryClient();
+  const settings = useQuery({
+    queryKey: ["admin-approval", routeId],
+    queryFn: () => adminApprovalSettings({ data: { routeId } }),
+  });
+  const toggle = useMutation({
+    mutationFn: (enabled: boolean) => adminSetApprovalEnabled({ data: { routeId, enabled } }),
+    onSuccess: (_r, enabled) => {
+      toast.success(enabled ? "New accounts now need approval" : "New accounts get in straight away");
+      void qc.invalidateQueries({ queryKey: ["admin-approval", routeId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const on = settings.data?.enabled ?? false;
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3">
+      <div>
+        <div className="text-sm font-semibold">Approve new accounts</div>
+        <div className="text-xs text-muted-foreground">
+          {on
+            ? "New accounts wait until you approve them on the Dashboard. Everyone already signed up stays in."
+            : "Off — new accounts can use HomeStock straight away."}
+        </div>
+      </div>
+      <button
+        type="button"
+        disabled={settings.isPending || toggle.isPending}
+        onClick={() => toggle.mutate(!on)}
+        className={`h-10 rounded-xl border px-4 text-sm font-semibold disabled:opacity-50 ${
+          on ? "border-brand bg-brand-soft text-brand" : "border-border"
+        }`}
+      >
+        {on ? "Approval on" : "Approval off"}
+      </button>
     </div>
   );
 }

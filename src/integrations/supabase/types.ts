@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_approvals: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       account_directory: {
         Row: {
           display_name: string | null
@@ -452,11 +476,45 @@ export type Database = {
         }
         Relationships: []
       }
+      product_reports: {
+        Row: {
+          barcode: string
+          created_at: string
+          id: string
+          reported_name: string | null
+          reporter_id: string
+        }
+        Insert: {
+          barcode: string
+          created_at?: string
+          id?: string
+          reported_name?: string | null
+          reporter_id: string
+        }
+        Update: {
+          barcode?: string
+          created_at?: string
+          id?: string
+          reported_name?: string | null
+          reporter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reports_barcode_fkey"
+            columns: ["barcode"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["barcode"]
+          },
+        ]
+      }
       products: {
         Row: {
           barcode: string
           brand: string | null
+          created_by: string | null
           fetched_at: string
+          hidden_at: string | null
           image_url: string | null
           name: string | null
           quantity_label: string | null
@@ -465,7 +523,9 @@ export type Database = {
         Insert: {
           barcode: string
           brand?: string | null
+          created_by?: string | null
           fetched_at?: string
+          hidden_at?: string | null
           image_url?: string | null
           name?: string | null
           quantity_label?: string | null
@@ -474,7 +534,9 @@ export type Database = {
         Update: {
           barcode?: string
           brand?: string | null
+          created_by?: string | null
           fetched_at?: string
+          hidden_at?: string | null
           image_url?: string | null
           name?: string | null
           quantity_label?: string | null
@@ -723,6 +785,7 @@ export type Database = {
         Args: { _delta: number; _item_id: string }
         Returns: number
       }
+      approve_existing_accounts: { Args: never; Returns: number }
       create_household: {
         Args: { _name: string }
         Returns: {
