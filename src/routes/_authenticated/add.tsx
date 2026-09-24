@@ -183,9 +183,7 @@ function AddPage() {
             <strong className="block break-words">{search.name}</strong>
             {search.brand && <span>{search.brand}</span>}
           </div>
-          {search.shared && search.barcode && (
-            <ReportName barcode={search.barcode} />
-          )}
+          {search.shared && search.barcode && <ReportName barcode={search.barcode} />}
         </div>
       )}
 

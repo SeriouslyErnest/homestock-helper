@@ -958,7 +958,10 @@ export const myApprovalStatus = createServerFn({ method: "POST" })
     if (!row) {
       await supabaseAdmin
         .from("account_approvals")
-        .upsert({ user_id: context.userId, status: "pending" }, { onConflict: "user_id", ignoreDuplicates: true });
+        .upsert(
+          { user_id: context.userId, status: "pending" },
+          { onConflict: "user_id", ignoreDuplicates: true },
+        );
       return { status: "pending" };
     }
     return { status: row.status as "approved" | "pending" | "rejected" };
@@ -1050,7 +1053,11 @@ export const adminDecideApplication = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("account_approvals")
-      .update({ status: data.decision, decided_by: context.userId, decided_at: new Date().toISOString() })
+      .update({
+        status: data.decision,
+        decided_by: context.userId,
+        decided_at: new Date().toISOString(),
+      })
       .eq("user_id", data.userId);
     if (error) throw error;
     await writeAudit({

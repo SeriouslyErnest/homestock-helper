@@ -902,6 +902,7 @@ function Signups({ routeId }: { routeId: string }) {
 
   return (
     <div className="space-y-4">
+      <ApprovalSwitch routeId={routeId} />
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3">
         <div>
           <div className="text-sm font-semibold">New account sign-ups</div>
