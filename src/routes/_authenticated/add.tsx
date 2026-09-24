@@ -14,6 +14,7 @@ type AddSearch = {
   image?: string | undefined;
   category?: string | undefined;
   notFound?: boolean | undefined;
+  shared?: boolean | undefined;
 };
 
 export const Route = createFileRoute("/_authenticated/add")({
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/_authenticated/add")({
     image: typeof search["image"] === "string" ? search["image"] : undefined,
     category: typeof search["category"] === "string" ? search["category"] : undefined,
     notFound: search["notFound"] === true ? true : undefined,
+    shared: search["shared"] === true ? true : undefined,
   }),
   head: () => ({
     meta: [

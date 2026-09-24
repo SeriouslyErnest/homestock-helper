@@ -27,13 +27,15 @@ export async function lookupProduct(barcode: string): Promise<ProductInfo | null
     .eq("barcode", code)
     .maybeSingle();
   if (cached) {
+    // A reported name is hidden for everyone until an admin reviews it.
+    if (cached.hidden_at) return null;
     return {
       barcode: cached.barcode,
       name: cached.name,
       brand: cached.brand,
       image_url: cached.image_url,
       quantity_label: cached.quantity_label,
-      source: "cache",
+      source: cached.source === "manual" ? "manual" : "cache",
     };
   }
 

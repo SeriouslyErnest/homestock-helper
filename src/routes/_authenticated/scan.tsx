@@ -69,6 +69,7 @@ function ScanPage() {
           brand: info?.brand ?? undefined,
           image: info?.image_url ?? undefined,
           notFound: info ? undefined : true,
+          shared: info?.source === "manual" ? true : undefined,
         },
       });
     } catch {
