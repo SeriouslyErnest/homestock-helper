@@ -64,6 +64,13 @@
       "when": 1790058579624,
       "tag": "0008_inventory_events_and_corrections",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790214463552,
+      "tag": "0009_catalogue_reports_and_account_approval",
+      "breakpoints": true
     }
   ]
 }
