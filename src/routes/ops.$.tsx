@@ -27,6 +27,12 @@ import {
   adminSetPromotionStatus,
   adminSetSignupsEnabled,
   adminSignupSettings,
+  adminApprovalSettings,
+  adminSetApprovalEnabled,
+  adminListApplications,
+  adminDecideApplication,
+  adminProductReports,
+  adminResolveProductReport,
 } from "@/lib/admin.functions";
 import { CATEGORIES } from "@/lib/homestock";
 
@@ -180,6 +186,8 @@ function Dashboard({ routeId }: { routeId: string }) {
   if (!data) return <p className="text-sm text-muted-foreground">Loading…</p>;
   return (
     <div className="space-y-4">
+      <Applications routeId={routeId} />
+      <ProductReports routeId={routeId} />
       <LimitRequests routeId={routeId} />
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Card label="Accounts signed up" value={data.accounts} />

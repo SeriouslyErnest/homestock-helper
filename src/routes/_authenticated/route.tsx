@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LogoMark } from "@/components/logo";
 import { useHouseholds } from "@/lib/homestock";
-import { syncAccountDirectory } from "@/lib/admin.functions";
+import { useQuery } from "@tanstack/react-query";
+import { myApprovalStatus, syncAccountDirectory } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthGate,
@@ -47,7 +48,49 @@ function AuthGate() {
 
   if (!ready) return <Splash />;
 
-  return <HouseholdGate />;
+  return <ApprovalGate />;
+}
+
+/** When the admin has switched on account approval, newcomers wait here. */
+function ApprovalGate() {
+  const { data, isPending, refetch, isFetching } = useQuery({
+    queryKey: ["my-approval"],
+    queryFn: () => myApprovalStatus(),
+    staleTime: 5 * 60_000,
+  });
+  if (isPending) return <Splash />;
+  // If the check itself fails, don't lock people out — the database still enforces it.
+  if (!data || data.status === "approved") return <HouseholdGate />;
+  return (
+    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col items-center justify-center gap-4 px-8 text-center">
+      <LogoMark size={64} />
+      <h1 className="text-xl font-bold">
+        {data.status === "pending" ? "Thanks for signing up" : "Your account wasn't approved"}
+      </h1>
+      <p className="text-sm text-muted-foreground" role="status">
+        {data.status === "pending"
+          ? "New accounts are being approved by hand right now. You'll be able to use HomeStock as soon as yours is approved — check back soon."
+          : "HomeStock isn't taking new accounts like yours at the moment. If you think this is a mistake, contact whoever invited you."}
+      </p>
+      {data.status === "pending" && (
+        <button
+          type="button"
+          onClick={() => void refetch()}
+          disabled={isFetching}
+          className="min-h-11 rounded-2xl bg-primary px-5 font-semibold text-primary-foreground disabled:opacity-60"
+        >
+          {isFetching ? "Checking…" : "Check again"}
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={() => void supabase.auth.signOut()}
+        className="min-h-11 px-4 text-sm font-semibold text-muted-foreground underline"
+      >
+        Sign out
+      </button>
+    </div>
+  );
 }
 
 /** New accounts have no home yet — send them to choose join or create. */
