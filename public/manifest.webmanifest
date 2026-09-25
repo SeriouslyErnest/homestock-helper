@@ -1,0 +1,14 @@
+{
+  "name": "HomeStock — Shared household inventory",
+  "short_name": "HomeStock",
+  "description": "Know what you have, wherever you are. A lightweight shared household inventory.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4e91d8",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
