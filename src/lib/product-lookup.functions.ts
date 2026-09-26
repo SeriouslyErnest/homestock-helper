@@ -56,14 +56,18 @@ export const fetchAndCacheProduct = createServerFn({ method: "POST" })
     if (!info) return null;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("products").upsert({
-      barcode: info.barcode,
-      name: info.name,
-      brand: info.brand,
-      image_url: info.image_url,
-      quantity_label: info.quantity_label,
-      source: "openfoodfacts",
-    });
+    // Insert only when missing — never overwrite an existing shared entry.
+    await supabaseAdmin.from("products").upsert(
+      {
+        barcode: info.barcode,
+        name: info.name,
+        brand: info.brand,
+        image_url: info.image_url,
+        quantity_label: info.quantity_label,
+        source: "openfoodfacts",
+      },
+      { onConflict: "barcode", ignoreDuplicates: true },
+    );
     return info;
   });
 
@@ -112,6 +116,13 @@ export const reportProductName = createServerFn({ method: "POST" })
     return { barcode };
   })
   .handler(async ({ data, context }) => {
+    // Only someone who actually has this barcode in one of their homes may flag it.
+    const { data: mine } = await context.supabase
+      .from("items")
+      .select("id")
+      .eq("barcode", data.barcode)
+      .limit(1);
+    if (!mine || mine.length === 0) return { ok: false };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: product } = await supabaseAdmin
       .from("products")

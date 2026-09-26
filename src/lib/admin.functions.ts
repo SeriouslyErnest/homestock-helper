@@ -560,6 +560,13 @@ export const adminClaimConsole = createServerFn({ method: "POST" })
       .from("admin_users")
       .select("user_id", { count: "exact", head: true });
     if ((count ?? 0) > 0) throw new Error("This console already has an operator.");
+    // Only the project's very first account (the person who set the app up) may
+    // claim an unclaimed console — knowing the address alone is not enough.
+    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    const first = [...(list?.users ?? [])].sort((a, b) =>
+      (a.created_at ?? "").localeCompare(b.created_at ?? ""),
+    )[0];
+    if (!first || first.id !== context.userId) throw new Error("Not found");
     // bootstrap=true is guarded by a unique index, so only one claim can ever win,
     // even if two people hit this at the same moment.
     const { error } = await supabaseAdmin.from("admin_users").insert({
@@ -675,13 +682,24 @@ export const adminInviteUser = createServerFn({ method: "POST" })
     await guard(data.routeId, context.userId, ["SUPER_ADMIN", "SUPPORT_ADMIN"]);
     const email = data.email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Enter a valid email address");
-    if (!/^https?:\/\//.test(data.origin)) throw new Error("Invalid redirect address");
+    // Only our own app addresses may be used as the link destination.
+    let origin: string;
+    try {
+      const u = new URL(data.origin);
+      const okHost =
+        (u.protocol === "https:" && /(^|\.)lovable\.app$/.test(u.hostname)) ||
+        (u.hostname === "localhost" && (u.protocol === "http:" || u.protocol === "https:"));
+      if (!okHost) throw new Error();
+      origin = u.origin;
+    } catch {
+      throw new Error("Invalid redirect address");
+    }
 
     const { hashEmail, maskEmail, writeAudit } = await import("./admin.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${data.origin.replace(/\/+$/, "")}/inventory`,
+      redirectTo: `${origin}/inventory`,
     });
     if (error) {
       throw new Error(
