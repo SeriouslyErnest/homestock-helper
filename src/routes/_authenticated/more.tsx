@@ -379,7 +379,7 @@ function MorePage() {
                 checked={household[key] !== false}
                 onChange={async (e) => {
                   const next = e.target.checked;
-                  const patch: Record<typeof key, boolean> = { [key]: next };
+                  const patch: Partial<Record<typeof key, boolean>> = { [key]: next };
                   const setCache = (value: boolean) =>
                     queryClient.setQueryData<typeof households>(["households"], (old) =>
                       old?.map((h) => (h.id === household.id ? { ...h, [key]: value } : h)),
