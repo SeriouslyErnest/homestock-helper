@@ -367,6 +367,7 @@ function MorePage() {
             [
               ["show_expiry", "Ask for expiry dates"],
               ["show_locations", "Ask where things are kept"],
+              ["join_open", "Open for join requests"],
             ] as const
           ).map(([key, text]) => (
             <label key={key} className="flex min-h-11 items-center justify-between gap-3 text-sm">
@@ -377,7 +378,7 @@ function MorePage() {
                 checked={household[key] !== false}
                 onChange={async (e) => {
                   const next = e.target.checked;
-                  const patch = key === "show_expiry" ? { show_expiry: next } : { show_locations: next };
+                  const patch = { [key]: next };
                   const setCache = (value: boolean) =>
                     queryClient.setQueryData<typeof households>(["households"], (old) =>
                       old?.map((h) => (h.id === household.id ? { ...h, [key]: value } : h)),
