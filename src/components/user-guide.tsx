@@ -16,7 +16,7 @@ const FLOWS: Flow[] = [
     img: more,
     alt: "Household and account page with home name, invite code and optional details switches",
     steps: [
-      "Open HomeStock and enter your email — we send a sign-in link. You can also use a password or Google.",
+      "Open HomeStock and enter your email — we send a sign-in link. You can also sign in with Google. No passwords to remember.",
       "First time in? A short welcome tour shows the basics (skip it any time; restart it from More). Then create a home, or type the 6-letter invite code someone gave you and wait for the owner to approve you.",
       "Under More, owners can rename the home, copy the invite code, approve join requests and switch the expiry-date and location boxes off for everyone.",
       "Done inviting? Switch off “Open for join requests”. Tap “New code” and the old code stops working straight away — handy if it was shared too widely.",

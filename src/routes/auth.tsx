@@ -40,9 +40,7 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
-  // Email link by default; password sign-in available via a toggle.
-  const [usePassword, setUsePassword] = useState(false);
-  const [password, setPassword] = useState("");
+  // Email link only — password sign-in is intentionally not offered.
   const { data: policy } = useQuery({
     queryKey: ["signup-policy"],
     queryFn: () => getSignupPolicy(),
@@ -88,51 +86,6 @@ function AuthPage() {
     setCooldown(30);
   }
 
-  async function passwordSignIn(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setMessage(null);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
-      password,
-    });
-    setBusy(false);
-    if (error) {
-      setMessage(
-        /confirm/i.test(error.message)
-          ? "Please confirm your email first — check your inbox for the link."
-          : "That email and password don't match. Try again or use a sign-in link.",
-      );
-      return;
-    }
-    navigate({ to: "/inventory", replace: true });
-  }
-
-  async function passwordSignUp() {
-    setBusy(true);
-    setMessage(null);
-    const { data, error } = await supabase.auth.signUp({
-      email: email.trim().toLowerCase(),
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/inventory`,
-        ...(name.trim() ? { data: { display_name: name.trim() } } : {}),
-      },
-    });
-    setBusy(false);
-    if (error) {
-      setMessage(
-        /weak|pwned|leaked/i.test(error.message)
-          ? "That password is too easy to guess. Pick a longer or less common one."
-          : /not allowed|signups/i.test(error.message)
-            ? "New accounts are invite only at the moment."
-            : "Couldn't create the account. Try again.",
-      );
-      return;
-    }
-    if (data.session) {
-      navigate({ to: "/inventory", replace: true });
-      return;
     }
     setStep("sent");
     setMessage("Almost there — tap the confirmation link we emailed you, then sign in.");
