@@ -327,6 +327,39 @@ function MorePage() {
         </p>
       </section>
 
+      {isOwner && household && (
+        <section className="mb-6 rounded-2xl border border-border bg-card p-4">
+          <h2 className="mb-1 text-sm font-bold">Optional details</h2>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Applies to everyone in this household. Turning one off only hides the box — anything
+            already filled in is kept.
+          </p>
+          {(
+            [
+              ["show_expiry", "Ask for expiry dates"],
+              ["show_locations", "Ask where things are kept"],
+            ] as const
+          ).map(([key, text]) => (
+            <label key={key} className="flex min-h-11 items-center justify-between gap-3 text-sm">
+              {text}
+              <input
+                type="checkbox"
+                className="h-5 w-5"
+                checked={household[key] !== false}
+                onChange={async (e) => {
+                  const { error } = await supabase
+                    .from("households")
+                    .update({ [key]: e.target.checked })
+                    .eq("id", household.id);
+                  if (error) toast.error("Couldn't save that. Try again.");
+                  else queryClient.invalidateQueries({ queryKey: ["households"] });
+                }}
+              />
+            </label>
+          ))}
+        </section>
+      )}
+
       {isOwner && (
         <section className="mb-6 rounded-2xl border border-border bg-card p-4">
           <h2 className="mb-1 text-sm font-bold">
