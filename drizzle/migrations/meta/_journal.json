@@ -78,6 +78,13 @@
       "when": 1790398118390,
       "tag": "0010_household_feature_visibility",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790411553062,
+      "tag": "0011_household_join_toggle",
+      "breakpoints": true
     }
   ]
 }
