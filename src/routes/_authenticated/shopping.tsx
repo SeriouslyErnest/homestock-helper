@@ -1,3 +1,4 @@
+import { FirstUseTip } from "@/lib/onboarding";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -357,13 +358,16 @@ function ShoppingPage() {
         </section>
       )}
 
+      <FirstUseTip tip="shopping" title="Shopping has two kinds of entry.">
+        Running low comes from your "Keep at least" amounts. Buy requests are things someone asked for.
+      </FirstUseTip>
       <section>
         <h2 className="mb-2 text-sm font-bold">To buy · {pending.length}</h2>
         {isPending && <p className="py-6 text-center text-sm text-muted-foreground">Loading…</p>}
         {!isPending && pending.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border p-6 text-center">
             <p className="text-2xl">🛒</p>
-            <p className="mt-1 text-sm text-muted-foreground">Nothing to buy. Enjoy the calm.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Nothing to buy. Add something your household should pick up, or set "Keep at least" on things you never want to run out of.</p>
           </div>
         )}
         <div className="grid gap-2">

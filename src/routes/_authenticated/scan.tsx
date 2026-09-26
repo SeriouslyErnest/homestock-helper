@@ -1,3 +1,4 @@
+import { FirstUseTip } from "@/lib/onboarding";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Minus, Plus, X } from "lucide-react";
@@ -304,6 +305,9 @@ function ScanPage() {
 
   return (
     <AppShell title="Scan a barcode" subtitle="Point the camera at a product barcode.">
+      <FirstUseTip tip="restock" title="Restocking lots?">
+        Turn on Restock several to keep scanning and save everything together at the end.
+      </FirstUseTip>
       {phase === "result" && first ? (
         <section className="rounded-3xl border border-border bg-card p-4">
           <h2 className="text-lg font-bold break-words">{first.name}</h2>

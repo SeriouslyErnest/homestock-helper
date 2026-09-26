@@ -1,3 +1,4 @@
+import { FirstUseTip } from "@/lib/onboarding";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -123,6 +124,9 @@ function ConsumePage() {
         {search.trim() ? `Matches · ${list.length}` : "What you reach for most"}
       </h2>
 
+      <FirstUseTip tip="use_up" title="Used something?">
+        Tap −1, scan it, or search for it. You can Undo mistakes.
+      </FirstUseTip>
       {isPending && <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>}
 
       {!isPending && list.length === 0 && (
@@ -130,7 +134,7 @@ function ConsumePage() {
           <p className="text-3xl">🥣</p>
           <p className="mt-2 font-semibold">Nothing to take yet</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Add something to your inventory first.
+            Items you use often will appear here over time. You can still scan or search.
           </p>
           <Link
             to="/add"

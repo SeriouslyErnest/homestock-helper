@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { PromoCard } from "@/components/promo-code";
 import { AskForMoreHomes } from "@/components/limit-request";
+import { useOnboardingActions } from "@/lib/onboarding";
 
 import {
   createHousehold,
@@ -238,6 +239,7 @@ function MorePage() {
     }
   }
 
+  const { restart: restartWelcome } = useOnboardingActions();
   async function signOut() {
     await supabase.auth.signOut();
     navigate({ to: "/" });
@@ -595,6 +597,27 @@ function MorePage() {
       </section>
 
       <PromoCard />
+
+      <section className="mb-6 rounded-2xl border border-border bg-card p-4">
+        <h2 className="mb-1 text-sm font-bold">Help & welcome</h2>
+        <p className="mb-3 text-sm text-muted-foreground">
+          Restart the welcome flow and first-use tips. Only affects you.
+        </p>
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              await restartWelcome();
+              navigate({ to: "/welcome" });
+            } catch {
+              toast.error("Couldn't restart the welcome. Try again.");
+            }
+          }}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border py-3 text-sm font-semibold"
+        >
+          <RotateCcw size={15} /> Restart welcome flow
+        </button>
+      </section>
 
       <section className="rounded-2xl border border-border bg-card p-4">
         <h2 className="mb-2 text-sm font-bold">Account</h2>
