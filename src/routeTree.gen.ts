@@ -24,6 +24,8 @@ import { Route as AuthenticatedShoppingRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedWelcomeRouteImport } from './routes/_authenticated/welcome'
 import { Route as OpsSplatRouteImport } from './routes/ops.$'
 import { Route as AuthenticatedItemItemIdRouteImport } from './routes/_authenticated/item/$itemId'
+import { Route as ApiPublicCronExpiryDigestRouteImport } from './routes/api/public/cron/expiry-digest'
+import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -99,6 +101,18 @@ const AuthenticatedItemItemIdRoute = AuthenticatedItemItemIdRouteImport.update({
   path: '/item/$itemId',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicCronExpiryDigestRoute =
+  ApiPublicCronExpiryDigestRouteImport.update({
+    id: '/api/public/cron/expiry-digest',
+    path: '/api/public/cron/expiry-digest',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTelegramWebhookRoute =
+  ApiPublicTelegramWebhookRouteImport.update({
+    id: '/api/public/telegram/webhook',
+    path: '/api/public/telegram/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -115,6 +129,8 @@ export interface FileRoutesByFullPath {
   '/welcome': typeof AuthenticatedWelcomeRoute
   '/ops/$': typeof OpsSplatRoute
   '/item/$itemId': typeof AuthenticatedItemItemIdRoute
+  '/api/public/cron/expiry-digest': typeof ApiPublicCronExpiryDigestRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -131,6 +147,8 @@ export interface FileRoutesByTo {
   '/welcome': typeof AuthenticatedWelcomeRoute
   '/ops/$': typeof OpsSplatRoute
   '/item/$itemId': typeof AuthenticatedItemItemIdRoute
+  '/api/public/cron/expiry-digest': typeof ApiPublicCronExpiryDigestRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -149,6 +167,8 @@ export interface FileRoutesById {
   '/_authenticated/welcome': typeof AuthenticatedWelcomeRoute
   '/ops/$': typeof OpsSplatRoute
   '/_authenticated/item/$itemId': typeof AuthenticatedItemItemIdRoute
+  '/api/public/cron/expiry-digest': typeof ApiPublicCronExpiryDigestRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -167,6 +187,8 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/ops/$'
     | '/item/$itemId'
+    | '/api/public/cron/expiry-digest'
+    | '/api/public/telegram/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -183,6 +205,8 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/ops/$'
     | '/item/$itemId'
+    | '/api/public/cron/expiry-digest'
+    | '/api/public/telegram/webhook'
   id:
     | '__root__'
     | '/'
@@ -200,6 +224,8 @@ export interface FileRouteTypes {
     | '/_authenticated/welcome'
     | '/ops/$'
     | '/_authenticated/item/$itemId'
+    | '/api/public/cron/expiry-digest'
+    | '/api/public/telegram/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -208,6 +234,8 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
   OpsSplatRoute: typeof OpsSplatRoute
+  ApiPublicCronExpiryDigestRoute: typeof ApiPublicCronExpiryDigestRoute
+  ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -317,6 +345,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedItemItemIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/cron/expiry-digest': {
+      id: '/api/public/cron/expiry-digest'
+      path: '/api/public/cron/expiry-digest'
+      fullPath: '/api/public/cron/expiry-digest'
+      preLoaderRoute: typeof ApiPublicCronExpiryDigestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/telegram/webhook': {
+      id: '/api/public/telegram/webhook'
+      path: '/api/public/telegram/webhook'
+      fullPath: '/api/public/telegram/webhook'
+      preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -355,6 +397,8 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
   OpsSplatRoute: OpsSplatRoute,
+  ApiPublicCronExpiryDigestRoute: ApiPublicCronExpiryDigestRoute,
+  ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
