@@ -112,7 +112,7 @@ compared in constant time server-side. Wrong paths render an identical
 
 ## Screens (MVP)
 
-Landing (`/`) · About (`/about`) · Sign-in (`/auth`: email link, password or
+Landing (`/`) · About (`/about`) · Sign-in (`/auth`: email link or
 Google) · Welcome tour (`/welcome`) · Setup / create-or-join (`/setup`) ·
 Inventory · Quick stock check (`/reconcile`) · Use up (`/consume`) · Scan
 (single "Do we have this?" with "Add N to stock", or "Restock several"
@@ -138,7 +138,7 @@ Telegram reminders, restart welcome, promo code, account).
 - No activity-history screen; events are used for undo, ranking and admin counts.
 - No automatic matching of buy requests to products — completion is manual.
 - No household deletion UI.
-- Sign-in is by email link, email + password, or Google — no 6-digit code.
+- Sign-in is by email link or Google — no passwords, no 6-digit code.
 - Telegram admin alerts are not built yet.
 - Six security-linter EXECUTE warnings on SECURITY DEFINER helper functions
   are expected: they must be callable by signed-in users and each verifies
