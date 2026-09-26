@@ -2,7 +2,7 @@
 
 ## Done
 - Backend: households, members, profiles, products cache, items, shopping_items (RLS + invite-code join)
-- Auth: email/password + Google sign-in
+- Auth: email link + Google sign-in (no passwords)
 - Landing page, app shell with bottom nav (Inventory / Shopping / Scan / More)
 - Inventory: search, category chips, low-stock summary, list/card toggle (remembered), quick +/-
 - Item detail: big +/- counter, consume with 4s Undo, edit details, add to shopping, delete
@@ -11,7 +11,7 @@
 - Shopping list: quick add, tick off (auto-restocks tracked items), running-low suggestions
 - More: rename household, invite code, members, join by code, sign out
 - Verified on a phone-sized screen: sign-up → add item → consume → shopping list
-- Auth switched to email one-time code + Google (no passwords)
+- Auth switched to email link + Google (no passwords)
 - UX review fixes: untick now reverses stock, dates shown in local time (stored UTC),
   avatar shows your own initials, undo on inventory quick -1, 44px tap targets,
   balanced nav with a new "Use up" page, clear-bought, save confirmation,
@@ -27,7 +27,7 @@
 - Account approval switch in admin console (default off); newcomers wait on a pending screen
 - Restock several: scan basket with non-blocking "needs a name" placeholders
 - Shared vs personal labels on settings; Quick stock check; per-household expiry/location switches
-- Email + password sign-in enabled (27 Sep 2026) alongside link + Google
+- Password sign-in tried for testing (27 Sep 2026), then removed — link + Google only
 - Admin dashboard: items tracked, stock changes and count fixes (7 days); sign-in methods per account
 - User guide on About page with real screenshots of the 9 key flows (26 Sep 2026); responsive check 320–1280px, shopping add row wraps on very small phones
 
@@ -49,5 +49,5 @@
 ## Invite codes & Telegram (2026-09-26/27)
 - [x] Owner can close join requests and regenerate the invite code
 - [x] Telegram expiry reminders (daily digest, admin kill switch, scheduler load panel)
-- [x] Docs + user guide updated; password sign-in enabled; end-to-end test
+- [x] Docs + user guide updated; end-to-end test done; password sign-in reverted, test account removed
 - [ ] Telegram admin alerts ("🔐 ADMIN") — later

@@ -40,9 +40,7 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
-  // Email link by default; password sign-in available via a toggle.
-  const [usePassword, setUsePassword] = useState(false);
-  const [password, setPassword] = useState("");
+  // Email link only — password sign-in is intentionally not offered.
   const { data: policy } = useQuery({
     queryKey: ["signup-policy"],
     queryFn: () => getSignupPolicy(),
@@ -88,56 +86,6 @@ function AuthPage() {
     setCooldown(30);
   }
 
-  async function passwordSignIn(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setMessage(null);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
-      password,
-    });
-    setBusy(false);
-    if (error) {
-      setMessage(
-        /confirm/i.test(error.message)
-          ? "Please confirm your email first — check your inbox for the link."
-          : "That email and password don't match. Try again or use a sign-in link.",
-      );
-      return;
-    }
-    navigate({ to: "/inventory", replace: true });
-  }
-
-  async function passwordSignUp() {
-    setBusy(true);
-    setMessage(null);
-    const { data, error } = await supabase.auth.signUp({
-      email: email.trim().toLowerCase(),
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/inventory`,
-        ...(name.trim() ? { data: { display_name: name.trim() } } : {}),
-      },
-    });
-    setBusy(false);
-    if (error) {
-      setMessage(
-        /weak|pwned|leaked/i.test(error.message)
-          ? "That password is too easy to guess. Pick a longer or less common one."
-          : /not allowed|signups/i.test(error.message)
-            ? "New accounts are invite only at the moment."
-            : "Couldn't create the account. Try again.",
-      );
-      return;
-    }
-    if (data.session) {
-      navigate({ to: "/inventory", replace: true });
-      return;
-    }
-    setStep("sent");
-    setMessage("Almost there — tap the confirmation link we emailed you, then sign in.");
-  }
-
   async function google() {
     setBusy(true);
     setMessage(null);
@@ -160,15 +108,13 @@ function AuthPage() {
         <LogoWordmark className="mt-3 text-3xl" />
         <p className="mt-1 text-sm text-muted-foreground">
           {step === "email"
-            ? usePassword
-              ? "Sign in with your email and password."
-              : "Enter your email and we'll send you a sign-in link — no password needed."
+            ? "Enter your email and we'll send you a sign-in link — no password needed."
             : `We emailed ${email}. Tap the link in that email and you're in.`}
         </p>
       </div>
 
       {step === "email" ? (
-        <form onSubmit={usePassword ? passwordSignIn : sendLink} className="flex flex-col gap-3">
+        <form onSubmit={sendLink} className="flex flex-col gap-3">
           {!signupsOpen && (
             <p className="rounded-2xl bg-surface-2 px-4 py-3 text-center text-sm text-muted-foreground">
               HomeStock is invite only right now. Sign in below if you already have an account, or
@@ -195,45 +141,12 @@ function AuthPage() {
             inputMode="email"
             className="rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
           />
-          {usePassword && (
-            <input
-              type="password"
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password (8+ characters)"
-              aria-label="Password"
-              autoComplete="current-password"
-              className="rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
-            />
-          )}
           <button
             type="submit"
-            disabled={busy || !email.trim() || (usePassword && password.length < 8)}
+            disabled={busy || !email.trim()}
             className="rounded-2xl bg-primary px-4 py-3.5 font-semibold text-primary-foreground disabled:opacity-60"
           >
-            {busy ? "One moment…" : usePassword ? "Sign in" : "Email me a sign-in link"}
-          </button>
-          {usePassword && signupsOpen && (
-            <button
-              type="button"
-              onClick={passwordSignUp}
-              disabled={busy || !email.trim() || password.length < 8}
-              className="rounded-2xl border border-border bg-card px-4 py-3 text-sm font-semibold disabled:opacity-60"
-            >
-              New here? Create an account with this password
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => {
-              setUsePassword((v) => !v);
-              setMessage(null);
-            }}
-            className="py-1 text-sm text-muted-foreground underline"
-          >
-            {usePassword ? "Email me a sign-in link instead" : "Use a password instead"}
+            {busy ? "One moment…" : "Email me a sign-in link"}
           </button>
         </form>
       ) : (
