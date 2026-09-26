@@ -163,6 +163,21 @@ function MorePage() {
     }
   }
 
+  async function regenerateCode() {
+    if (!household) return;
+    const { data, error } = await supabase.rpc("regenerate_invite_code", {
+      _household_id: household.id,
+    });
+    if (error || !data) {
+      toast.error("Couldn't make a new code. You need to be the owner.");
+      return;
+    }
+    queryClient.setQueryData<typeof households>(["households"], (old) =>
+      old?.map((h) => (h.id === household.id ? { ...h, invite_code: data } : h)),
+    );
+    toast.success("New invite code — the old one no longer works");
+  }
+
   async function decide(requestId: string, decision: "approved" | "rejected" | "blocked") {
     setDeciding(requestId);
     const { error } = await supabase.rpc("decide_join_request", {
@@ -214,6 +229,8 @@ function MorePage() {
       setJoinMessage("You're already a member of that household.");
     } else if (data === "blocked") {
       setJoinMessage("That household isn't accepting a request from you.");
+    } else if (data === "closed") {
+      setJoinMessage("That household isn't accepting new members right now.");
     } else {
       setJoinMessage("Request sent. An owner of that household needs to approve you.");
       setJoinCode("");
