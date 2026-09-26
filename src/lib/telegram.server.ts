@@ -8,7 +8,7 @@ export function escapeHtml(s: string): string {
 export async function telegramCall(
   method: string,
   body: Record<string, unknown>,
-): Promise<{ ok: boolean; description?: string; result?: unknown }> {
+): Promise<{ ok: boolean; description?: string | undefined; result?: unknown }> {
   const token = process.env["TELEGRAM_BOT_TOKEN"];
   if (!token) return { ok: false, description: "bot not configured" };
   try {

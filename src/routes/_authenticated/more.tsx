@@ -597,7 +597,7 @@ function MorePage() {
         </p>
       </section>
 
-      <TelegramCard householdId={household.id} householdName={household.name} />
+      {household && <TelegramCard householdId={household.id} householdName={household.name} />}
 
       <PromoCard />
 
