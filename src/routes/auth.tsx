@@ -159,7 +159,9 @@ function AuthPage() {
         <LogoWordmark className="mt-3 text-3xl" />
         <p className="mt-1 text-sm text-muted-foreground">
           {step === "email"
-            ? "Enter your email and we'll send you a sign-in link — no password needed."
+            ? usePassword
+              ? "Sign in with your email and password."
+              : "Enter your email and we'll send you a sign-in link — no password needed."
             : `We emailed ${email}. Tap the link in that email and you're in.`}
         </p>
       </div>
