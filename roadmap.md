@@ -29,6 +29,7 @@
 - Shared vs personal labels on settings; Quick stock check; per-household expiry/location switches
 - Email + password sign-in tried, then removed (26 Sep 2026) — link + Google only
 - Admin dashboard: items tracked, stock changes and count fixes (7 days); sign-in methods per account
+- User guide on About page with real screenshots of the 9 key flows (26 Sep 2026); responsive check 320–1280px, shopping add row wraps on very small phones
 
 ## Open
 - Consider recording who last edited an item's details (name, place, expiry), not just stock changes

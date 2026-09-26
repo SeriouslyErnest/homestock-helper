@@ -205,15 +205,15 @@ function ShoppingPage() {
       subtitle="What the household needs — anyone can add or tick off."
     >
       <form onSubmit={addQuick} className="mb-4">
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5 min-[360px]:flex-nowrap">
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Add something to buy…"
             aria-label="Add something to buy"
-            className="w-full min-w-0 flex-1 rounded-2xl border border-border bg-surface-2 px-3.5 py-3 outline-none focus:border-brand"
+            className="w-full min-w-0 flex-1 basis-full rounded-2xl border border-border bg-surface-2 px-3.5 py-3 outline-none focus:border-brand min-[360px]:basis-auto"
           />
-          <div className="flex shrink-0 items-center rounded-2xl border border-border bg-surface-2">
+          <div className="ml-auto flex shrink-0 items-center rounded-2xl border border-border bg-surface-2 min-[360px]:ml-0">
             <button
               type="button"
               onClick={() => setQty((q) => Math.max(1, q - 1))}
