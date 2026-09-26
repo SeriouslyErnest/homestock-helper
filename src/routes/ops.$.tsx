@@ -196,6 +196,9 @@ function Dashboard({ routeId }: { routeId: string }) {
         <Card label="Expiring in 7 days" value={data.expiringSoon} />
         <Card label="Active promotions" value={data.activePromotions} />
         <Card label="Promo redemptions" value={data.redemptions} />
+        <Card label="Items tracked" value={data.items} />
+        <Card label="Stock changes, 7 days" value={data.stockChanges7d} />
+        <Card label="Count fixes, 7 days" value={data.corrections7d} />
       </div>
     </div>
   );
@@ -377,6 +380,9 @@ function AccountDetail({
         <h2 className="text-lg font-semibold">{a.emailMasked}</h2>
         <p className="text-xs text-muted-foreground">
           {a.displayName ?? "No name"} · effective plan {a.tier} · last seen {fmt(a.lastSeenAt)}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Signs in with: {a.signInMethods.length ? a.signInMethods.join(", ") : "—"}
         </p>
       </div>
 
@@ -1078,21 +1084,36 @@ function ProductReports({ routeId }: { routeId: string }) {
                 {r.contributorEmail ?? "unknown"}
               </span>
             </span>
-            <button type="button" disabled={resolve.isPending} className={btn}
-              onClick={() => resolve.mutate({ barcode: r.barcode, action: "keep" })}>
+            <button
+              type="button"
+              disabled={resolve.isPending}
+              className={btn}
+              onClick={() => resolve.mutate({ barcode: r.barcode, action: "keep" })}
+            >
               Keep
             </button>
-            <button type="button" disabled={resolve.isPending} className={btn}
-              onClick={() => resolve.mutate({ barcode: r.barcode, action: "remove" })}>
+            <button
+              type="button"
+              disabled={resolve.isPending}
+              className={btn}
+              onClick={() => resolve.mutate({ barcode: r.barcode, action: "remove" })}
+            >
               Remove
             </button>
             {r.contributorId && (
-              <button type="button" disabled={resolve.isPending}
+              <button
+                type="button"
+                disabled={resolve.isPending}
                 className="h-9 rounded-xl bg-destructive px-3 text-xs font-semibold text-destructive-foreground disabled:opacity-50"
                 onClick={() => {
-                  if (window.confirm(`Remove this name and ban ${r.contributorEmail ?? "this account"}?`))
+                  if (
+                    window.confirm(
+                      `Remove this name and ban ${r.contributorEmail ?? "this account"}?`,
+                    )
+                  )
                     resolve.mutate({ barcode: r.barcode, action: "ban" });
-                }}>
+                }}
+              >
                 Remove &amp; ban
               </button>
             )}
@@ -1112,7 +1133,9 @@ function ApprovalSwitch({ routeId }: { routeId: string }) {
   const toggle = useMutation({
     mutationFn: (enabled: boolean) => adminSetApprovalEnabled({ data: { routeId, enabled } }),
     onSuccess: (_r, enabled) => {
-      toast.success(enabled ? "New accounts now need approval" : "New accounts get in straight away");
+      toast.success(
+        enabled ? "New accounts now need approval" : "New accounts get in straight away",
+      );
       void qc.invalidateQueries({ queryKey: ["admin-approval", routeId] });
     },
     onError: (e: Error) => toast.error(e.message),

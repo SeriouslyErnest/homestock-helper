@@ -256,10 +256,14 @@ function AboutPage() {
               mockup={<RestockMock />}
               flip
             >
-              <p>When you come home with groceries, open Restock and scan the product barcodes.</p>
               <p>
-                Keep scanning until you are finished, adjust quantities if needed, and add
-                everything to your household inventory at once.
+                When you come home with groceries, tap Scan and switch on &ldquo;Restock
+                several&rdquo;.
+              </p>
+              <p>
+                Keep scanning until you are finished, adjust quantities if needed, and save
+                everything at once. A product nobody has seen before never stops you — it waits in
+                the list for a name.
               </p>
               <p>
                 You can optionally record where something is stored or when it expires, but these
@@ -273,7 +277,7 @@ function AboutPage() {
               caption="One tap to keep your inventory useful."
               mockup={<ConsumeMock />}
             >
-              <p>When you finish or use an item, open Consume.</p>
+              <p>When you finish or use an item, open Use up.</p>
               <p>
                 Scan the barcode, search for the product, or select something you recently used,
                 then reduce the quantity.
@@ -297,6 +301,11 @@ function AboutPage() {
                 have it at home.
               </p>
               <p>This helps reduce duplicate purchases and unnecessary clutter.</p>
+              <p>
+                Counts drifted? &ldquo;Quick stock check&rdquo; on the Inventory page shows a
+                handful of items — tap &ldquo;Still 2&rdquo; or change the number. Every fix is
+                recorded.
+              </p>
             </HowItWorksStep>
 
             <HowItWorksStep
@@ -436,7 +445,8 @@ function AboutPage() {
             <p className="mx-auto mt-6 max-w-2xl text-center text-[15px] leading-relaxed text-muted-foreground">
               The most important information is simply what the product is and how many you have.
               Storage location and expiry dates can be added when they are useful, but they should
-              never get in the way of quickly updating stock.
+              never get in the way of quickly updating stock. A home owner can switch either box off
+              for the whole household — anything already filled in is kept.
             </p>
           </Reveal>
         </Section>
@@ -446,7 +456,7 @@ function AboutPage() {
           <Reveal>
             <SectionHeading
               title="See things your way"
-              intro="Different people organise information differently. Inventory supports both List and Card views today, and more screens will follow."
+              intro="Different people organise information differently. Inventory offers a detailed list, a compact list and cards."
             />
           </Reveal>
           <Reveal delay={90} className="mt-8">
@@ -455,14 +465,13 @@ function AboutPage() {
           <Reveal delay={150}>
             <div className="mx-auto mt-8 max-w-md rounded-3xl border border-border bg-card p-5">
               <p className="text-sm text-muted-foreground">
-                Your preference is remembered per screen — starting with Inventory.
+                Your preference is remembered on this device and only changes how you see the page —
+                not what anyone else sees.
               </p>
               <dl className="mt-3 grid gap-2 text-sm">
                 {[
-                  ["Inventory", "List or Cards"],
-                  ["Restock basket", "Coming soon"],
-                  ["Consume", "Coming soon"],
-                  ["Shopping", "Coming soon"],
+                  ["Inventory", "Detailed list, compact list or cards"],
+                  ["Inventory sort", "Name, place, expiry or last updated"],
                 ].map(([area, mode]) => (
                   <div key={area} className="flex items-center justify-between gap-3">
                     <dt className="text-muted-foreground">{area}</dt>
@@ -672,7 +681,7 @@ function AboutPage() {
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} HomeStock
             {/* Bump this when the app ships meaningful changes. */}
-            <span className="sr-only">·</span> Last updated 16 September 2026
+            <span className="sr-only">·</span> Last updated 26 September 2026
           </p>
         </div>
       </footer>

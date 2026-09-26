@@ -25,16 +25,16 @@
 - Shared product catalogue: a manually identified unknown barcode is remembered for everyone (first save wins, never overwritten)
 - Shared catalogue safeguards: word filter on save + one-tap report (hides name, admin keep/remove/ban)
 - Account approval switch in admin console (default off); newcomers wait on a pending screen
+- Restock several: scan basket with non-blocking "needs a name" placeholders
+- Shared vs personal labels on settings; Quick stock check; per-household expiry/location switches
+- Email + password sign-in alongside link and Google
+- Admin dashboard: items tracked, stock changes and count fixes (7 days); sign-in methods per account
 
 ## Open
 - Consider recording who last edited an item's details (name, place, expiry), not just stock changes
 
 ## Later (beyond MVP)
-- Multi-location stock records, inventory event history, buy-request tags
-- Household switching for multi-household users
+- Activity history screen (events already recorded)
+- Admin account deletion
+- Read-only offline snapshot
 - Scan-to-consume (scan currently routes to restock/add; "Use up" page covers search/recent)
-
-- [x] Restock several (non-blocking unknown barcodes in scan basket)
-- [x] Shared/personal copy labels
-- [x] Quick stock check (/reconcile)
-- [x] Household optional details switches (expiry, locations)

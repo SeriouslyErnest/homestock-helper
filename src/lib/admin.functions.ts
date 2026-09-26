@@ -106,7 +106,18 @@ export const adminOverview = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const nowIso = new Date().toISOString();
     const soon = new Date(Date.now() + 7 * 86400000).toISOString();
-    const [accounts, households, grants, expiring, promos, redemptions] = await Promise.all([
+    const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+    const [
+      accounts,
+      households,
+      grants,
+      expiring,
+      promos,
+      redemptions,
+      items,
+      stockChanges,
+      corrections,
+    ] = await Promise.all([
       supabaseAdmin.from("account_directory").select("user_id", { count: "exact", head: true }),
       supabaseAdmin.from("households").select("id", { count: "exact", head: true }),
       supabaseAdmin
@@ -125,6 +136,16 @@ export const adminOverview = createServerFn({ method: "POST" })
         .select("code", { count: "exact", head: true })
         .eq("status", "active"),
       supabaseAdmin.from("promo_redemptions").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("items").select("id", { count: "exact", head: true }),
+      supabaseAdmin
+        .from("inventory_events")
+        .select("id", { count: "exact", head: true })
+        .gte("created_at", weekAgo),
+      supabaseAdmin
+        .from("inventory_events")
+        .select("id", { count: "exact", head: true })
+        .eq("kind", "correction")
+        .gte("created_at", weekAgo),
     ]);
     return {
       accounts: accounts.count ?? 0,
@@ -133,6 +154,9 @@ export const adminOverview = createServerFn({ method: "POST" })
       expiringSoon: expiring.count ?? 0,
       activePromotions: promos.count ?? 0,
       redemptions: redemptions.count ?? 0,
+      items: items.count ?? 0,
+      stockChanges7d: stockChanges.count ?? 0,
+      corrections7d: corrections.count ?? 0,
     };
   });
 
@@ -183,7 +207,7 @@ export const adminAccountDetail = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const [account, tier, grants, memberships] = await Promise.all([
+    const [account, tier, grants, memberships, authUser] = await Promise.all([
       supabaseAdmin
         .from("account_directory")
         .select("user_id, email_masked, display_name, first_seen_at, last_seen_at")
@@ -199,7 +223,14 @@ export const adminAccountDetail = createServerFn({ method: "POST" })
         .from("household_members")
         .select("household_id, role, households(name)")
         .eq("user_id", data.userId),
+      supabaseAdmin.auth.admin.getUserById(data.userId),
     ]);
+    // Which ways this person can sign in — read live, never stored.
+    const providers =
+      (authUser.data.user?.app_metadata?.["providers"] as string[] | undefined) ?? [];
+    const signInMethods = providers.map((p) =>
+      p === "email" ? "Email (link or password)" : p === "google" ? "Google" : p,
+    );
 
     return {
       account: account.data
@@ -210,6 +241,7 @@ export const adminAccountDetail = createServerFn({ method: "POST" })
             firstSeenAt: account.data.first_seen_at,
             lastSeenAt: account.data.last_seen_at,
             tier: (tier.data as string | null) ?? "free",
+            signInMethods,
           }
         : null,
       grants: (grants.data ?? []).map((g): AdminGrant => ({

@@ -67,20 +67,19 @@ Running low / buy request → Shop → Restock.
   (most-recently-used first, choice remembered). Same product in two
   locations = two rows clustered together with a combined total.
 
-## Plan allowances (monetisation hooks, off by default)
+## Plan allowances
 
 `app_plans` holds one row per tier: max homes **owned**, max members per
-home, and an `enforced` flag. Shipped values: free = 1 home / 4 members,
-paid = 25 / 50, both `enforced = false`.
+home, max items, and an `enforced` flag. Current values: free = 2 homes
+(members/items effectively unlimited), `enforced = true`; paid = 25 / 50 /
+100000, `enforced = false`. All editable in the admin console Plans tab.
 
-- With enforcement off nothing is limited and the UI looks exactly as if no
-  plan system existed.
-- Flipping `enforced` on the free row greys out "create a new home" after
-  the first one (with a notice to ask an owner for their code), caps
-  approvals at the member limit, and shows "3 of 4" counts.
-- The checks run on the server, so the greyed button isn't the only barrier.
+- `create_household` checks the allowance on the server; the greyed button
+  isn't the only barrier.
+- At the limit the app offers "Ask for another home" → one `limit_requests`
+  row per user, shown in the admin dashboard and deleted on dismiss.
 - Existing owners keep every home they already have; limits only block new
-  creations.
+  creations. Item limits hide (never delete) the newest rows beyond the cap.
 
 ## Admin console
 
@@ -98,29 +97,36 @@ compared in constant time server-side. Wrong paths render an identical
 - **Privacy**: customer emails are never stored in app tables. The account
   directory keeps `email_hash = HMAC_SHA256(email, ADMIN_EMAIL_SALT)` for
   exact-address search and `email_masked` like `er…ng@gmail.com` for display.
-- **Capabilities**: dashboard counters, searchable account list, account
-  detail (tier, grants, homes), complimentary/trial grants with mandatory
-  reason, grant revocation, promo codes (create / pause / expire, redemption
-  counts), plan enforcement switches, and an append-only audit log of every
-  operator action.
+- **Capabilities**: dashboard counters (accounts, homes, grants, promos,
+  items tracked, stock changes and count fixes in the last 7 days), inbox for
+  home-limit requests, account applications and reported product names
+  (Keep / Remove / Remove & ban); searchable account list; account detail
+  (tier, sign-in methods read live, grants, homes); grants with mandatory
+  reason and revocation; promo codes; sign-up switch (open / invite-only),
+  one-time invite links and the "approve new accounts" switch (default off);
+  plan limits and enforcement; the category/place list; and an append-only
+  audit log of every operator action. No account deletion yet.
 - **Promo redemption** lives in the app under More → "Have a code?" and goes
   through the `redeem_promo` RPC (validates status, window, caps and
   per-account limits).
 
 ## Screens (MVP)
 
-Landing (`/`) · About (`/about`) · Sign-in (`/auth`, email link + Google) ·
-Setup / create-or-join (`/setup`) · Inventory · Consume ("Use up") · Scan ·
-Add item · Item detail · Shopping (Running low + buy requests) · More
-(household switching, members, join requests, promo code, account).
+Landing (`/`) · About (`/about`) · Sign-in (`/auth`: email link, email +
+password, Google) · Setup / create-or-join (`/setup`) · Inventory · Quick
+stock check (`/reconcile`) · Use up (`/consume`) · Scan (single "Do we have
+this?" or "Restock several" basket) · Add item · Item detail (incl.
+"Correct the count") · Shopping (Running low + buy requests) · More
+(household switching, members, join requests, optional-details switches,
+promo code, account).
 
 ## Known intentional choices
 
-- No activity-history UI (event model kept minimal on purpose).
+- No activity-history screen; events are used for undo, ranking and admin counts.
 - No automatic matching of buy requests to products — completion is manual.
 - No household deletion UI.
-- Email-link auth uses Supabase's default sender; showing a 6-digit code in
-  the email would require a custom SMTP domain, so the UI is link-only.
+- Email sign-in is link-first; a password is optional ("Use a password
+  instead"). No 6-digit code. New password accounts confirm their email.
 - Six security-linter EXECUTE warnings on SECURITY DEFINER helper functions
   are expected: they must be callable by signed-in users and each verifies
   its caller internally.
