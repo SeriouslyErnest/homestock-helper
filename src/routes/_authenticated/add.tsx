@@ -83,6 +83,8 @@ function AddPage() {
   const navigate = useNavigate();
   const { data: household } = useHousehold();
   const categories = useCategories();
+  const showExpiry = household?.show_expiry !== false;
+  const showLocations = household?.show_locations !== false;
 
   const fullName = [search.name, search.brand].filter(Boolean).join(" — ");
   const [name, setName] = useState(fullName);
@@ -256,55 +258,59 @@ function AddPage() {
               ))}
             </select>
           </div>
-          <div>
-            <label htmlFor="location" className={label}>
-              Location
-            </label>
-            <input
-              id="location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="e.g. Fridge door"
-              className={field}
-            />
-          </div>
+          {showLocations && (
+            <div>
+              <label htmlFor="location" className={label}>
+                Location
+              </label>
+              <input
+                id="location"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="e.g. Fridge door"
+                className={field}
+              />
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label htmlFor="expires" className={label}>
-              Expires (optional)
-            </label>
-            <input
-              id="expires"
-              type="date"
-              value={expires}
-              onChange={(e) => setExpires(e.target.value)}
-              className={field}
-            />
-            <div className="mt-2 flex gap-2">
-              {[3, 5, 14].map((d) => {
-                const target = quickExpiry(d);
-                const active = expires === target;
-                return (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => setExpires(active ? "" : target)}
-                    aria-pressed={active}
-                    className={
-                      "h-10 flex-1 rounded-2xl border text-sm font-bold outline-none focus-visible:ring-2 focus-visible:ring-ring " +
-                      (active
-                        ? "border-brand bg-brand-soft text-brand"
-                        : "border-border bg-card text-muted-foreground active:bg-surface-2")
-                    }
-                  >
-                    {d} days
-                  </button>
-                );
-              })}
+          {showExpiry && (
+            <div>
+              <label htmlFor="expires" className={label}>
+                Expires (optional)
+              </label>
+              <input
+                id="expires"
+                type="date"
+                value={expires}
+                onChange={(e) => setExpires(e.target.value)}
+                className={field}
+              />
+              <div className="mt-2 flex gap-2">
+                {[3, 5, 14].map((d) => {
+                  const target = quickExpiry(d);
+                  const active = expires === target;
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setExpires(active ? "" : target)}
+                      aria-pressed={active}
+                      className={
+                        "h-10 flex-1 rounded-2xl border text-sm font-bold outline-none focus-visible:ring-2 focus-visible:ring-ring " +
+                        (active
+                          ? "border-brand bg-brand-soft text-brand"
+                          : "border-border bg-card text-muted-foreground active:bg-surface-2")
+                      }
+                    >
+                      {d} days
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
           <div>
             <label htmlFor="min" className={label}>
               Keep at least
@@ -318,6 +324,9 @@ function AddPage() {
               onChange={(e) => setMinQuantity(Math.max(0, Number(e.target.value) || 0))}
               className={field}
             />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Applies to everyone in this household
+            </p>
           </div>
         </div>
 

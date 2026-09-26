@@ -71,6 +71,13 @@
       "when": 1790214463552,
       "tag": "0009_catalogue_reports_and_account_approval",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790398118390,
+      "tag": "0010_household_feature_visibility",
+      "breakpoints": true
     }
   ]
 }

@@ -17,6 +17,7 @@ import { Route as AuthenticatedAddRouteImport } from './routes/_authenticated/ad
 import { Route as AuthenticatedConsumeRouteImport } from './routes/_authenticated/consume'
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
 import { Route as AuthenticatedMoreRouteImport } from './routes/_authenticated/more'
+import { Route as AuthenticatedReconcileRouteImport } from './routes/_authenticated/reconcile'
 import { Route as AuthenticatedScanRouteImport } from './routes/_authenticated/scan'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedShoppingRouteImport } from './routes/_authenticated/shopping'
@@ -62,6 +63,11 @@ const AuthenticatedMoreRoute = AuthenticatedMoreRouteImport.update({
   path: '/more',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReconcileRoute = AuthenticatedReconcileRouteImport.update({
+  id: '/reconcile',
+  path: '/reconcile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedScanRoute = AuthenticatedScanRouteImport.update({
   id: '/scan',
   path: '/scan',
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/consume': typeof AuthenticatedConsumeRoute
   '/inventory': typeof AuthenticatedInventoryRoute
   '/more': typeof AuthenticatedMoreRoute
+  '/reconcile': typeof AuthenticatedReconcileRoute
   '/scan': typeof AuthenticatedScanRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/shopping': typeof AuthenticatedShoppingRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/consume': typeof AuthenticatedConsumeRoute
   '/inventory': typeof AuthenticatedInventoryRoute
   '/more': typeof AuthenticatedMoreRoute
+  '/reconcile': typeof AuthenticatedReconcileRoute
   '/scan': typeof AuthenticatedScanRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/shopping': typeof AuthenticatedShoppingRoute
@@ -126,6 +134,7 @@ export interface FileRoutesById {
   '/_authenticated/consume': typeof AuthenticatedConsumeRoute
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
   '/_authenticated/more': typeof AuthenticatedMoreRoute
+  '/_authenticated/reconcile': typeof AuthenticatedReconcileRoute
   '/_authenticated/scan': typeof AuthenticatedScanRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/shopping': typeof AuthenticatedShoppingRoute
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
     | '/consume'
     | '/inventory'
     | '/more'
+    | '/reconcile'
     | '/scan'
     | '/setup'
     | '/shopping'
@@ -156,6 +166,7 @@ export interface FileRouteTypes {
     | '/consume'
     | '/inventory'
     | '/more'
+    | '/reconcile'
     | '/scan'
     | '/setup'
     | '/shopping'
@@ -171,6 +182,7 @@ export interface FileRouteTypes {
     | '/_authenticated/consume'
     | '/_authenticated/inventory'
     | '/_authenticated/more'
+    | '/_authenticated/reconcile'
     | '/_authenticated/scan'
     | '/_authenticated/setup'
     | '/_authenticated/shopping'
@@ -244,6 +256,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMoreRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reconcile': {
+      id: '/_authenticated/reconcile'
+      path: '/reconcile'
+      fullPath: '/reconcile'
+      preLoaderRoute: typeof AuthenticatedReconcileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/scan': {
       id: '/_authenticated/scan'
       path: '/scan'
@@ -287,6 +306,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedConsumeRoute: typeof AuthenticatedConsumeRoute
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
   AuthenticatedMoreRoute: typeof AuthenticatedMoreRoute
+  AuthenticatedReconcileRoute: typeof AuthenticatedReconcileRoute
   AuthenticatedScanRoute: typeof AuthenticatedScanRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedShoppingRoute: typeof AuthenticatedShoppingRoute
@@ -298,6 +318,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedConsumeRoute: AuthenticatedConsumeRoute,
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
   AuthenticatedMoreRoute: AuthenticatedMoreRoute,
+  AuthenticatedReconcileRoute: AuthenticatedReconcileRoute,
   AuthenticatedScanRoute: AuthenticatedScanRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedShoppingRoute: AuthenticatedShoppingRoute,

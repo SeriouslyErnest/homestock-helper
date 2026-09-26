@@ -443,6 +443,12 @@ function InventoryPage() {
             </button>
           </div>
         </div>
+        <div className="mt-1.5 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+          <span>Sort and view only change how you see this page.</span>
+          <Link to="/reconcile" className="shrink-0 font-bold text-brand">
+            Quick stock check
+          </Link>
+        </div>
       </div>
 
       {isPending && <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>}

@@ -33,3 +33,8 @@
 - Multi-location stock records, inventory event history, buy-request tags
 - Household switching for multi-household users
 - Scan-to-consume (scan currently routes to restock/add; "Use up" page covers search/recent)
+
+- [x] Restock several (non-blocking unknown barcodes in scan basket)
+- [x] Shared/personal copy labels
+- [x] Quick stock check (/reconcile)
+- [x] Household optional details switches (expiry, locations)

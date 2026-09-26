@@ -319,6 +319,8 @@ export type Database = {
           id: string
           invite_code: string
           name: string
+          show_expiry: boolean
+          show_locations: boolean
         }
         Insert: {
           created_at?: string
@@ -326,6 +328,8 @@ export type Database = {
           id?: string
           invite_code?: string
           name?: string
+          show_expiry?: boolean
+          show_locations?: boolean
         }
         Update: {
           created_at?: string
@@ -333,6 +337,8 @@ export type Database = {
           id?: string
           invite_code?: string
           name?: string
+          show_expiry?: boolean
+          show_locations?: boolean
         }
         Relationships: []
       }
@@ -794,6 +800,8 @@ export type Database = {
           id: string
           invite_code: string
           name: string
+          show_expiry: boolean
+          show_locations: boolean
         }
         SetofOptions: {
           from: "*"
