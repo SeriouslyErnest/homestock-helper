@@ -349,7 +349,11 @@ function MorePage() {
                 onChange={async (e) => {
                   const { error } = await supabase
                     .from("households")
-                    .update({ [key]: e.target.checked })
+                    .update(
+                      key === "show_expiry"
+                        ? { show_expiry: e.target.checked }
+                        : { show_locations: e.target.checked },
+                    )
                     .eq("id", household.id);
                   if (error) toast.error("Couldn't save that. Try again.");
                   else queryClient.invalidateQueries({ queryKey: ["households"] });
