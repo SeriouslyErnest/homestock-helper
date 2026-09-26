@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LogoMark } from "@/components/logo";
 import { useHouseholds } from "@/lib/homestock";
 import { useQuery } from "@tanstack/react-query";
+import { useOnboarding } from "@/lib/onboarding";
 import { myApprovalStatus, syncAccountDirectory } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -99,6 +100,10 @@ function HouseholdGate() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const onSetup = pathname === "/setup";
+  const onWelcome = pathname === "/welcome";
+  const { data: onboarding } = useOnboarding();
+  const needsWelcome =
+    onboarding?.welcome_status === "not_started" || onboarding?.welcome_status === "in_progress";
 
   useEffect(() => {
     if (isPending || isError) return;
@@ -107,9 +112,12 @@ function HouseholdGate() {
       navigate({ to: "/setup", replace: true });
     } else if (count > 0 && onSetup) {
       // First-run only — once you have a home, this screen can't make duplicates.
-      navigate({ to: "/inventory", replace: true });
+      navigate({ to: needsWelcome ? "/welcome" : "/inventory", replace: true });
+    } else if (count > 0 && needsWelcome && !onWelcome) {
+      // Once per account: first time in with a home, show the short welcome.
+      navigate({ to: "/welcome", replace: true });
     }
-  }, [households, isPending, isError, onSetup, navigate]);
+  }, [households, isPending, isError, onSetup, onWelcome, needsWelcome, navigate]);
 
   if (isPending) return <Splash />;
   if (!isError && (households?.length ?? 0) === 0 && !onSetup) return <Splash />;
