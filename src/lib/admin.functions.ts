@@ -560,13 +560,9 @@ export const adminClaimConsole = createServerFn({ method: "POST" })
       .from("admin_users")
       .select("user_id", { count: "exact", head: true });
     if ((count ?? 0) > 0) throw new Error("This console already has an operator.");
-    // Only the project's very first account (the person who set the app up) may
-    // claim an unclaimed console — knowing the address alone is not enough.
-    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    const first = [...(list?.users ?? [])].sort((a, b) =>
-      (a.created_at ?? "").localeCompare(b.created_at ?? ""),
-    )[0];
-    if (!first || first.id !== context.userId) throw new Error("Not found");
+    // Any signed-in account may claim an unclaimed console. The secret address
+    // is the gate; the unique bootstrap index below guarantees only one claim
+    // can ever win, even if two people hit this at the same moment.
     // bootstrap=true is guarded by a unique index, so only one claim can ever win,
     // even if two people hit this at the same moment.
     const { error } = await supabaseAdmin.from("admin_users").insert({
