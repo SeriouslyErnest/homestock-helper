@@ -23,6 +23,7 @@ import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedShoppingRouteImport } from './routes/_authenticated/shopping'
 import { Route as OpsSplatRouteImport } from './routes/ops.$'
 import { Route as AuthenticatedItemItemIdRouteImport } from './routes/_authenticated/item/$itemId'
+import { Route as ApiPublicTmpSeed7f3aRouteImport } from './routes/api/public/tmp-seed-7f3a'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -93,6 +94,11 @@ const AuthenticatedItemItemIdRoute = AuthenticatedItemItemIdRouteImport.update({
   path: '/item/$itemId',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicTmpSeed7f3aRoute = ApiPublicTmpSeed7f3aRouteImport.update({
+  id: '/api/public/tmp-seed-7f3a',
+  path: '/api/public/tmp-seed-7f3a',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/shopping': typeof AuthenticatedShoppingRoute
   '/ops/$': typeof OpsSplatRoute
   '/item/$itemId': typeof AuthenticatedItemItemIdRoute
+  '/api/public/tmp-seed-7f3a': typeof ApiPublicTmpSeed7f3aRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -123,6 +130,7 @@ export interface FileRoutesByTo {
   '/shopping': typeof AuthenticatedShoppingRoute
   '/ops/$': typeof OpsSplatRoute
   '/item/$itemId': typeof AuthenticatedItemItemIdRoute
+  '/api/public/tmp-seed-7f3a': typeof ApiPublicTmpSeed7f3aRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/_authenticated/shopping': typeof AuthenticatedShoppingRoute
   '/ops/$': typeof OpsSplatRoute
   '/_authenticated/item/$itemId': typeof AuthenticatedItemItemIdRoute
+  '/api/public/tmp-seed-7f3a': typeof ApiPublicTmpSeed7f3aRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -157,6 +166,7 @@ export interface FileRouteTypes {
     | '/shopping'
     | '/ops/$'
     | '/item/$itemId'
+    | '/api/public/tmp-seed-7f3a'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/shopping'
     | '/ops/$'
     | '/item/$itemId'
+    | '/api/public/tmp-seed-7f3a'
   id:
     | '__root__'
     | '/'
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/_authenticated/shopping'
     | '/ops/$'
     | '/_authenticated/item/$itemId'
+    | '/api/public/tmp-seed-7f3a'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -196,6 +208,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
   OpsSplatRoute: typeof OpsSplatRoute
+  ApiPublicTmpSeed7f3aRoute: typeof ApiPublicTmpSeed7f3aRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -298,6 +311,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedItemItemIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/tmp-seed-7f3a': {
+      id: '/api/public/tmp-seed-7f3a'
+      path: '/api/public/tmp-seed-7f3a'
+      fullPath: '/api/public/tmp-seed-7f3a'
+      preLoaderRoute: typeof ApiPublicTmpSeed7f3aRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -334,6 +354,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
   OpsSplatRoute: OpsSplatRoute,
+  ApiPublicTmpSeed7f3aRoute: ApiPublicTmpSeed7f3aRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
