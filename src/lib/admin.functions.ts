@@ -1118,3 +1118,99 @@ export const adminDecideApplication = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+// ---------- Scheduler load ----------
+
+export type SchedulerBudget = { dailyQueries: number; warnPct: number };
+const DEFAULT_BUDGET: SchedulerBudget = { dailyQueries: 1000, warnPct: 20 };
+
+export const adminSchedulerLoad = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string }) => input)
+  .handler(async ({ data, context }) => {
+    await guard(data.routeId, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const since = new Date(Date.now() - 30 * 86400000).toISOString();
+    const [setting, runs, members] = await Promise.all([
+      supabaseAdmin.from("app_settings").select("value").eq("key", "scheduler_budget").maybeSingle(),
+      supabaseAdmin
+        .from("scheduler_runs")
+        .select("job_name, started_at, finished_at, status, pairs_processed, queries_run, messages_sent, errors")
+        .gte("started_at", since)
+        .order("started_at", { ascending: false })
+        .limit(500),
+      supabaseAdmin.from("household_members").select("user_id", { count: "exact", head: true }),
+    ]);
+    const raw = (setting.data?.value ?? {}) as Partial<SchedulerBudget>;
+    const budget: SchedulerBudget = {
+      dailyQueries: Number(raw.dailyQueries) > 0 ? Number(raw.dailyQueries) : DEFAULT_BUDGET.dailyQueries,
+      warnPct: Number(raw.warnPct) > 0 ? Number(raw.warnPct) : DEFAULT_BUDGET.warnPct,
+    };
+    const list = runs.data ?? [];
+    const byDay = new Map<string, { queries: number; messages: number; runs: number; errors: number }>();
+    for (const r of list) {
+      const day = r.started_at.slice(0, 10);
+      const d = byDay.get(day) ?? { queries: 0, messages: 0, runs: 0, errors: 0 };
+      d.queries += r.queries_run;
+      d.messages += r.messages_sent;
+      d.runs += 1;
+      d.errors += r.errors;
+      byDay.set(day, d);
+    }
+    const days = [...byDay.entries()]
+      .map(([day, v]) => ({ day, ...v }))
+      .sort((a, b) => b.day.localeCompare(a.day));
+    const today = new Date().toISOString().slice(0, 10);
+    const todayQueries = byDay.get(today)?.queries ?? 0;
+    const peakQueries = days.reduce((m, d) => Math.max(m, d.queries), 0);
+    const avgQueries = days.length ? Math.round(days.reduce((s, d) => s + d.queries, 0) / days.length) : 0;
+    // Worst case if every membership opted in: one query per user-household pair per day.
+    const projectedQueries = members.count ?? 0;
+    return {
+      budget,
+      warnAt: Math.round((budget.dailyQueries * budget.warnPct) / 100),
+      todayQueries,
+      peakQueries,
+      avgQueries,
+      projectedQueries,
+      days: days.slice(0, 14),
+      recentRuns: list.slice(0, 10).map((r) => ({
+        jobName: r.job_name,
+        startedAt: r.started_at,
+        finishedAt: r.finished_at,
+        status: r.status,
+        queries: r.queries_run,
+        messages: r.messages_sent,
+        errors: r.errors,
+      })),
+    };
+  });
+
+export const adminSetSchedulerBudget = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string; dailyQueries: number; warnPct: number }) => {
+    const dq = Math.floor(Number(input.dailyQueries));
+    const wp = Math.floor(Number(input.warnPct));
+    if (!(dq >= 1 && dq <= 10_000_000)) throw new Error("Daily budget must be a positive number");
+    if (!(wp >= 1 && wp <= 100)) throw new Error("Warning level must be 1–100%");
+    return { routeId: input.routeId, dailyQueries: dq, warnPct: wp };
+  })
+  .handler(async ({ data, context }) => {
+    await guard(data.routeId, context.userId, ["SUPER_ADMIN"]);
+    const { writeAudit } = await import("./admin.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const value = { dailyQueries: data.dailyQueries, warnPct: data.warnPct };
+    const { error } = await supabaseAdmin.from("app_settings").upsert(
+      { key: "scheduler_budget", value: value as never, updated_at: new Date().toISOString(), updated_by: context.userId },
+      { onConflict: "key" },
+    );
+    if (error) throw error;
+    await writeAudit({
+      adminUserId: context.userId,
+      actionType: "scheduler_budget.updated",
+      targetType: "setting",
+      targetId: "scheduler_budget",
+      afterJson: value,
+    });
+    return { ok: true };
+  });
