@@ -40,8 +40,8 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
-  // Password sign-in is switched off; sign-in is by email link or Google only.
-  const usePassword = false as boolean;
+  // Email link by default; password sign-in available via a toggle.
+  const [usePassword, setUsePassword] = useState(false);
   const [password, setPassword] = useState("");
   const { data: policy } = useQuery({
     queryKey: ["signup-policy"],
