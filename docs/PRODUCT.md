@@ -112,8 +112,8 @@ compared in constant time server-side. Wrong paths render an identical
 
 ## Screens (MVP)
 
-Landing (`/`) · About (`/about`) · Sign-in (`/auth`: email link, email +
-password, Google) · Setup / create-or-join (`/setup`) · Inventory · Quick
+Landing (`/`) · About (`/about`) · Sign-in (`/auth`: email link or
+Google) · Setup / create-or-join (`/setup`) · Inventory · Quick
 stock check (`/reconcile`) · Use up (`/consume`) · Scan (single "Do we have
 this?" or "Restock several" basket) · Add item · Item detail (incl.
 "Correct the count") · Shopping (Running low + buy requests) · More
@@ -125,8 +125,7 @@ promo code, account).
 - No activity-history screen; events are used for undo, ranking and admin counts.
 - No automatic matching of buy requests to products — completion is manual.
 - No household deletion UI.
-- Email sign-in is link-first; a password is optional ("Use a password
-  instead"). No 6-digit code. New password accounts confirm their email.
+- Sign-in is by email link or Google only — no passwords, no 6-digit code.
 - Six security-linter EXECUTE warnings on SECURITY DEFINER helper functions
   are expected: they must be callable by signed-in users and each verifies
   its caller internally.
