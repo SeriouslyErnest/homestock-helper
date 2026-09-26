@@ -27,7 +27,7 @@
 - Account approval switch in admin console (default off); newcomers wait on a pending screen
 - Restock several: scan basket with non-blocking "needs a name" placeholders
 - Shared vs personal labels on settings; Quick stock check; per-household expiry/location switches
-- Email + password sign-in alongside link and Google
+- Email + password sign-in tried, then removed (26 Sep 2026) — link + Google only
 - Admin dashboard: items tracked, stock changes and count fixes (7 days); sign-in methods per account
 
 ## Open
