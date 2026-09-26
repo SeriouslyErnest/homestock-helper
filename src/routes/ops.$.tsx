@@ -34,6 +34,9 @@ import {
   adminProductReports,
   adminResolveProductReport,
   adminSchedulerLoad,
+  adminTelegramSettings,
+  adminSetTelegramEnabled,
+  adminRegisterTelegramWebhook,
   adminSetSchedulerBudget,
 } from "@/lib/admin.functions";
 import { CATEGORIES } from "@/lib/homestock";
@@ -202,8 +205,65 @@ function Dashboard({ routeId }: { routeId: string }) {
         <Card label="Stock changes, 7 days" value={data.stockChanges7d} />
         <Card label="Count fixes, 7 days" value={data.corrections7d} />
       </div>
+      <TelegramPanel routeId={routeId} />
       <SchedulerLoad routeId={routeId} />
     </div>
+  );
+}
+
+function TelegramPanel({ routeId }: { routeId: string }) {
+  const qc = useQueryClient();
+  const q = useQuery({
+    queryKey: ["admin-telegram", routeId],
+    queryFn: () => adminTelegramSettings({ data: { routeId } }),
+  });
+  const refresh = () => qc.invalidateQueries({ queryKey: ["admin-telegram", routeId] });
+  const toggle = useMutation({
+    mutationFn: (enabled: boolean) => adminSetTelegramEnabled({ data: { routeId, enabled } }),
+    onSuccess: refresh,
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const hook = useMutation({
+    mutationFn: () => adminRegisterTelegramWebhook({ data: { routeId } }),
+    onSuccess: () => {
+      toast.success("Bot connected to the app");
+      void refresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const d = q.data;
+  if (!d) return null;
+  return (
+    <section className="rounded-2xl border border-border bg-card p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-bold">Telegram expiry reminders</h2>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={d.enabled}
+            disabled={toggle.isPending}
+            onChange={(e) => toggle.mutate(e.target.checked)}
+          />
+          {d.enabled ? "On" : "Off"}
+        </label>
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Bot @{d.botUsername ?? "—"} · token {d.tokenConfigured ? "stored securely" : "missing"} ·
+        messages {d.webhookRegistered ? "connected" : "not connected"} · {d.linkedAccounts} linked
+        accounts · {d.enabledPairs} reminders turned on. One run a day at 00:00 UTC. When off,
+        nothing is sent and members can't connect.
+      </p>
+      {!d.webhookRegistered && (
+        <button
+          type="button"
+          onClick={() => hook.mutate()}
+          disabled={hook.isPending}
+          className="mt-3 h-9 rounded-xl border border-border px-3 text-xs font-semibold disabled:opacity-50"
+        >
+          Connect bot to the published app
+        </button>
+      )}
+    </section>
   );
 }
 

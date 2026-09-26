@@ -9,9 +9,8 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const { safeEqual, sendTelegramMessage, sha256Hex, APP_URL } = await import(
-          "@/lib/telegram.server"
-        );
+        const { safeEqual, sendTelegramMessage, sha256Hex, APP_URL } =
+          await import("@/lib/telegram.server");
         const expected = process.env["TELEGRAM_WEBHOOK_SECRET"] ?? "";
         const given = request.headers.get("X-Telegram-Bot-Api-Secret-Token") ?? "";
         if (!expected || !safeEqual(given, expected)) {

@@ -61,7 +61,10 @@ export const Route = createFileRoute("/api/public/cron/expiry-digest")({
             const userIds = [...new Set(batch.map((p) => p.user_id))];
             const homeIds = [...new Set(batch.map((p) => p.household_id))];
             const [links, members, homes, items, done] = await Promise.all([
-              supabaseAdmin.from("telegram_links").select("user_id, chat_id").in("user_id", userIds),
+              supabaseAdmin
+                .from("telegram_links")
+                .select("user_id, chat_id")
+                .in("user_id", userIds),
               supabaseAdmin
                 .from("household_members")
                 .select("user_id, household_id")
@@ -89,9 +92,7 @@ export const Route = createFileRoute("/api/public/cron/expiry-digest")({
               (members.data ?? []).map((m) => `${m.user_id}:${m.household_id}`),
             );
             const homeOf = new Map((homes.data ?? []).map((h) => [h.id, h]));
-            const doneSet = new Set(
-              (done.data ?? []).map((d) => `${d.user_id}:${d.household_id}`),
-            );
+            const doneSet = new Set((done.data ?? []).map((d) => `${d.user_id}:${d.household_id}`));
 
             for (const p of batch) {
               const key = `${p.user_id}:${p.household_id}`;

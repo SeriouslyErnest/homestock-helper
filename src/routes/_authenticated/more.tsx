@@ -5,6 +5,7 @@ import { Ban, Check, Copy, LogOut, RefreshCw, RotateCcw, UserMinus, X } from "lu
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { PromoCard } from "@/components/promo-code";
+import { TelegramCard } from "@/components/telegram-card";
 import { AskForMoreHomes } from "@/components/limit-request";
 import { useOnboardingActions } from "@/lib/onboarding";
 
@@ -595,6 +596,8 @@ function MorePage() {
           {joinMessage}
         </p>
       </section>
+
+      <TelegramCard householdId={household.id} householdName={household.name} />
 
       <PromoCard />
 

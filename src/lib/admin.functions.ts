@@ -1212,17 +1212,15 @@ export const adminSetSchedulerBudget = createServerFn({ method: "POST" })
     const { writeAudit } = await import("./admin.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const value = { dailyQueries: data.dailyQueries, warnPct: data.warnPct };
-    const { error } = await supabaseAdmin
-      .from("app_settings")
-      .upsert(
-        {
-          key: "scheduler_budget",
-          value: value as never,
-          updated_at: new Date().toISOString(),
-          updated_by: context.userId,
-        },
-        { onConflict: "key" },
-      );
+    const { error } = await supabaseAdmin.from("app_settings").upsert(
+      {
+        key: "scheduler_budget",
+        value: value as never,
+        updated_at: new Date().toISOString(),
+        updated_by: context.userId,
+      },
+      { onConflict: "key" },
+    );
     if (error) throw error;
     await writeAudit({
       adminUserId: context.userId,
@@ -1241,7 +1239,8 @@ export const adminTelegramSettings = createServerFn({ method: "POST" })
   .inputValidator((input: { routeId: string }) => input)
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context.userId);
-    const { readSetting, expiryNotificationsEnabled, telegramCall } = await import("./telegram.server");
+    const { readSetting, expiryNotificationsEnabled, telegramCall } =
+      await import("./telegram.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [enabled, bot, info, links, prefs] = await Promise.all([
       expiryNotificationsEnabled(),
@@ -1306,7 +1305,8 @@ export const adminRegisterTelegramWebhook = createServerFn({ method: "POST" })
       allowed_updates: ["message"],
       drop_pending_updates: true,
     });
-    if (!res.ok) throw new Error("Telegram didn't accept the address. Publish the app first, then retry.");
+    if (!res.ok)
+      throw new Error("Telegram didn't accept the address. Publish the app first, then retry.");
     const { writeAudit } = await import("./admin.server");
     await writeAudit({
       adminUserId: context.userId,
