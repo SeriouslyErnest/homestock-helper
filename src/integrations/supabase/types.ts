@@ -819,6 +819,10 @@ export type Database = {
         Returns: string
       }
       effective_tier: { Args: { _user_id: string }; Returns: string }
+      household_hidden_item_count: {
+        Args: { _household_id: string }
+        Returns: number
+      }
       join_household_by_code: { Args: { _code: string }; Returns: string }
       my_access: {
         Args: never

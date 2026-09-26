@@ -85,6 +85,13 @@
       "when": 1790411553062,
       "tag": "0011_household_join_toggle",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790411922213,
+      "tag": "0012_tighten_plan_items_products_policies",
+      "breakpoints": true
     }
   ]
 }
