@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ArrowUp, Boxes, Check, Gauge, ShoppingBasket } from "lucide-react";
 import { LogoMark, LogoWordmark } from "@/components/logo";
+import { UserGuide } from "@/components/user-guide";
 import {
   FeatureCard,
   HowItWorksStep,
@@ -50,6 +51,7 @@ const secondaryBtn =
 
 const TOPICS = [
   { id: "what-is-it", label: "What is it?" },
+  { id: "guide", label: "User guide" },
   { id: "how-it-works", label: "How it works" },
   { id: "shopping-list", label: "Shopping list" },
   { id: "households", label: "Households" },
@@ -241,6 +243,17 @@ function AboutPage() {
               </FeatureCard>
             </Reveal>
           </div>
+        </Section>
+
+        {/* USER GUIDE */}
+        <Section id="guide">
+          <Reveal>
+            <SectionHeading
+              title="User guide: the key flows"
+              intro="A step-by-step walk through everything you'll do day to day, with real screens."
+            />
+          </Reveal>
+          <UserGuide />
         </Section>
 
         {/* HOW IT WORKS */}
