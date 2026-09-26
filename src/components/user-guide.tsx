@@ -16,9 +16,10 @@ const FLOWS: Flow[] = [
     img: more,
     alt: "Household and account page with home name, invite code and optional details switches",
     steps: [
-      "Open HomeStock and enter your email — we send a sign-in link, no password. Google works too.",
-      "First time in? Create a home, or type the 6-letter invite code someone gave you and wait for the owner to approve you.",
-      "Under More, owners can rename the home, copy or change the invite code, approve join requests and switch the expiry-date and location boxes off for everyone.",
+      "Open HomeStock and enter your email — we send a sign-in link. You can also use a password or Google.",
+      "First time in? A short welcome tour shows the basics (skip it any time; restart it from More). Then create a home, or type the 6-letter invite code someone gave you and wait for the owner to approve you.",
+      "Under More, owners can rename the home, copy the invite code, approve join requests and switch the expiry-date and location boxes off for everyone.",
+      "Done inviting? Switch off “Open for join requests”. Tap “New code” and the old code stops working straight away — handy if it was shared too widely.",
     ],
     tip: "Tap your initials at the top right any time to reach your account.",
   },
@@ -40,7 +41,7 @@ const FLOWS: Flow[] = [
     alt: "Scan page with camera area, Restock several switch, barcode box and Add without a barcode",
     steps: [
       "Tap the big scan button in the middle of the bottom bar and point the camera at a barcode — or type the number.",
-      "Already at home? You'll see how many you have, where, and whether you need more.",
+      "Already at home? You'll see how many you have, where, and whether you need more. Set the amount and tap “Add 1 to stock” — it's added straight away with Undo, ready for the next scan.",
       "Switch on “Restock several” to keep scanning a whole bag, adjust amounts, then save once. Products HomeStock hasn't seen wait in the list until you give them a name.",
       "No barcode? Tap “Add without a barcode”.",
     ],
@@ -101,6 +102,17 @@ const FLOWS: Flow[] = [
       "“Running low at home” fills itself from items under their minimum — tap “+ List” to add one.",
       "Tick things off as you buy them. Ticking a tracked item adds it to the stock; unticking reverses it.",
     ],
+  },
+  {
+    title: "10. Expiry reminders on Telegram (optional)",
+    img: more,
+    alt: "More page where the Telegram reminders card appears",
+    steps: [
+      "Under More, tap “Connect Telegram”. The HomeStock bot opens — tap Start. The link works once and expires after 15 minutes.",
+      "Turn reminders on for each home and choose how early: on the day, 1 day, 3 days or a week before.",
+      "You get at most one short message a day per home listing what's expiring. Disconnect in the app, or send /stop to the bot.",
+    ],
+    tip: "The card only appears once your admin has switched Telegram reminders on.",
   },
 ];
 

@@ -46,12 +46,26 @@ Built with TanStack Start (React 19), Tailwind CSS v4 and Supabase
   effectively unlimited); paid 25 homes / 50 members, not enforced. At the
   limit users can tap "Ask for another home", which lands in the admin
   dashboard inbox.
-- **Sign-in** — email link or Google (no passwords). Admins can switch
+- **Sign-in** — email link, email + password, or Google. Admins can switch
   sign-ups to invite-only and optionally require approval of new accounts.
+- **Welcome flow** — 5-step tour once per account (`user_onboarding`),
+  skip/resume, restart from More; one-time first-use tips per screen.
+- **Scan-to-add** — scanning a product already at home offers "Add N to
+  stock" (via `adjust_item_quantity`, with Undo).
+- **Invite code control** — owners can close join requests (`join_open`) and
+  regenerate the code (`regenerate_invite_code`); old codes stop working.
+- **Telegram expiry reminders** — dedicated bot, direct Bot API. Members
+  link via a one-time 15-minute deep link, pick per-home notice days
+  (0/1/3/7). A daily pg_cron job (00:00 UTC) calls
+  `/api/public/cron/expiry-digest`; at most one message per person/home/day.
+  Admin kill switch defaults Off. `TELEGRAM_BOT_TOKEN` and
+  `TELEGRAM_WEBHOOK_SECRET` live only in protected server secrets.
 - **Admin console** — hidden ops route (see below) with dashboard (counters,
-  home-limit requests, account applications, reported product names),
-  account directory, complimentary/trial grants, promo codes, sign-up
-  settings and invites, plan limits, category list and an audit log.
+  home-limit requests, account applications, reported product names,
+  Telegram panel, scheduler load with 20%-of-budget warnings read from
+  `scheduler_runs`), account directory, complimentary/trial grants, promo
+  codes, sign-up settings and invites, plan limits, category list and an
+  audit log.
   Customer emails are stored only as salted HMAC fingerprints plus a masked
   display form — never in plain text.
 - **Light & dark mode** — follows the device automatically.

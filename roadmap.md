@@ -27,7 +27,7 @@
 - Account approval switch in admin console (default off); newcomers wait on a pending screen
 - Restock several: scan basket with non-blocking "needs a name" placeholders
 - Shared vs personal labels on settings; Quick stock check; per-household expiry/location switches
-- Email + password sign-in tried, then removed (26 Sep 2026) — link + Google only
+- Email + password sign-in enabled (27 Sep 2026) alongside link + Google
 - Admin dashboard: items tracked, stock changes and count fixes (7 days); sign-in methods per account
 - User guide on About page with real screenshots of the 9 key flows (26 Sep 2026); responsive check 320–1280px, shopping add row wraps on very small phones
 
@@ -45,3 +45,9 @@
 - [x] Restart welcome flow under More (also resets first-use tips)
 - [x] First-use tips on Inventory, Scan, Shopping, Use up; empty-state copy per PRD
 - [x] Scan a product already at home → "Add N to stock" with Undo
+
+## Invite codes & Telegram (2026-09-26/27)
+- [x] Owner can close join requests and regenerate the invite code
+- [x] Telegram expiry reminders (daily digest, admin kill switch, scheduler load panel)
+- [x] Docs + user guide updated; password sign-in enabled; end-to-end test
+- [ ] Telegram admin alerts ("🔐 ADMIN") — later

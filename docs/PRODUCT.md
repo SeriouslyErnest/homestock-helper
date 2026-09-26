@@ -112,20 +112,34 @@ compared in constant time server-side. Wrong paths render an identical
 
 ## Screens (MVP)
 
-Landing (`/`) · About (`/about`) · Sign-in (`/auth`: email link or
-Google) · Setup / create-or-join (`/setup`) · Inventory · Quick
-stock check (`/reconcile`) · Use up (`/consume`) · Scan (single "Do we have
-this?" or "Restock several" basket) · Add item · Item detail (incl.
-"Correct the count") · Shopping (Running low + buy requests) · More
-(household switching, members, join requests, optional-details switches,
-promo code, account).
+Landing (`/`) · About (`/about`) · Sign-in (`/auth`: email link, password or
+Google) · Welcome tour (`/welcome`) · Setup / create-or-join (`/setup`) ·
+Inventory · Quick stock check (`/reconcile`) · Use up (`/consume`) · Scan
+(single "Do we have this?" with "Add N to stock", or "Restock several"
+basket) · Add item · Item detail (incl. "Correct the count") · Shopping
+(Running low + buy requests) · More (household switching, members, join
+requests, open/closed join switch, "New code", optional-details switches,
+Telegram reminders, restart welcome, promo code, account).
+
+## Newer features
+
+- **Welcome flow** — shown once per account, resumable, skippable; existing
+  accounts were marked completed. First-use tips never show during the tour.
+- **Invite code control** — closing join requests rejects new applications;
+  regenerating the code invalidates the old one. Existing members stay.
+- **Telegram expiry reminders** — opt-in per person per home, one daily
+  digest, admin kill switch (default Off). Runs on the database scheduler,
+  not a paid job service; every run logs to `scheduler_runs`, which feeds the
+  admin Scheduler load panel (default budget 1,000 queries/day, warning at
+  20%).
 
 ## Known intentional choices
 
 - No activity-history screen; events are used for undo, ranking and admin counts.
 - No automatic matching of buy requests to products — completion is manual.
 - No household deletion UI.
-- Sign-in is by email link or Google only — no passwords, no 6-digit code.
+- Sign-in is by email link, email + password, or Google — no 6-digit code.
+- Telegram admin alerts are not built yet.
 - Six security-linter EXECUTE warnings on SECURITY DEFINER helper functions
   are expected: they must be callable by signed-in users and each verifies
   its caller internally.
