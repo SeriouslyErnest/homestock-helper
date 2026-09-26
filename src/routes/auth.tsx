@@ -225,6 +225,16 @@ function AuthPage() {
               New here? Create an account with this password
             </button>
           )}
+          <button
+            type="button"
+            onClick={() => {
+              setUsePassword((v) => !v);
+              setMessage(null);
+            }}
+            className="py-1 text-sm text-muted-foreground underline"
+          >
+            {usePassword ? "Email me a sign-in link instead" : "Use a password instead"}
+          </button>
         </form>
       ) : (
         <div className="flex flex-col gap-3">
