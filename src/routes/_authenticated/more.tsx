@@ -331,16 +331,28 @@ function MorePage() {
               {household?.invite_code ?? "······"}
             </strong>
           </div>
-          <button
-            onClick={copyCode}
-            className="flex items-center gap-1.5 rounded-xl bg-card px-3 py-2 text-xs font-bold text-brand"
-          >
-            <Copy size={14} /> Copy
-          </button>
+          <div className="flex flex-col gap-1.5">
+            <button
+              onClick={copyCode}
+              className="flex items-center gap-1.5 rounded-xl bg-card px-3 py-2 text-xs font-bold text-brand"
+            >
+              <Copy size={14} /> Copy
+            </button>
+            {isOwner && (
+              <button
+                onClick={regenerateCode}
+                className="flex items-center gap-1.5 rounded-xl bg-card px-3 py-2 text-xs font-bold text-brand"
+              >
+                <RefreshCw size={14} /> New code
+              </button>
+            )}
+          </div>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
           Share this code so family or flatmates can ask to join. Nobody gets in until an owner
           approves them.
+          {isOwner &&
+            " “New code” replaces it — the old code stops working straight away, handy if it leaked."}
         </p>
       </section>
 
