@@ -194,7 +194,6 @@ function ScanPage() {
         }
       }
 
-
       const info = await lookupProduct(code);
       navigate({
         to: "/add",

@@ -347,16 +347,21 @@ function MorePage() {
                 className="h-5 w-5"
                 checked={household[key] !== false}
                 onChange={async (e) => {
+                  const next = e.target.checked;
+                  const patch = key === "show_expiry" ? { show_expiry: next } : { show_locations: next };
+                  const setCache = (value: boolean) =>
+                    queryClient.setQueryData<typeof households>(["households"], (old) =>
+                      old?.map((h) => (h.id === household.id ? { ...h, [key]: value } : h)),
+                    );
+                  setCache(next);
                   const { error } = await supabase
                     .from("households")
-                    .update(
-                      key === "show_expiry"
-                        ? { show_expiry: e.target.checked }
-                        : { show_locations: e.target.checked },
-                    )
+                    .update(patch)
                     .eq("id", household.id);
-                  if (error) toast.error("Couldn't save that. Try again.");
-                  else queryClient.invalidateQueries({ queryKey: ["households"] });
+                  if (error) {
+                    setCache(!next);
+                    toast.error("Couldn't save that. Try again.");
+                  }
                 }}
               />
             </label>
