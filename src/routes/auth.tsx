@@ -40,7 +40,8 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
-  const [usePassword, setUsePassword] = useState(false);
+  // Password sign-in is switched off; sign-in is by email link or Google only.
+  const usePassword = false as boolean;
   const [password, setPassword] = useState("");
   const { data: policy } = useQuery({
     queryKey: ["signup-policy"],
@@ -224,16 +225,6 @@ function AuthPage() {
               New here? Create an account with this password
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => {
-              setUsePassword((v) => !v);
-              setMessage(null);
-            }}
-            className="py-1 text-sm font-semibold text-brand"
-          >
-            {usePassword ? "Email me a link instead" : "Use a password instead"}
-          </button>
         </form>
       ) : (
         <div className="flex flex-col gap-3">
