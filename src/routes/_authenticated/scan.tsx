@@ -57,6 +57,8 @@ function ScanPage() {
   const [basket, setBasket] = useState<BasketLine[]>([]);
   const [committing, setCommitting] = useState(false);
   const lastScan = useRef<{ code: string; at: number } | null>(null);
+  const batchRef = useRef(false);
+  batchRef.current = batch;
   const unnamed = basket.filter((l) => !l.itemId && !l.name.trim()).length;
 
   function resumeSoon() {
@@ -394,6 +396,112 @@ function ScanPage() {
 
       {phase !== "result" && (
         <>
+          <label className="mt-4 flex min-h-11 items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-2 text-sm font-semibold">
+            Restock several — keep scanning
+            <input
+              type="checkbox"
+              className="h-5 w-5"
+              checked={batch}
+              onChange={(e) => {
+                setBatch(e.target.checked);
+                setMessage(null);
+                handled.current = false;
+                setPhase("scanning");
+              }}
+            />
+          </label>
+
+          {batch && (
+            <section className="mt-3 rounded-2xl border border-border bg-card p-3">
+              {basket.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground">
+                  Scan each product — they'll collect here.
+                </p>
+              ) : (
+                <>
+                  {unnamed > 0 && (
+                    <p className="mb-2 rounded-xl bg-warning-soft px-3 py-2 text-sm font-bold text-warning">
+                      {unnamed} product{unnamed === 1 ? " needs" : "s need"} a name
+                    </p>
+                  )}
+                  <ul className="grid gap-2">
+                    {basket.map((line) => (
+                      <li key={line.key} className="grid gap-1 border-t border-border pt-2">
+                        <div className="flex items-center gap-2">
+                          {line.itemId || !line.unknown ? (
+                            <span className="min-w-0 flex-1 break-words text-sm font-semibold">
+                              {line.name || line.barcode}
+                            </span>
+                          ) : (
+                            <input
+                              value={line.name}
+                              onChange={(e) =>
+                                setBasket((b) =>
+                                  b.map((l) =>
+                                    l.key === line.key ? { ...l, name: e.target.value } : l,
+                                  ),
+                                )
+                              }
+                              placeholder={`Name for ${line.barcode}`}
+                              aria-label={`Name for barcode ${line.barcode}`}
+                              className="min-w-0 flex-1 rounded-xl border border-warning bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
+                            />
+                          )}
+                          <button
+                            aria-label="One fewer"
+                            onClick={() =>
+                              setBasket((b) =>
+                                b.map((l) =>
+                                  l.key === line.key ? { ...l, qty: Math.max(1, l.qty - 1) } : l,
+                                ),
+                              )
+                            }
+                            className="grid h-10 w-10 place-items-center rounded-xl border border-border"
+                          >
+                            <Minus size={16} />
+                          </button>
+                          <strong className="w-6 text-center">{line.qty}</strong>
+                          <button
+                            aria-label="One more"
+                            onClick={() =>
+                              setBasket((b) =>
+                                b.map((l) => (l.key === line.key ? { ...l, qty: l.qty + 1 } : l)),
+                              )
+                            }
+                            className="grid h-10 w-10 place-items-center rounded-xl bg-brand-soft text-brand"
+                          >
+                            <Plus size={16} />
+                          </button>
+                          <button
+                            aria-label="Remove from basket"
+                            onClick={() => setBasket((b) => b.filter((l) => l.key !== line.key))}
+                            className="grid h-10 w-8 place-items-center text-muted-foreground"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                        {!line.itemId && !line.unknown && (
+                          <span className="text-xs text-muted-foreground">New to your home</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    onClick={commitBasket}
+                    disabled={committing || unnamed > 0}
+                    className="mt-3 w-full rounded-2xl bg-primary py-3 font-bold text-primary-foreground disabled:opacity-50"
+                  >
+                    {committing
+                      ? "Saving…"
+                      : unnamed > 0
+                        ? "Name or remove the new ones first"
+                        : `Save ${basket.reduce((s, l) => s + l.qty, 0)} to inventory`}
+                  </button>
+                </>
+              )}
+            </section>
+          )}
+
           <form onSubmit={submitManual} className="mt-4 flex gap-2">
             <input
               value={manual}
