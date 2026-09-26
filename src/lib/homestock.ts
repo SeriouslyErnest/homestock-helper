@@ -7,6 +7,9 @@ export type Household = {
   name: string;
   invite_code: string;
   created_by: string;
+  /** Household-wide switches: hide optional fields nobody in this home uses. */
+  show_expiry?: boolean;
+  show_locations?: boolean;
 };
 
 export type Member = {
@@ -279,7 +282,9 @@ export function useHouseholds() {
 
       const { data, error } = await supabase
         .from("household_members")
-        .select("household_id, created_at, households(id, name, invite_code, created_by)")
+        .select(
+          "household_id, created_at, households(id, name, invite_code, created_by, show_expiry, show_locations)",
+        )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
