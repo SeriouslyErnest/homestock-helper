@@ -1,9 +1,24 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { Minus, Plus, X } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { lookupProduct } from "@/lib/product-lookup";
+import { cacheManualProduct } from "@/lib/product-lookup.functions";
 import { useHousehold, type Item } from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
+
+type BasketLine = {
+  key: string;
+  barcode: string;
+  /** Set when this product is already on the household's shelves. */
+  itemId?: string;
+  name: string;
+  image?: string | null;
+  /** Nobody has named this barcode yet. */
+  unknown?: boolean;
+  qty: number;
+};
 
 export const Route = createFileRoute("/_authenticated/scan")({
   head: () => ({
