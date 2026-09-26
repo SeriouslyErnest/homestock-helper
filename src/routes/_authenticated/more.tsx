@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Ban, Check, Copy, LogOut, RotateCcw, UserMinus, X } from "lucide-react";
+import { Ban, Check, Copy, LogOut, RefreshCw, RotateCcw, UserMinus, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { PromoCard } from "@/components/promo-code";
