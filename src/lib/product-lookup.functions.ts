@@ -116,13 +116,13 @@ export const reportProductName = createServerFn({ method: "POST" })
     return { barcode };
   })
   .handler(async ({ data, context }) => {
-    // Only someone who actually has this barcode in one of their homes may flag it.
+    // Only someone who actually has this barcode in one of their homes may hide it straight away.
     const { data: mine } = await context.supabase
       .from("items")
       .select("id")
       .eq("barcode", data.barcode)
       .limit(1);
-    if (!mine || mine.length === 0) return { ok: false };
+    const canHide = !!mine && mine.length > 0;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: product } = await supabaseAdmin
       .from("products")
@@ -136,6 +136,8 @@ export const reportProductName = createServerFn({ method: "POST" })
         { barcode: data.barcode, reporter_id: context.userId, reported_name: product.name },
         { onConflict: "barcode,reporter_id", ignoreDuplicates: true },
       );
+    // Others' reports go to the admin queue without hiding the name for everyone.
+    if (!canHide) return { ok: true };
     await supabaseAdmin
       .from("products")
       .update({ hidden_at: new Date().toISOString() })
