@@ -663,6 +663,45 @@ export type Database = {
           },
         ]
       }
+      scheduler_runs: {
+        Row: {
+          errors: number
+          finished_at: string | null
+          id: string
+          job_name: string
+          messages_sent: number
+          note: string | null
+          pairs_processed: number
+          queries_run: number
+          started_at: string
+          status: string
+        }
+        Insert: {
+          errors?: number
+          finished_at?: string | null
+          id?: string
+          job_name: string
+          messages_sent?: number
+          note?: string | null
+          pairs_processed?: number
+          queries_run?: number
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          errors?: number
+          finished_at?: string | null
+          id?: string
+          job_name?: string
+          messages_sent?: number
+          note?: string | null
+          pairs_processed?: number
+          queries_run?: number
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
       shopping_items: {
         Row: {
           bought_at: string | null
