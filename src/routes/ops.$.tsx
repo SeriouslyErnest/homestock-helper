@@ -196,6 +196,9 @@ function Dashboard({ routeId }: { routeId: string }) {
         <Card label="Expiring in 7 days" value={data.expiringSoon} />
         <Card label="Active promotions" value={data.activePromotions} />
         <Card label="Promo redemptions" value={data.redemptions} />
+        <Card label="Items tracked" value={data.items} />
+        <Card label="Stock changes, 7 days" value={data.stockChanges7d} />
+        <Card label="Count fixes, 7 days" value={data.corrections7d} />
       </div>
     </div>
   );
