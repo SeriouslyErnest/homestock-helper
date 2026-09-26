@@ -295,6 +295,7 @@ function ScanPage() {
     if (!code || handled.current) return;
     handled.current = true;
     await handleCode.current(code);
+    if (batchRef.current) setManual("");
   }
 
   const total = (found ?? []).reduce((sum, i) => sum + Number(i.quantity), 0);
