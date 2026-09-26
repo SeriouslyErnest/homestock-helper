@@ -9,3 +9,4 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 - Every scheduled job writes one row per run to public.scheduler_runs (queries_run, messages_sent, errors) — the admin dashboard's scheduler-load panel and cost warnings read only from it.
+- Telegram: dedicated bot, direct Bot API from server only (no relay); token/webhook secret in protected secrets; cron caller token in locked public.cron_tokens read by pg_cron.
