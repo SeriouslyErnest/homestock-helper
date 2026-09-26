@@ -37,8 +37,125 @@ function ScanPage() {
 
   const [lastCode, setLastCode] = useState<string | null>(null);
 
+  // "Restock several": every scan drops into a basket without leaving the camera.
+  const [batch, setBatch] = useState(false);
+  const [basket, setBasket] = useState<BasketLine[]>([]);
+  const [committing, setCommitting] = useState(false);
+  const lastScan = useRef<{ code: string; at: number } | null>(null);
+  const unnamed = basket.filter((l) => !l.itemId && !l.name.trim()).length;
+
+  function resumeSoon() {
+    setTimeout(() => {
+      handled.current = false;
+    }, 1200);
+  }
+
+  async function addToBasket(code: string) {
+    const bump = (match: (l: BasketLine) => boolean, fresh: () => BasketLine) =>
+      setBasket((b) =>
+        b.some(match) ? b.map((l) => (match(l) ? { ...l, qty: l.qty + 1 } : l)) : [fresh(), ...b],
+      );
+    if (household) {
+      const { data: existing, error } = await supabase
+        .from("items")
+        .select("id, name")
+        .eq("household_id", household.id)
+        .eq("barcode", code)
+        .order("updated_at", { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      const row = existing?.[0];
+      if (row) {
+        bump(
+          (l) => l.barcode === code,
+          () => ({ key: code, barcode: code, itemId: row.id, name: row.name, qty: 1 }),
+        );
+        return;
+      }
+    }
+    const info = await lookupProduct(code);
+    const name = info ? [info.name, info.brand].filter(Boolean).join(" — ") : "";
+    bump(
+      (l) => l.barcode === code,
+      () => ({
+        key: code,
+        barcode: code,
+        name,
+        image: info?.image_url ?? null,
+        unknown: !info,
+        qty: 1,
+      }),
+    );
+  }
+
+  async function commitBasket() {
+    if (!household || unnamed > 0 || basket.length === 0) return;
+    setCommitting(true);
+    setMessage(null);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const left: BasketLine[] = [];
+    for (const line of basket) {
+      try {
+        if (line.itemId) {
+          const { error } = await supabase.rpc("adjust_item_quantity", {
+            _item_id: line.itemId,
+            _delta: line.qty,
+          });
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from("items").insert({
+            household_id: household.id,
+            name: line.name.trim(),
+            barcode: line.barcode,
+            image_url: line.image ?? null,
+            quantity: line.qty,
+            unit: "pcs",
+            created_by: user?.id ?? null,
+          });
+          if (error) throw error;
+          if (line.unknown) {
+            try {
+              await cacheManualProduct({ data: { barcode: line.barcode, name: line.name.trim() } });
+            } catch {
+              // Shared catalogue is best effort; the item is saved either way.
+            }
+          }
+        }
+      } catch {
+        left.push(line);
+      }
+    }
+    setCommitting(false);
+    setBasket(left);
+    if (left.length > 0) {
+      setMessage(`${left.length} couldn't be saved. Check your connection and tap Save again.`);
+    } else {
+      toast.success("Restock saved");
+      setBatch(false);
+    }
+  }
+
   const handleCode = useRef<(code: string) => Promise<void>>(async () => {});
   handleCode.current = async (code: string) => {
+    if (batchRef.current) {
+      // Same code still in front of the camera — don't count it twice.
+      const prev = lastScan.current;
+      if (prev && prev.code === code && Date.now() - prev.at < 2500) {
+        resumeSoon();
+        return;
+      }
+      lastScan.current = { code, at: Date.now() };
+      setMessage(null);
+      try {
+        await addToBasket(code);
+      } catch {
+        setMessage("We couldn't check that code. Scan it again when you're back online.");
+      }
+      resumeSoon();
+      return;
+    }
     setPhase("looking-up");
     setMessage(null);
     setLastCode(code);
@@ -59,6 +176,7 @@ function ScanPage() {
           return;
         }
       }
+
 
       const info = await lookupProduct(code);
       navigate({
