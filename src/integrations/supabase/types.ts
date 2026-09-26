@@ -233,6 +233,65 @@ export type Database = {
           },
         ]
       }
+      expiry_notification_deliveries: {
+        Row: {
+          created_at: string
+          digest_date: string
+          household_id: string
+          item_count: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          digest_date: string
+          household_id: string
+          item_count?: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          digest_date?: string
+          household_id?: string
+          item_count?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      expiry_notification_prefs: {
+        Row: {
+          enabled: boolean
+          household_id: string
+          notice_days: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          enabled?: boolean
+          household_id: string
+          notice_days?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          enabled?: boolean
+          household_id?: string
+          notice_days?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expiry_notification_prefs_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       household_join_requests: {
         Row: {
           created_at: string
@@ -792,6 +851,48 @@ export type Database = {
           invited_by?: string | null
           last_sent_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      telegram_link_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          token_hash: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          token_hash: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          token_hash?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      telegram_links: {
+        Row: {
+          chat_id: number
+          linked_at: string
+          user_id: string
+        }
+        Insert: {
+          chat_id: number
+          linked_at?: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: number
+          linked_at?: string
+          user_id?: string
         }
         Relationships: []
       }
