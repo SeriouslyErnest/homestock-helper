@@ -10,6 +10,8 @@ export type Household = {
   /** Household-wide switches: hide optional fields nobody in this home uses. */
   show_expiry?: boolean;
   show_locations?: boolean;
+  /** When false, new join requests with the invite code are refused. */
+  join_open?: boolean;
 };
 
 export type Member = {

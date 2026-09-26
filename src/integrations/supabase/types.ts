@@ -318,6 +318,7 @@ export type Database = {
           created_by: string
           id: string
           invite_code: string
+          join_open: boolean
           name: string
           show_expiry: boolean
           show_locations: boolean
@@ -327,6 +328,7 @@ export type Database = {
           created_by: string
           id?: string
           invite_code?: string
+          join_open?: boolean
           name?: string
           show_expiry?: boolean
           show_locations?: boolean
@@ -336,6 +338,7 @@ export type Database = {
           created_by?: string
           id?: string
           invite_code?: string
+          join_open?: boolean
           name?: string
           show_expiry?: boolean
           show_locations?: boolean
@@ -799,6 +802,7 @@ export type Database = {
           created_by: string
           id: string
           invite_code: string
+          join_open: boolean
           name: string
           show_expiry: boolean
           show_locations: boolean
@@ -854,6 +858,10 @@ export type Database = {
         }
       }
       redeem_promo: { Args: { _code: string }; Returns: Json }
+      regenerate_invite_code: {
+        Args: { _household_id: string }
+        Returns: string
+      }
       request_household_join: { Args: { _code: string }; Returns: string }
       set_item_quantity: {
         Args: { _item_id: string; _note?: string; _quantity: number }

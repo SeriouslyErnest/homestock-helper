@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Ban, Check, Copy, LogOut, RotateCcw, UserMinus, X } from "lucide-react";
+import { Ban, Check, Copy, LogOut, RefreshCw, RotateCcw, UserMinus, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { PromoCard } from "@/components/promo-code";
@@ -163,6 +163,21 @@ function MorePage() {
     }
   }
 
+  async function regenerateCode() {
+    if (!household) return;
+    const { data, error } = await supabase.rpc("regenerate_invite_code", {
+      _household_id: household.id,
+    });
+    if (error || !data) {
+      toast.error("Couldn't make a new code. You need to be the owner.");
+      return;
+    }
+    queryClient.setQueryData<typeof households>(["households"], (old) =>
+      old?.map((h) => (h.id === household.id ? { ...h, invite_code: data } : h)),
+    );
+    toast.success("New invite code — the old one no longer works");
+  }
+
   async function decide(requestId: string, decision: "approved" | "rejected" | "blocked") {
     setDeciding(requestId);
     const { error } = await supabase.rpc("decide_join_request", {
@@ -214,6 +229,8 @@ function MorePage() {
       setJoinMessage("You're already a member of that household.");
     } else if (data === "blocked") {
       setJoinMessage("That household isn't accepting a request from you.");
+    } else if (data === "closed") {
+      setJoinMessage("That household isn't accepting new members right now.");
     } else {
       setJoinMessage("Request sent. An owner of that household needs to approve you.");
       setJoinCode("");
@@ -314,16 +331,28 @@ function MorePage() {
               {household?.invite_code ?? "······"}
             </strong>
           </div>
-          <button
-            onClick={copyCode}
-            className="flex items-center gap-1.5 rounded-xl bg-card px-3 py-2 text-xs font-bold text-brand"
-          >
-            <Copy size={14} /> Copy
-          </button>
+          <div className="flex flex-col gap-1.5">
+            <button
+              onClick={copyCode}
+              className="flex items-center gap-1.5 rounded-xl bg-card px-3 py-2 text-xs font-bold text-brand"
+            >
+              <Copy size={14} /> Copy
+            </button>
+            {isOwner && (
+              <button
+                onClick={regenerateCode}
+                className="flex items-center gap-1.5 rounded-xl bg-card px-3 py-2 text-xs font-bold text-brand"
+              >
+                <RefreshCw size={14} /> New code
+              </button>
+            )}
+          </div>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
           Share this code so family or flatmates can ask to join. Nobody gets in until an owner
           approves them.
+          {isOwner &&
+            " “New code” replaces it — the old code stops working straight away, handy if it leaked."}
         </p>
       </section>
 
@@ -331,13 +360,15 @@ function MorePage() {
         <section className="mb-6 rounded-2xl border border-border bg-card p-4">
           <h2 className="mb-1 text-sm font-bold">Optional details</h2>
           <p className="mb-3 text-xs text-muted-foreground">
-            Applies to everyone in this household. Turning one off only hides the box — anything
-            already filled in is kept.
+            Applies to everyone in this household. Turning the first two off only hides the box —
+            anything already filled in is kept. Turning off join requests means nobody new can ask
+            to join until you turn it back on; people already in stay in.
           </p>
           {(
             [
               ["show_expiry", "Ask for expiry dates"],
               ["show_locations", "Ask where things are kept"],
+              ["join_open", "Open for join requests"],
             ] as const
           ).map(([key, text]) => (
             <label key={key} className="flex min-h-11 items-center justify-between gap-3 text-sm">
@@ -348,7 +379,7 @@ function MorePage() {
                 checked={household[key] !== false}
                 onChange={async (e) => {
                   const next = e.target.checked;
-                  const patch = key === "show_expiry" ? { show_expiry: next } : { show_locations: next };
+                  const patch: Partial<Record<typeof key, boolean>> = { [key]: next };
                   const setCache = (value: boolean) =>
                     queryClient.setQueryData<typeof households>(["households"], (old) =>
                       old?.map((h) => (h.id === household.id ? { ...h, [key]: value } : h)),
