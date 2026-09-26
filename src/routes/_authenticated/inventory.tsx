@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlignJustify, ArrowDown, ArrowUp, LayoutGrid, List, Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
@@ -149,21 +149,19 @@ function InventoryPage() {
     return sortByNameThenPlace(list, sortDir);
   }, [items, search, category, showLow, showExpiring, sort, sortDir]);
 
-  // Plan allowance: when a plan is enforced, only the first N items a home added
-  // stay visible. Nothing is deleted — raising the limit brings them straight back.
-  const cap = plan?.enforced ? plan.max_items : Infinity;
-  const allowedIds = useMemo(() => {
-    if (!Number.isFinite(cap)) return null;
-    const oldestFirst = [...(items ?? [])].sort((a, b) =>
-      (a.created_at ?? "").localeCompare(b.created_at ?? ""),
-    );
-    return new Set(oldestFirst.slice(0, cap).map((i) => i.id));
-  }, [items, cap]);
-  const visible = useMemo(
-    () => (allowedIds ? filtered.filter((i) => allowedIds.has(i.id)) : filtered),
-    [filtered, allowedIds],
-  );
-  const overCap = allowedIds ? Math.max((items ?? []).length - allowedIds.size, 0) : 0;
+  // Plan allowance: when a plan is enforced, the database only returns the first N
+  // items a home added. Nothing is deleted — raising the limit brings them back.
+  const visible = filtered;
+  const { data: overCap = 0 } = useQuery({
+    queryKey: ["hidden-item-count", household?.id, items?.length],
+    enabled: !!household?.id && !!plan?.enforced,
+    queryFn: async () => {
+      const { data } = await supabase.rpc("household_hidden_item_count", {
+        _household_id: household!.id,
+      });
+      return Number(data ?? 0);
+    },
+  });
 
   /** How many rows and how much stock each product has across every place. */
   const spread = useMemo(() => {
