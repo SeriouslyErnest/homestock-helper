@@ -46,7 +46,7 @@ Built with TanStack Start (React 19), Tailwind CSS v4 and Supabase
   effectively unlimited); paid 25 homes / 50 members, not enforced. At the
   limit users can tap "Ask for another home", which lands in the admin
   dashboard inbox.
-- **Sign-in** — email link, email + password, or Google. Admins can switch
+- **Sign-in** — email link or Google (no passwords). Admins can switch
   sign-ups to invite-only and optionally require approval of new accounts.
 - **Admin console** — hidden ops route (see below) with dashboard (counters,
   home-limit requests, account applications, reported product names),

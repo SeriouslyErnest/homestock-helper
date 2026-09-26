@@ -229,7 +229,7 @@ export const adminAccountDetail = createServerFn({ method: "POST" })
     const providers =
       (authUser.data.user?.app_metadata?.["providers"] as string[] | undefined) ?? [];
     const signInMethods = providers.map((p) =>
-      p === "email" ? "Email (link or password)" : p === "google" ? "Google" : p,
+      p === "email" ? "Email link" : p === "google" ? "Google" : p,
     );
 
     return {
