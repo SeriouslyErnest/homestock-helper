@@ -386,17 +386,19 @@ function ItemPage() {
               ))}
             </select>
           </div>
-          <div>
-            <label htmlFor="d-loc" className={label}>
-              Location
-            </label>
-            <input
-              id="d-loc"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className={field}
-            />
-          </div>
+          {(household?.show_locations !== false || location) && (
+            <div>
+              <label htmlFor="d-loc" className={label}>
+                Location
+              </label>
+              <input
+                id="d-loc"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className={field}
+              />
+            </div>
+          )}
         </div>
         <div className="grid grid-cols-3 gap-3">
           <div>
@@ -424,19 +426,24 @@ function ItemPage() {
               className={field}
             />
           </div>
-          <div>
-            <label htmlFor="d-exp" className={label}>
-              Expires
-            </label>
-            <input
-              id="d-exp"
-              type="date"
-              value={expires}
-              onChange={(e) => setExpires(e.target.value)}
-              className={field}
-            />
-          </div>
+          {(household?.show_expiry !== false || expires) && (
+            <div>
+              <label htmlFor="d-exp" className={label}>
+                Expires
+              </label>
+              <input
+                id="d-exp"
+                type="date"
+                value={expires}
+                onChange={(e) => setExpires(e.target.value)}
+                className={field}
+              />
+            </div>
+          )}
         </div>
+        <p className="-mt-2 text-xs text-muted-foreground">
+          These details apply to everyone in this household.
+        </p>
         <div>
           <label htmlFor="d-notes" className={label}>
             Notes
