@@ -257,7 +257,8 @@ function AboutPage() {
               flip
             >
               <p>
-                When you come home with groceries, tap Scan and switch on &ldquo;Restock several&rdquo;.
+                When you come home with groceries, tap Scan and switch on &ldquo;Restock
+                several&rdquo;.
               </p>
               <p>
                 Keep scanning until you are finished, adjust quantities if needed, and save
@@ -300,6 +301,11 @@ function AboutPage() {
                 have it at home.
               </p>
               <p>This helps reduce duplicate purchases and unnecessary clutter.</p>
+              <p>
+                Counts drifted? &ldquo;Quick stock check&rdquo; on the Inventory page shows a
+                handful of items — tap &ldquo;Still 2&rdquo; or change the number. Every fix is
+                recorded.
+              </p>
             </HowItWorksStep>
 
             <HowItWorksStep
@@ -466,8 +472,6 @@ function AboutPage() {
                 {[
                   ["Inventory", "Detailed list, compact list or cards"],
                   ["Inventory sort", "Name, place, expiry or last updated"],
-                  ["Consume", "Coming soon"],
-                  ["Shopping", "Coming soon"],
                 ].map(([area, mode]) => (
                   <div key={area} className="flex items-center justify-between gap-3">
                     <dt className="text-muted-foreground">{area}</dt>
