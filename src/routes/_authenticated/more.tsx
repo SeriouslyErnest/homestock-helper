@@ -360,8 +360,9 @@ function MorePage() {
         <section className="mb-6 rounded-2xl border border-border bg-card p-4">
           <h2 className="mb-1 text-sm font-bold">Optional details</h2>
           <p className="mb-3 text-xs text-muted-foreground">
-            Applies to everyone in this household. Turning one off only hides the box — anything
-            already filled in is kept.
+            Applies to everyone in this household. Turning the first two off only hides the box —
+            anything already filled in is kept. Turning off join requests means nobody new can ask
+            to join until you turn it back on; people already in stay in.
           </p>
           {(
             [
