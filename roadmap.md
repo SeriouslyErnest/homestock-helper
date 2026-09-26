@@ -39,3 +39,9 @@
 - Admin account deletion
 - Read-only offline snapshot
 - Scan-to-consume (scan currently routes to restock/add; "Use up" page covers search/recent)
+
+## Welcome flow & scan-to-add (2026-09-26)
+- [x] 5-step welcome at /welcome, once per account (server-side), skip/finish, resume step; existing accounts marked completed
+- [x] Restart welcome flow under More (also resets first-use tips)
+- [x] First-use tips on Inventory, Scan, Shopping, Use up; empty-state copy per PRD
+- [x] Scan a product already at home → "Add N to stock" with Undo

@@ -1,3 +1,4 @@
+import { FirstUseTip } from "@/lib/onboarding";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Minus, Plus, X } from "lucide-react";
@@ -221,11 +222,40 @@ function ScanPage() {
   }
 
   function scanAnother() {
+    setAddQty(1);
     setFound(null);
     setLastCode(null);
     setMessage(null);
     setPhase("scanning");
     handled.current = false;
+  }
+
+  const [addQty, setAddQty] = useState(1);
+  const [adding, setAdding] = useState(false);
+
+  /** Scan → add straight to stock in one tap, with Undo instead of a confirmation. */
+  async function addFoundToStock(item: Item) {
+    const qty = addQty;
+    setAdding(true);
+    const { error } = await supabase.rpc("adjust_item_quantity", {
+      _item_id: item.id,
+      _delta: qty,
+    });
+    setAdding(false);
+    if (error) {
+      setMessage("Couldn't add it. Try again.");
+      return;
+    }
+    toast.success(`Added ${qty} × ${item.name}`, {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          void supabase.rpc("adjust_item_quantity", { _item_id: item.id, _delta: -qty });
+        },
+      },
+    });
+    setAddQty(1);
+    scanAnother();
   }
 
   async function addFoundToShopping(item: Item, need: number) {
@@ -304,6 +334,9 @@ function ScanPage() {
 
   return (
     <AppShell title="Scan a barcode" subtitle="Point the camera at a product barcode.">
+      <FirstUseTip tip="restock" title="Restocking lots?">
+        Turn on Restock several to keep scanning and save everything together at the end.
+      </FirstUseTip>
       {phase === "result" && first ? (
         <section className="rounded-3xl border border-border bg-card p-4">
           <h2 className="text-lg font-bold break-words">{first.name}</h2>
@@ -335,6 +368,33 @@ function ScanPage() {
                 : "You're stocked"}
           </p>
           <div className="mt-3 grid gap-2">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setAddQty((q) => Math.max(1, q - 1))}
+                disabled={addQty <= 1}
+                aria-label="Add fewer"
+                className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-border disabled:opacity-40"
+              >
+                <Minus size={18} />
+              </button>
+              <button
+                type="button"
+                onClick={() => void addFoundToStock(first)}
+                disabled={adding}
+                className="min-h-12 flex-1 rounded-2xl bg-primary px-3 text-sm font-bold text-primary-foreground disabled:opacity-60"
+              >
+                {adding ? "Adding…" : `Add ${addQty} to stock`}
+              </button>
+              <button
+                type="button"
+                onClick={() => setAddQty((q) => q + 1)}
+                aria-label="Add more"
+                className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-soft text-brand"
+              >
+                <Plus size={18} />
+              </button>
+            </div>
             <button
               onClick={() => addFoundToShopping(first, need || 1)}
               className="rounded-2xl border border-border py-3 text-sm font-bold"
@@ -350,7 +410,7 @@ function ScanPage() {
             </Link>
             <button
               onClick={scanAnother}
-              className="rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground"
+              className="rounded-2xl border border-border py-3 text-sm font-bold"
             >
               Scan another
             </button>

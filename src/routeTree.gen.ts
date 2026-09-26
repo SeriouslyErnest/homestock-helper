@@ -21,6 +21,7 @@ import { Route as AuthenticatedReconcileRouteImport } from './routes/_authentica
 import { Route as AuthenticatedScanRouteImport } from './routes/_authenticated/scan'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedShoppingRouteImport } from './routes/_authenticated/shopping'
+import { Route as AuthenticatedWelcomeRouteImport } from './routes/_authenticated/welcome'
 import { Route as OpsSplatRouteImport } from './routes/ops.$'
 import { Route as AuthenticatedItemItemIdRouteImport } from './routes/_authenticated/item/$itemId'
 
@@ -83,6 +84,11 @@ const AuthenticatedShoppingRoute = AuthenticatedShoppingRouteImport.update({
   path: '/shopping',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedWelcomeRoute = AuthenticatedWelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const OpsSplatRoute = OpsSplatRouteImport.update({
   id: '/ops/$',
   path: '/ops/$',
@@ -106,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/scan': typeof AuthenticatedScanRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/shopping': typeof AuthenticatedShoppingRoute
+  '/welcome': typeof AuthenticatedWelcomeRoute
   '/ops/$': typeof OpsSplatRoute
   '/item/$itemId': typeof AuthenticatedItemItemIdRoute
 }
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/scan': typeof AuthenticatedScanRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/shopping': typeof AuthenticatedShoppingRoute
+  '/welcome': typeof AuthenticatedWelcomeRoute
   '/ops/$': typeof OpsSplatRoute
   '/item/$itemId': typeof AuthenticatedItemItemIdRoute
 }
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/_authenticated/scan': typeof AuthenticatedScanRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/shopping': typeof AuthenticatedShoppingRoute
+  '/_authenticated/welcome': typeof AuthenticatedWelcomeRoute
   '/ops/$': typeof OpsSplatRoute
   '/_authenticated/item/$itemId': typeof AuthenticatedItemItemIdRoute
 }
@@ -155,6 +164,7 @@ export interface FileRouteTypes {
     | '/scan'
     | '/setup'
     | '/shopping'
+    | '/welcome'
     | '/ops/$'
     | '/item/$itemId'
   fileRoutesByTo: FileRoutesByTo
@@ -170,6 +180,7 @@ export interface FileRouteTypes {
     | '/scan'
     | '/setup'
     | '/shopping'
+    | '/welcome'
     | '/ops/$'
     | '/item/$itemId'
   id:
@@ -186,6 +197,7 @@ export interface FileRouteTypes {
     | '/_authenticated/scan'
     | '/_authenticated/setup'
     | '/_authenticated/shopping'
+    | '/_authenticated/welcome'
     | '/ops/$'
     | '/_authenticated/item/$itemId'
   fileRoutesById: FileRoutesById
@@ -284,6 +296,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedShoppingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/welcome': {
+      id: '/_authenticated/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof AuthenticatedWelcomeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/ops/$': {
       id: '/ops/$'
       path: '/ops/$'
@@ -310,6 +329,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedScanRoute: typeof AuthenticatedScanRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedShoppingRoute: typeof AuthenticatedShoppingRoute
+  AuthenticatedWelcomeRoute: typeof AuthenticatedWelcomeRoute
   AuthenticatedItemItemIdRoute: typeof AuthenticatedItemItemIdRoute
 }
 
@@ -322,6 +342,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedScanRoute: AuthenticatedScanRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedShoppingRoute: AuthenticatedShoppingRoute,
+  AuthenticatedWelcomeRoute: AuthenticatedWelcomeRoute,
   AuthenticatedItemItemIdRoute: AuthenticatedItemItemIdRoute,
 }
 

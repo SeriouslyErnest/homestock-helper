@@ -1,3 +1,4 @@
+import { FirstUseTip } from "@/lib/onboarding";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -449,6 +450,9 @@ function InventoryPage() {
         </div>
       </div>
 
+      <FirstUseTip tip="inventory" title="This is your household stock.">
+        Use the Low and Expiring filters to find what needs attention.
+      </FirstUseTip>
       {isPending && <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>}
 
       {!isPending && visible.length === 0 && (
@@ -459,16 +463,24 @@ function InventoryPage() {
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
             {(items ?? []).length === 0
-              ? "Add your first item — it takes a few seconds."
+              ? "Start with the things you regularly wonder whether you already have. You don't need to catalogue everything."
               : "Try a different search or category."}
           </p>
           {(items ?? []).length === 0 && (
-            <Link
-              to="/add"
-              className="mt-4 inline-block rounded-2xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
-            >
-              Add an item
-            </Link>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <Link
+                to="/scan"
+                className="inline-block rounded-2xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+              >
+                Scan products
+              </Link>
+              <Link
+                to="/add"
+                className="inline-block rounded-2xl border border-border px-5 py-2.5 text-sm font-semibold"
+              >
+                Add manually
+              </Link>
+            </div>
           )}
         </div>
       )}

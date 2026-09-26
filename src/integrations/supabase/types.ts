@@ -756,6 +756,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_onboarding: {
+        Row: {
+          completed_at: string | null
+          current_step: number
+          skipped_at: string | null
+          started_at: string | null
+          tips_seen: string[]
+          updated_at: string
+          user_id: string
+          welcome_status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          current_step?: number
+          skipped_at?: string | null
+          started_at?: string | null
+          tips_seen?: string[]
+          updated_at?: string
+          user_id: string
+          welcome_status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          current_step?: number
+          skipped_at?: string | null
+          started_at?: string | null
+          tips_seen?: string[]
+          updated_at?: string
+          user_id?: string
+          welcome_status?: string
+        }
+        Relationships: []
+      }
       user_plans: {
         Row: {
           created_at: string
