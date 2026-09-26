@@ -12,9 +12,17 @@ Built with TanStack Start (React 19), Tailwind CSS v4 and Supabase
 
 ## Features
 
-- **Scan-first restock** — camera barcode scanner with a large basket and
-  one-tap +/− quantities. Unknown barcodes fall back to quick manual entry;
-  a barcode you save is remembered forever.
+- **Scan-first restock** — camera barcode scanner. "Restock several" keeps
+  the camera running and collects scans in a basket with +/− quantities;
+  unknown barcodes drop in as "needs a name" placeholders instead of
+  interrupting, and must be named or removed before saving. A single scan
+  answers "Do we have this?" first (totals per place, need, status).
+  Manually named barcodes join a shared catalogue (first save wins; rude
+  names filtered, reportable).
+- **Quick stock check** — up to 8 items (most used + longest untouched);
+  "Still N" or change, each fix logged as a correction event with Undo.
+- **Activity events** — every consume, restock and correction is logged in
+  `inventory_events`; "Use up" ranks items by recent, frequent use.
 - **One-tap consume** — "Use up" flow with immediate −1 and a 5-second Undo.
   No confirmation modals.
 - **Shared households** — invite by 6-character code; owners approve, reject
@@ -26,13 +34,24 @@ Built with TanStack Start (React 19), Tailwind CSS v4 and Supabase
   Completion is manual — nothing is auto-matched.
 - **Expiry tracking (optional)** — never blocks restock; quick 3/5/14-day
   buttons. Inventory surfaces "expiring soon" as its own card and filter.
+  Owners can switch the expiry and location boxes off per household
+  (existing values are kept and still shown).
+- **Inventory views** — detailed list, compact list or cards; sort by name,
+  place, expiry or last updated. Fully used-up items with no minimum are
+  hidden (search still finds them).
 - **Multiple locations** — the same product in the fridge and the cupboard
   are two rows that cluster together with a combined total.
-- **Plan allowances (enforcement off by default)** — free tier: 1 owned home,
-  4 members; paid tier: 25 / 50. Flipping `app_plans.enforced` turns the
-  limits on; the UI greys out accordingly. Ready for a future billing module.
-- **Admin console** — hidden ops route (see below) with account directory,
-  complimentary/trial grants, promo codes, plan switches and an audit log.
+- **Plan allowances** — limits live in `app_plans`, editable in the admin
+  console. Shipped: free tier enforced at 2 owned homes (members/items
+  effectively unlimited); paid 25 homes / 50 members, not enforced. At the
+  limit users can tap "Ask for another home", which lands in the admin
+  dashboard inbox.
+- **Sign-in** — email link, email + password, or Google. Admins can switch
+  sign-ups to invite-only and optionally require approval of new accounts.
+- **Admin console** — hidden ops route (see below) with dashboard (counters,
+  home-limit requests, account applications, reported product names),
+  account directory, complimentary/trial grants, promo codes, sign-up
+  settings and invites, plan limits, category list and an audit log.
   Customer emails are stored only as salted HMAC fingerprints plus a masked
   display form — never in plain text.
 - **Light & dark mode** — follows the device automatically.
@@ -78,7 +97,7 @@ npm run dev
 
 ### Database
 
-Apply the migrations in `supabase/migrations/` in order
+Apply the migrations in `supabase/migrations/` and `drizzle/migrations/` in order
 (`supabase db push`, or paste them into the SQL editor). They create the
 schema, row-level security policies, grants, and helper functions
 (`request_household_join`, `decide_join_request`, `adjust_item_quantity`,
