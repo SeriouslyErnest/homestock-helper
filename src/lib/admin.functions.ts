@@ -1233,3 +1233,86 @@ export const adminSetSchedulerBudget = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+// ---------- Telegram reminders ----------
+
+export const adminTelegramSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string }) => input)
+  .handler(async ({ data, context }) => {
+    await guard(data.routeId, context.userId);
+    const { readSetting, expiryNotificationsEnabled, telegramCall } = await import("./telegram.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [enabled, bot, info, links, prefs] = await Promise.all([
+      expiryNotificationsEnabled(),
+      readSetting<{ username?: string }>("telegram_bot"),
+      telegramCall("getWebhookInfo", {}),
+      supabaseAdmin.from("telegram_links").select("user_id", { count: "exact", head: true }),
+      supabaseAdmin
+        .from("expiry_notification_prefs")
+        .select("user_id", { count: "exact", head: true })
+        .eq("enabled", true),
+    ]);
+    const url = (info.result as { url?: string } | undefined)?.url ?? "";
+    return {
+      enabled,
+      botUsername: bot?.username ?? null,
+      tokenConfigured: !!process.env["TELEGRAM_BOT_TOKEN"],
+      webhookRegistered: url.endsWith("/api/public/telegram/webhook"),
+      linkedAccounts: links.count ?? 0,
+      enabledPairs: prefs.count ?? 0,
+    };
+  });
+
+export const adminSetTelegramEnabled = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string; enabled: boolean }) => input)
+  .handler(async ({ data, context }) => {
+    await guard(data.routeId, context.userId, ["SUPER_ADMIN"]);
+    const { writeAudit } = await import("./admin.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("app_settings").upsert(
+      {
+        key: "expiry_daily_notifications_enabled",
+        value: { enabled: !!data.enabled } as never,
+        updated_at: new Date().toISOString(),
+        updated_by: context.userId,
+      },
+      { onConflict: "key" },
+    );
+    if (error) throw error;
+    await writeAudit({
+      adminUserId: context.userId,
+      actionType: "telegram_reminders.toggled",
+      targetType: "setting",
+      targetId: "expiry_daily_notifications_enabled",
+      afterJson: { enabled: !!data.enabled },
+    });
+    return { ok: true };
+  });
+
+/** Points the bot at the published app. Secret is sent to Telegram server-to-server only. */
+export const adminRegisterTelegramWebhook = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string }) => input)
+  .handler(async ({ data, context }) => {
+    await guard(data.routeId, context.userId, ["SUPER_ADMIN"]);
+    const { telegramCall, APP_URL } = await import("./telegram.server");
+    const secret = process.env["TELEGRAM_WEBHOOK_SECRET"];
+    if (!secret) throw new Error("Webhook secret missing");
+    const res = await telegramCall("setWebhook", {
+      url: `${APP_URL}/api/public/telegram/webhook`,
+      secret_token: secret,
+      allowed_updates: ["message"],
+      drop_pending_updates: true,
+    });
+    if (!res.ok) throw new Error("Telegram didn't accept the address. Publish the app first, then retry.");
+    const { writeAudit } = await import("./admin.server");
+    await writeAudit({
+      adminUserId: context.userId,
+      actionType: "telegram_webhook.registered",
+      targetType: "setting",
+      targetId: "telegram_bot",
+    });
+    return { ok: true };
+  });
