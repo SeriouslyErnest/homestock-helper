@@ -226,7 +226,8 @@ export const adminAccountDetail = createServerFn({ method: "POST" })
       supabaseAdmin.auth.admin.getUserById(data.userId),
     ]);
     // Which ways this person can sign in — read live, never stored.
-    const providers = (authUser.data.user?.app_metadata?.["providers"] as string[] | undefined) ?? [];
+    const providers =
+      (authUser.data.user?.app_metadata?.["providers"] as string[] | undefined) ?? [];
     const signInMethods = providers.map((p) =>
       p === "email" ? "Email (link or password)" : p === "google" ? "Google" : p,
     );
