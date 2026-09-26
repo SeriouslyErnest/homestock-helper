@@ -114,7 +114,7 @@ function AuthPage() {
       </div>
 
       {step === "email" ? (
-        <form onSubmit={usePassword ? passwordSignIn : sendLink} className="flex flex-col gap-3">
+        <form onSubmit={sendLink} className="flex flex-col gap-3">
           {!signupsOpen && (
             <p className="rounded-2xl bg-surface-2 px-4 py-3 text-center text-sm text-muted-foreground">
               HomeStock is invite only right now. Sign in below if you already have an account, or
@@ -141,45 +141,12 @@ function AuthPage() {
             inputMode="email"
             className="rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
           />
-          {usePassword && (
-            <input
-              type="password"
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password (8+ characters)"
-              aria-label="Password"
-              autoComplete="current-password"
-              className="rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
-            />
-          )}
           <button
             type="submit"
-            disabled={busy || !email.trim() || (usePassword && password.length < 8)}
+            disabled={busy || !email.trim()}
             className="rounded-2xl bg-primary px-4 py-3.5 font-semibold text-primary-foreground disabled:opacity-60"
           >
-            {busy ? "One moment…" : usePassword ? "Sign in" : "Email me a sign-in link"}
-          </button>
-          {usePassword && signupsOpen && (
-            <button
-              type="button"
-              onClick={passwordSignUp}
-              disabled={busy || !email.trim() || password.length < 8}
-              className="rounded-2xl border border-border bg-card px-4 py-3 text-sm font-semibold disabled:opacity-60"
-            >
-              New here? Create an account with this password
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => {
-              setUsePassword((v) => !v);
-              setMessage(null);
-            }}
-            className="py-1 text-sm text-muted-foreground underline"
-          >
-            {usePassword ? "Email me a sign-in link instead" : "Use a password instead"}
+            {busy ? "One moment…" : "Email me a sign-in link"}
           </button>
         </form>
       ) : (
