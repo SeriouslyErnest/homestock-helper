@@ -6,7 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type WelcomeStatus = "not_started" | "in_progress" | "completed" | "skipped";
 export type TipKey = "inventory" | "restock" | "shopping" | "use_up";
-export type Onboarding = { welcome_status: WelcomeStatus; current_step: number; tips_seen: string[] };
+export type Onboarding = {
+  welcome_status: WelcomeStatus;
+  current_step: number;
+  tips_seen: string[];
+};
 
 const KEY = ["onboarding"];
 
@@ -29,7 +33,13 @@ export function useOnboarding() {
         .eq("user_id", id)
         .maybeSingle();
       if (error) throw error;
-      return (data as Onboarding | null) ?? { welcome_status: "not_started", current_step: 0, tips_seen: [] };
+      return (
+        (data as Onboarding | null) ?? {
+          welcome_status: "not_started",
+          current_step: 0,
+          tips_seen: [],
+        }
+      );
     },
   });
 }
@@ -39,7 +49,9 @@ export async function saveOnboarding(patch: Partial<Onboarding> & Record<string,
   if (!id) return;
   const { error } = await supabase
     .from("user_onboarding")
-    .upsert({ user_id: id, ...patch, updated_at: new Date().toISOString() } as never, { onConflict: "user_id" });
+    .upsert({ user_id: id, ...patch, updated_at: new Date().toISOString() } as never, {
+      onConflict: "user_id",
+    });
   if (error) throw error;
 }
 
@@ -83,7 +95,15 @@ export function useOnboardingActions() {
 }
 
 /** One-time, dismissible, non-blocking hint shown on first visit to a screen. */
-export function FirstUseTip({ tip, title, children }: { tip: TipKey; title: string; children: string }) {
+export function FirstUseTip({
+  tip,
+  title,
+  children,
+}: {
+  tip: TipKey;
+  title: string;
+  children: string;
+}) {
   const { data } = useOnboarding();
   const { seeTip } = useOnboardingActions();
   const [hidden, setHidden] = useState(false);
@@ -92,7 +112,10 @@ export function FirstUseTip({ tip, title, children }: { tip: TipKey; title: stri
   if (data.welcome_status === "not_started" || data.welcome_status === "in_progress") return null;
   return createElement(
     "div",
-    { role: "note", className: "mb-4 flex items-start gap-3 rounded-2xl bg-brand-soft p-3.5 text-sm" },
+    {
+      role: "note",
+      className: "mb-4 flex items-start gap-3 rounded-2xl bg-brand-soft p-3.5 text-sm",
+    },
     createElement(
       "p",
       { className: "min-w-0 flex-1" },
@@ -105,7 +128,8 @@ export function FirstUseTip({ tip, title, children }: { tip: TipKey; title: stri
       {
         type: "button",
         "aria-label": "Dismiss tip",
-        className: "-m-2 grid h-11 w-11 shrink-0 place-items-center rounded-xl text-muted-foreground",
+        className:
+          "-m-2 grid h-11 w-11 shrink-0 place-items-center rounded-xl text-muted-foreground",
         onClick: () => {
           setHidden(true);
           void seeTip(tip, data.tips_seen);

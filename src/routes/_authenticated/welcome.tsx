@@ -46,13 +46,17 @@ const STEPS: Step[] = [
     heading: "See what you have",
     body: (
       <>
-        <p>Inventory shows what your home is tracking and highlights things that may need attention.</p>
+        <p>
+          Inventory shows what your home is tracking and highlights things that may need attention.
+        </p>
         <ul className="grid gap-2 text-sm">
           <Term t="Tracked">Products this home is keeping an eye on.</Term>
           <Term t="Need attention">Running low, or worth checking soon.</Term>
           <Term t="Expiring soon">An expiry date is coming up.</Term>
         </ul>
-        <p className="text-muted-foreground">Use + or − for quick changes. Mistakes can be undone.</p>
+        <p className="text-muted-foreground">
+          Use + or − for quick changes. Mistakes can be undone.
+        </p>
       </>
     ),
   },

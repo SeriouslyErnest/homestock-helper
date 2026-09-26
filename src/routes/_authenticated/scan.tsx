@@ -258,7 +258,7 @@ function ScanPage() {
     scanAnother();
   }
 
-    async function addFoundToShopping(item: Item, need: number) {
+  async function addFoundToShopping(item: Item, need: number) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -382,7 +382,7 @@ function ScanPage() {
                 type="button"
                 onClick={() => void addFoundToStock(first)}
                 disabled={adding}
-                className="min-h-12 flex-1 rounded-2xl bg-success px-3 text-sm font-bold text-primary-foreground disabled:opacity-60"
+                className="min-h-12 flex-1 rounded-2xl bg-primary px-3 text-sm font-bold text-primary-foreground disabled:opacity-60"
               >
                 {adding ? "Adding…" : `Add ${addQty} to stock`}
               </button>
@@ -410,7 +410,7 @@ function ScanPage() {
             </Link>
             <button
               onClick={scanAnother}
-              className="rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground"
+              className="rounded-2xl border border-border py-3 text-sm font-bold"
             >
               Scan another
             </button>
