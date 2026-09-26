@@ -33,6 +33,8 @@ import {
   adminDecideApplication,
   adminProductReports,
   adminResolveProductReport,
+  adminSchedulerLoad,
+  adminSetSchedulerBudget,
 } from "@/lib/admin.functions";
 import { CATEGORIES } from "@/lib/homestock";
 
@@ -200,7 +202,142 @@ function Dashboard({ routeId }: { routeId: string }) {
         <Card label="Stock changes, 7 days" value={data.stockChanges7d} />
         <Card label="Count fixes, 7 days" value={data.corrections7d} />
       </div>
+      <SchedulerLoad routeId={routeId} />
     </div>
+  );
+}
+
+function SchedulerLoad({ routeId }: { routeId: string }) {
+  const qc = useQueryClient();
+  const load = useQuery({
+    queryKey: ["admin-scheduler-load", routeId],
+    queryFn: () => adminSchedulerLoad({ data: { routeId } }),
+    refetchInterval: 300_000,
+  });
+  const [editing, setEditing] = useState(false);
+  const [dq, setDq] = useState("");
+  const [wp, setWp] = useState("");
+  const save = useMutation({
+    mutationFn: () =>
+      adminSetSchedulerBudget({
+        data: { routeId, dailyQueries: Number(dq), warnPct: Number(wp) },
+      }),
+    onSuccess: () => {
+      toast.success("Scheduler budget saved");
+      setEditing(false);
+      void qc.invalidateQueries({ queryKey: ["admin-scheduler-load", routeId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const d = load.data;
+  if (!d) return null;
+  const pct = (n: number) => Math.round((n / d.budget.dailyQueries) * 100);
+  const warnings: string[] = [];
+  if (d.peakQueries > d.warnAt)
+    warnings.push(
+      `Busiest day in the last 30 days used ${d.peakQueries.toLocaleString()} queries — ${pct(d.peakQueries)}% of the planned budget (warning level ${d.budget.warnPct}%).`,
+    );
+  if (d.projectedQueries > d.warnAt)
+    warnings.push(
+      `If every member turned on reminders, a daily run would need about ${d.projectedQueries.toLocaleString()} queries — ${pct(d.projectedQueries)}% of the planned budget.`,
+    );
+  return (
+    <section className="rounded-2xl border border-border bg-card p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-bold">Scheduler load</h2>
+        <button
+          type="button"
+          onClick={() => {
+            setDq(String(d.budget.dailyQueries));
+            setWp(String(d.budget.warnPct));
+            setEditing((v) => !v);
+          }}
+          className="h-9 rounded-xl border border-border px-3 text-xs font-semibold"
+        >
+          {editing ? "Cancel" : "Change budget"}
+        </button>
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Planned budget: {d.budget.dailyQueries.toLocaleString()} queries a day (the level assessed
+        as negligible cost). You're warned once load passes {d.budget.warnPct}% of it (
+        {d.warnAt.toLocaleString()} queries).
+      </p>
+      {editing && (
+        <form
+          className="mt-3 flex flex-wrap items-end gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            save.mutate();
+          }}
+        >
+          <label className="text-xs">
+            Queries a day
+            <input
+              type="number"
+              min={1}
+              value={dq}
+              onChange={(e) => setDq(e.target.value)}
+              className="mt-1 block h-10 w-32 rounded-xl border border-border bg-background px-3 text-sm"
+            />
+          </label>
+          <label className="text-xs">
+            Warn at %
+            <input
+              type="number"
+              min={1}
+              max={100}
+              value={wp}
+              onChange={(e) => setWp(e.target.value)}
+              className="mt-1 block h-10 w-24 rounded-xl border border-border bg-background px-3 text-sm"
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={save.isPending}
+            className="h-10 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+          >
+            Save
+          </button>
+        </form>
+      )}
+      {warnings.length > 0 && (
+        <div className="mt-3 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+          <p className="font-semibold">Load above the warning level — re-check running costs.</p>
+          <ul className="mt-1 list-disc pl-4">
+            {warnings.map((w) => (
+              <li key={w}>{w}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Card label="Queries today" value={d.todayQueries} />
+        <Card label="Busiest day, 30 days" value={d.peakQueries} />
+        <Card label="Average day, 30 days" value={d.avgQueries} />
+        <Card label="Worst case if all opt in" value={d.projectedQueries} />
+      </div>
+      {d.recentRuns.length === 0 ? (
+        <p className="mt-3 text-xs text-muted-foreground">
+          No scheduled jobs have run yet. Figures fill in once the daily reminder job is switched
+          on.
+        </p>
+      ) : (
+        <ul className="mt-3 grid gap-1 text-xs">
+          {d.recentRuns.map((r) => (
+            <li
+              key={r.startedAt + r.jobName}
+              className="flex flex-wrap justify-between gap-2 border-b border-border py-1 last:border-0"
+            >
+              <span className="font-semibold">{r.jobName}</span>
+              <span className="text-muted-foreground">
+                {fmt(r.startedAt)} · {r.status} · {r.queries} queries · {r.messages} messages
+                {r.errors ? ` · ${r.errors} errors` : ""}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 

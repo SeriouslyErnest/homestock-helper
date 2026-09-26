@@ -1132,10 +1132,16 @@ export const adminSchedulerLoad = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const since = new Date(Date.now() - 30 * 86400000).toISOString();
     const [setting, runs, members] = await Promise.all([
-      supabaseAdmin.from("app_settings").select("value").eq("key", "scheduler_budget").maybeSingle(),
+      supabaseAdmin
+        .from("app_settings")
+        .select("value")
+        .eq("key", "scheduler_budget")
+        .maybeSingle(),
       supabaseAdmin
         .from("scheduler_runs")
-        .select("job_name, started_at, finished_at, status, pairs_processed, queries_run, messages_sent, errors")
+        .select(
+          "job_name, started_at, finished_at, status, pairs_processed, queries_run, messages_sent, errors",
+        )
         .gte("started_at", since)
         .order("started_at", { ascending: false })
         .limit(500),
@@ -1143,11 +1149,15 @@ export const adminSchedulerLoad = createServerFn({ method: "POST" })
     ]);
     const raw = (setting.data?.value ?? {}) as Partial<SchedulerBudget>;
     const budget: SchedulerBudget = {
-      dailyQueries: Number(raw.dailyQueries) > 0 ? Number(raw.dailyQueries) : DEFAULT_BUDGET.dailyQueries,
+      dailyQueries:
+        Number(raw.dailyQueries) > 0 ? Number(raw.dailyQueries) : DEFAULT_BUDGET.dailyQueries,
       warnPct: Number(raw.warnPct) > 0 ? Number(raw.warnPct) : DEFAULT_BUDGET.warnPct,
     };
     const list = runs.data ?? [];
-    const byDay = new Map<string, { queries: number; messages: number; runs: number; errors: number }>();
+    const byDay = new Map<
+      string,
+      { queries: number; messages: number; runs: number; errors: number }
+    >();
     for (const r of list) {
       const day = r.started_at.slice(0, 10);
       const d = byDay.get(day) ?? { queries: 0, messages: 0, runs: 0, errors: 0 };
@@ -1163,7 +1173,9 @@ export const adminSchedulerLoad = createServerFn({ method: "POST" })
     const today = new Date().toISOString().slice(0, 10);
     const todayQueries = byDay.get(today)?.queries ?? 0;
     const peakQueries = days.reduce((m, d) => Math.max(m, d.queries), 0);
-    const avgQueries = days.length ? Math.round(days.reduce((s, d) => s + d.queries, 0) / days.length) : 0;
+    const avgQueries = days.length
+      ? Math.round(days.reduce((s, d) => s + d.queries, 0) / days.length)
+      : 0;
     // Worst case if every membership opted in: one query per user-household pair per day.
     const projectedQueries = members.count ?? 0;
     return {
@@ -1200,10 +1212,17 @@ export const adminSetSchedulerBudget = createServerFn({ method: "POST" })
     const { writeAudit } = await import("./admin.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const value = { dailyQueries: data.dailyQueries, warnPct: data.warnPct };
-    const { error } = await supabaseAdmin.from("app_settings").upsert(
-      { key: "scheduler_budget", value: value as never, updated_at: new Date().toISOString(), updated_by: context.userId },
-      { onConflict: "key" },
-    );
+    const { error } = await supabaseAdmin
+      .from("app_settings")
+      .upsert(
+        {
+          key: "scheduler_budget",
+          value: value as never,
+          updated_at: new Date().toISOString(),
+          updated_by: context.userId,
+        },
+        { onConflict: "key" },
+      );
     if (error) throw error;
     await writeAudit({
       adminUserId: context.userId,
