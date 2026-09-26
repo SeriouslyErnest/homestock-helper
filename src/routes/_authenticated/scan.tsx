@@ -428,9 +428,9 @@ function ScanPage() {
                   <ul className="grid gap-2">
                     {basket.map((line) => (
                       <li key={line.key} className="grid gap-1 border-t border-border pt-2">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center justify-end gap-2">
                           {line.itemId || !line.unknown ? (
-                            <span className="min-w-0 flex-1 break-words text-sm font-semibold">
+                            <span className="min-w-0 basis-full break-words text-sm font-semibold">
                               {line.name || line.barcode}
                             </span>
                           ) : (
@@ -445,7 +445,7 @@ function ScanPage() {
                               }
                               placeholder={`Name for ${line.barcode}`}
                               aria-label={`Name for barcode ${line.barcode}`}
-                              className="min-w-0 flex-1 rounded-xl border border-warning bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
+                              className="min-w-0 basis-full rounded-xl border border-warning bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
                             />
                           )}
                           <button
