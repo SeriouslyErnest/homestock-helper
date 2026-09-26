@@ -1,0 +1,1 @@
+ALTER TABLE public.households ADD COLUMN IF NOT EXISTS show_expiry boolean NOT NULL DEFAULT true, ADD COLUMN IF NOT EXISTS show_locations boolean NOT NULL DEFAULT true;
