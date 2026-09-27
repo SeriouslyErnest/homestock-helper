@@ -29,6 +29,7 @@ import {
   adminSignupSettings,
   adminApprovalSettings,
   adminSetApprovalEnabled,
+  adminSetSignupAlerts,
   adminListApplications,
   adminDecideApplication,
   adminProductReports,
@@ -1338,26 +1339,69 @@ function ApprovalSwitch({ routeId }: { routeId: string }) {
     onError: (e: Error) => toast.error(e.message),
   });
   const on = settings.data?.enabled ?? false;
+  const alerts = settings.data?.alerts ?? { waiting: false, entered: false };
+  const setAlerts = useMutation({
+    mutationFn: (v: { waiting: boolean; entered: boolean }) =>
+      adminSetSignupAlerts({ data: { routeId, ...v } }),
+    onSuccess: () => {
+      toast.success("Sign-up alerts updated");
+      void qc.invalidateQueries({ queryKey: ["admin-approval", routeId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const alertRow = (label: string, hint: string, key: "waiting" | "entered") => (
+    <label className="flex items-center justify-between gap-3 text-sm">
+      <span className="min-w-0">
+        <span className="block font-medium">{label}</span>
+        <span className="block text-xs text-muted-foreground">{hint}</span>
+      </span>
+      <input
+        type="checkbox"
+        className="h-5 w-5 shrink-0"
+        checked={alerts[key]}
+        disabled={!on || settings.isPending || setAlerts.isPending}
+        onChange={(e) => setAlerts.mutate({ ...alerts, [key]: e.target.checked })}
+      />
+    </label>
+  );
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3">
-      <div>
-        <div className="text-sm font-semibold">Approve new accounts</div>
-        <div className="text-xs text-muted-foreground">
-          {on
-            ? "New accounts wait until you approve them on the Dashboard. Everyone already signed up stays in."
-            : "Off — new accounts can use HomeStock straight away."}
+    <div className="rounded-2xl border border-border bg-card px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="text-sm font-semibold">Approve new accounts</div>
+          <div className="text-xs text-muted-foreground">
+            {on
+              ? "New accounts wait until you approve them on the Dashboard. Everyone already signed up stays in."
+              : "Off — new accounts can use HomeStock straight away."}
+          </div>
         </div>
+        <button
+          type="button"
+          disabled={settings.isPending || toggle.isPending}
+          onClick={() => toggle.mutate(!on)}
+          className={`h-10 rounded-xl border px-4 text-sm font-semibold disabled:opacity-50 ${
+            on ? "border-brand bg-brand-soft text-brand" : "border-border"
+          }`}
+        >
+          {on ? "Approval on" : "Approval off"}
+        </button>
       </div>
-      <button
-        type="button"
-        disabled={settings.isPending || toggle.isPending}
-        onClick={() => toggle.mutate(!on)}
-        className={`h-10 rounded-xl border px-4 text-sm font-semibold disabled:opacity-50 ${
-          on ? "border-brand bg-brand-soft text-brand" : "border-border"
-        }`}
-      >
-        {on ? "Approval on" : "Approval off"}
-      </button>
+      <div className="mt-3 space-y-3 border-t border-border pt-3">
+        <div className="text-xs text-muted-foreground">
+          Telegram alerts go to every operator who connected Telegram on the More tab.
+          {!on && " Turn approval on to use them."}
+        </div>
+        {alertRow(
+          "Alert: waiting for approval",
+          "When someone opens their sign-in link and lands on the waiting screen.",
+          "waiting",
+        )}
+        {alertRow(
+          "Alert: first time in",
+          "When an approved account enters the app for the first time.",
+          "entered",
+        )}
+      </div>
     </div>
   );
 }
