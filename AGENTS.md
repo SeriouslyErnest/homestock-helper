@@ -11,3 +11,4 @@
 - Every scheduled job writes one row per run to public.scheduler_runs (queries_run, messages_sent, errors) — the admin dashboard's scheduler-load panel and cost warnings read only from it.
 - Telegram: dedicated bot, direct Bot API from server only (no relay); token/webhook secret in protected secrets; cron caller token in locked public.cron_tokens read by pg_cron.
 - Telegram links: one chat may serve many accounts (telegram_links keyed by user_id, no chat_id uniqueness); admin alert destinations live in telegram_admin_links — separate and authoritative, never touched by user-side disconnects or /stop.
+- Admin console requires a second factor: every admin server fn demands aal2 (TOTP-verified session); one-time recovery codes in public.admin_recovery_codes are salted hashes and only let an operator re-enroll, never bypass the gate.
