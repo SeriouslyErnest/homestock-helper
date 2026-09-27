@@ -40,6 +40,7 @@ import {
   adminRegisterTelegramWebhook,
   adminUnlinkTelegramAlerts,
   adminSetSchedulerBudget,
+  adminIssueRecoveryCodes,
 } from "@/lib/admin.functions";
 import { CATEGORIES } from "@/lib/homestock";
 import { AdminMfaGate } from "@/components/admin-mfa";
