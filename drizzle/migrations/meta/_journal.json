@@ -120,6 +120,13 @@
       "when": 1790439316069,
       "tag": "0016_cron_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1790479653233,
+      "tag": "0017_signup_alert_first_entry",
+      "breakpoints": true
     }
   ]
 }
