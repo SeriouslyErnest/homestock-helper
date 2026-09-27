@@ -1003,19 +1003,17 @@ async function signupAlerts(): Promise<SignupAlerts> {
   return { waiting: v?.waiting === true, entered: v?.entered === true };
 }
 
-/** Best-effort Telegram note to every operator who linked Telegram. Never throws. */
+/** Best-effort Telegram note to every operator with an admin alert destination. Never throws. */
 async function alertAdmins(kind: "waiting" | "entered", email: string | undefined) {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { sendTelegramMessage, escapeHtml } = await import("./telegram.server");
     const { maskEmail } = await import("./admin.server");
-    const { data: admins } = await supabaseAdmin.from("admin_users").select("user_id");
-    const ids = (admins ?? []).map((a) => a.user_id);
-    if (!ids.length) return;
+    // Admin alert destinations are authoritative and separate from user reminder
+    // links: disconnecting a user mapping never removes an admin mapping.
     const { data: links } = await supabaseAdmin
-      .from("telegram_links")
-      .select("chat_id")
-      .in("user_id", ids);
+      .from("telegram_admin_links")
+      .select("chat_id");
     if (!links?.length) return;
     const masked = escapeHtml(email ? maskEmail(email) : "hidden");
     const when = new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC";
