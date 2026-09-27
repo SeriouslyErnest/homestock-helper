@@ -81,7 +81,12 @@ export const syncAccountDirectory = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Validates the hidden path and the caller's admin allow-listing in one step. */
+/**
+ * Validates the hidden path and the caller's admin allow-listing. This is the
+ * only console call that works before the one-time code has been entered: it
+ * reports whether the operator still needs to set up or pass their second
+ * factor. Everything else refuses to answer until the session is verified.
+ */
 export const adminSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { routeId: string }) => input)
@@ -89,14 +94,35 @@ export const adminSession = createServerFn({ method: "POST" })
     const { matchesConsoleRoute, requireAdmin } = await import("./admin.server");
     if (!matchesConsoleRoute(data.routeId)) throw new Error("Not found");
     const role = await requireAdmin(context.userId);
-    return { role: role as AdminRole };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: userData } = await supabaseAdmin.auth.admin.getUserById(context.userId);
+    const factors = (userData?.user?.factors ?? []) as Array<{
+      factor_type?: string;
+      status?: string;
+    }>;
+    const enrolled = factors.some((f) => f.factor_type === "totp" && f.status === "verified");
+    const verified = (context.claims as { aal?: string } | undefined)?.aal === "aal2";
+    const { count } = await supabaseAdmin
+      .from("admin_recovery_codes")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", context.userId)
+      .is("used_at", null);
+    return {
+      role: role as AdminRole,
+      mfa: { enrolled, verified, recoveryRemaining: count ?? 0 },
+    };
   });
 
-async function guard(routeId: string, userId: string, allowed?: AdminRole[]) {
-  const { matchesConsoleRoute, requireAdmin } = await import("./admin.server");
+type AdminContext = { userId: string; claims?: unknown };
+
+async function guard(routeId: string, context: AdminContext, allowed?: AdminRole[]) {
+  const { matchesConsoleRoute, requireAdmin, requireSecondFactor } = await import("./admin.server");
   if (!matchesConsoleRoute(routeId)) throw new Error("Not found");
-  return requireAdmin(userId, allowed);
+  const role = await requireAdmin(context.userId, allowed);
+  requireSecondFactor(context.claims);
+  return role;
 }
+
 
 export const adminOverview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
