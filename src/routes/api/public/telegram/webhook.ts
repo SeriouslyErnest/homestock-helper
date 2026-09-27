@@ -51,8 +51,7 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
             );
             return Response.json({ ok: true });
           }
-          // One chat belongs to one account; re-linking moves it.
-          await supabaseAdmin.from("telegram_links").delete().eq("chat_id", chatId);
+          // Many accounts may share one Telegram chat; each account links independently.
           const { error } = await supabaseAdmin
             .from("telegram_links")
             .upsert(
@@ -69,8 +68,13 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         }
 
         if (/^\/stop(?:@\w+)?$/.test(text)) {
+          // /stop disconnects every account linked to this chat. Admin alert
+          // destinations live in telegram_admin_links and are not touched here.
           await supabaseAdmin.from("telegram_links").delete().eq("chat_id", chatId);
-          await sendTelegramMessage(chatId, "Disconnected. You won't get any more reminders.");
+          await sendTelegramMessage(
+            chatId,
+            "Disconnected all HomeStock accounts from this chat. You can reconnect any time from inside HomeStock.",
+          );
           return Response.json({ ok: true });
         }
 
