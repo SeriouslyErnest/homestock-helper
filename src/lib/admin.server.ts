@@ -54,6 +54,26 @@ export async function requireAdmin(userId: string, allowed?: AdminRole[]): Promi
   return role;
 }
 
+/**
+ * Second factor enforcement. The console is only usable from a session that
+ * has passed a one-time code challenge, so a stolen sign-in link or a
+ * hijacked browser session alone cannot reach operator tools.
+ */
+export function requireSecondFactor(claims: unknown): void {
+  const aal = (claims as { aal?: string } | undefined)?.aal;
+  if (aal !== "aal2") throw new Error("MFA required");
+}
+
+/** One-way fingerprint of a recovery code; the plain code is never stored. */
+export function hashRecoveryCode(code: string): string {
+  const salt = process.env["ADMIN_EMAIL_SALT"];
+  if (!salt) throw new Error("ADMIN_EMAIL_SALT is not configured");
+  return createHmac("sha256", salt)
+    .update(code.replace(/[^a-z0-9]/gi, "").toLowerCase())
+    .digest("hex");
+}
+
+
 export async function writeAudit(entry: {
   adminUserId: string;
   actionType: string;
