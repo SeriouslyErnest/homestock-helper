@@ -91,6 +91,16 @@ compared in constant time server-side. Wrong paths render an identical
 - **Bootstrap**: while `admin_users` is empty, the first signed-in visitor
   can **Claim this console** (becomes `SUPER_ADMIN`). Afterwards the claim
   path is dead.
+- **Two-factor (mandatory)**: an operator session must be TOTP-verified
+  (`aal2`) before any console data loads. First visit shows an enrolment QR
+  code for any authenticator app; later visits ask for the six-digit code.
+  Every admin server function re-checks `aal2`, so the gate cannot be
+  bypassed from the browser. Enrolment hands over ten one-time recovery
+  codes (salted hashes in `admin_recovery_codes`, plain text shown once); a
+  recovery code only removes the lost authenticator so a new one can be set
+  up — it never grants access on its own. Fresh sets can be issued from the
+  console header.
+
 - **Roles**: `SUPER_ADMIN`, `BILLING_ADMIN`, `SUPPORT_ADMIN`,
   `READ_ONLY_ADMIN`, checked server-side per action (e.g. permanent grants
   need SUPER_ADMIN; revoking needs SUPER_ADMIN or BILLING_ADMIN).
