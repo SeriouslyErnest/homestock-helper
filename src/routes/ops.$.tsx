@@ -38,6 +38,7 @@ import {
   adminTelegramSettings,
   adminSetTelegramEnabled,
   adminRegisterTelegramWebhook,
+  adminUnlinkTelegramAlerts,
   adminSetSchedulerBudget,
 } from "@/lib/admin.functions";
 import { CATEGORIES } from "@/lib/homestock";
@@ -232,6 +233,14 @@ function TelegramPanel({ routeId }: { routeId: string }) {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+  const unlinkAlerts = useMutation({
+    mutationFn: () => adminUnlinkTelegramAlerts({ data: { routeId } }),
+    onSuccess: () => {
+      toast.success("You won't get sign-up alerts any more");
+      void refresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
   const d = q.data;
   if (!d) return null;
   return (
@@ -264,6 +273,19 @@ function TelegramPanel({ routeId }: { routeId: string }) {
           Connect bot to the published app
         </button>
       )}
+      <p className="mt-3 text-xs text-muted-foreground">
+        Sign-up alerts for you: {d.myAlerts ? "on (your linked Telegram)" : "off — connect Telegram on the More tab to receive them"}.
+        {d.myAlerts && (
+          <button
+            type="button"
+            onClick={() => unlinkAlerts.mutate()}
+            disabled={unlinkAlerts.isPending}
+            className="ml-2 underline disabled:opacity-50"
+          >
+            Stop my alerts
+          </button>
+        )}
+      </p>
     </section>
   );
 }
