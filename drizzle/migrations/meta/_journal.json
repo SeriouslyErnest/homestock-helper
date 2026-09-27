@@ -134,6 +134,13 @@
       "when": 1790483880264,
       "tag": "0018_telegram_multi_account_links",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790485487556,
+      "tag": "0019_admin_mfa_recovery_codes",
+      "breakpoints": true
     }
   ]
 }

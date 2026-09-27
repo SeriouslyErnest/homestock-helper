@@ -40,8 +40,11 @@ import {
   adminRegisterTelegramWebhook,
   adminUnlinkTelegramAlerts,
   adminSetSchedulerBudget,
+  adminIssueRecoveryCodes,
 } from "@/lib/admin.functions";
 import { CATEGORIES } from "@/lib/homestock";
+import { AdminMfaGate } from "@/components/admin-mfa";
+
 
 export const Route = createFileRoute("/ops/$")({
   ssr: false,
@@ -95,7 +98,18 @@ function Console() {
     return <Locked routeId={routeId} onClaimed={() => void session.refetch()} />;
   }
 
+  if (!session.data.mfa.verified) {
+    return (
+      <AdminMfaGate
+        routeId={routeId}
+        enrolled={session.data.mfa.enrolled}
+        onVerified={() => void session.refetch()}
+      />
+    );
+  }
+
   const role = session.data.role;
+
   const tabs: Tab[] = [
     "dashboard",
     "accounts",
@@ -116,7 +130,9 @@ function Console() {
             only as salted fingerprints and shown masked.
           </p>
         </div>
+        <RecoveryCodes routeId={routeId} remaining={session.data.mfa.recoveryRemaining} />
       </header>
+
 
       <nav className="mt-5 flex flex-wrap gap-2">
         {tabs.map((t) => (
@@ -147,6 +163,50 @@ function Console() {
     </div>
   );
 }
+
+/** Shows how many one-time backup codes are left and can issue a fresh set. */
+function RecoveryCodes({ routeId, remaining }: { routeId: string; remaining: number }) {
+  const [codes, setCodes] = useState<string[] | null>(null);
+  const issue = useMutation({
+    mutationFn: () => adminIssueRecoveryCodes({ data: { routeId } }),
+    onSuccess: (r) => setCodes(r.codes),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="text-right text-sm">
+      <p className="text-muted-foreground">
+        Recovery codes left: <span className="font-semibold">{remaining}</span>
+      </p>
+      <button
+        type="button"
+        onClick={() => issue.mutate()}
+        disabled={issue.isPending}
+        className="mt-1 text-sm font-semibold text-brand underline disabled:opacity-50"
+      >
+        {issue.isPending ? "Creating…" : "New recovery codes"}
+      </button>
+      {codes && (
+        <div className="mt-3 rounded-2xl border border-border bg-card p-4 text-left">
+          <p className="text-sm font-semibold">Save these now — shown once.</p>
+          <ul className="mt-2 grid grid-cols-2 gap-2 font-mono text-sm">
+            {codes.map((c) => (
+              <li key={c}>{c}</li>
+            ))}
+          </ul>
+          <button
+            type="button"
+            className="mt-3 text-sm font-semibold text-brand underline"
+            onClick={() => setCodes(null)}
+          >
+            Done
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 function Locked({ routeId, onClaimed }: { routeId: string; onClaimed: () => void }) {
   const unclaimed = useQuery({
