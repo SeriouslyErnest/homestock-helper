@@ -875,6 +875,24 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_admin_links: {
+        Row: {
+          chat_id: number
+          linked_at: string
+          user_id: string
+        }
+        Insert: {
+          chat_id: number
+          linked_at?: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: number
+          linked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       telegram_link_tokens: {
         Row: {
           created_at: string
