@@ -129,7 +129,9 @@ function Console() {
             only as salted fingerprints and shown masked.
           </p>
         </div>
+        <RecoveryCodes routeId={routeId} remaining={session.data.mfa.recoveryRemaining} />
       </header>
+
 
       <nav className="mt-5 flex flex-wrap gap-2">
         {tabs.map((t) => (
