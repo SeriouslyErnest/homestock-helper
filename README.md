@@ -60,6 +60,13 @@ Built with TanStack Start (React 19), Tailwind CSS v4 and Supabase
   `/api/public/cron/expiry-digest`; at most one message per person/home/day.
   Admin kill switch defaults Off. `TELEGRAM_BOT_TOKEN` and
   `TELEGRAM_WEBHOOK_SECRET` live only in protected server secrets.
+  One Telegram chat may serve many accounts (`telegram_links` is keyed by
+  user, not chat); `/stop` disconnects every account on that chat and says so.
+- **Telegram admin sign-up alerts** — two independent switches in the admin
+  console (waiting-for-approval, first-time-in). Alerts go to operators via
+  `telegram_admin_links`, a dedicated table separate from user reminder
+  links, so user-side disconnects never silence admin alerts. Messages are
+  content-minimal (masked email, UTC time) and never contain the console URL.
 - **Admin console** — hidden ops route (see below) with dashboard (counters,
   home-limit requests, account applications, reported product names,
   Telegram panel, scheduler load with 20%-of-budget warnings read from

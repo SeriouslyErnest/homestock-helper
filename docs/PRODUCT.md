@@ -131,7 +131,15 @@ Telegram reminders, restart welcome, promo code, account).
   digest, admin kill switch (default Off). Runs on the database scheduler,
   not a paid job service; every run logs to `scheduler_runs`, which feeds the
   admin Scheduler load panel (default budget 1,000 queries/day, warning at
-  20%).
+  20%). One Telegram chat can be linked to many accounts; each account links
+  independently and `/stop` disconnects all accounts on that chat.
+- **Telegram admin sign-up alerts** — two independent toggles: "waiting for
+  approval" fires when a newcomer lands on the approval holding screen,
+  "first time in" fires once when an approved user first enters the app
+  (tracked via `account_approvals.first_entered_at`). Destinations live in
+  `telegram_admin_links`, separate from user reminder links; operators can
+  stop their own alerts from the console. Messages contain only a masked
+  email and UTC time — never the admin console link.
 
 ## Known intentional choices
 
@@ -139,7 +147,7 @@ Telegram reminders, restart welcome, promo code, account).
 - No automatic matching of buy requests to products — completion is manual.
 - No household deletion UI.
 - Sign-in is by email link or Google — no passwords, no 6-digit code.
-- Telegram admin alerts are not built yet.
+- Telegram admin alerts never include the admin console URL — the hidden route must not leak into chat histories.
 - Six security-linter EXECUTE warnings on SECURITY DEFINER helper functions
   are expected: they must be callable by signed-in users and each verifies
   its caller internally.
