@@ -163,6 +163,50 @@ function Console() {
   );
 }
 
+/** Shows how many one-time backup codes are left and can issue a fresh set. */
+function RecoveryCodes({ routeId, remaining }: { routeId: string; remaining: number }) {
+  const [codes, setCodes] = useState<string[] | null>(null);
+  const issue = useMutation({
+    mutationFn: () => adminIssueRecoveryCodes({ data: { routeId } }),
+    onSuccess: (r) => setCodes(r.codes),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="text-right text-sm">
+      <p className="text-muted-foreground">
+        Recovery codes left: <span className="font-semibold">{remaining}</span>
+      </p>
+      <button
+        type="button"
+        onClick={() => issue.mutate()}
+        disabled={issue.isPending}
+        className="mt-1 text-sm font-semibold text-brand underline disabled:opacity-50"
+      >
+        {issue.isPending ? "Creating…" : "New recovery codes"}
+      </button>
+      {codes && (
+        <div className="mt-3 rounded-2xl border border-border bg-card p-4 text-left">
+          <p className="text-sm font-semibold">Save these now — shown once.</p>
+          <ul className="mt-2 grid grid-cols-2 gap-2 font-mono text-sm">
+            {codes.map((c) => (
+              <li key={c}>{c}</li>
+            ))}
+          </ul>
+          <button
+            type="button"
+            className="mt-3 text-sm font-semibold text-brand underline"
+            onClick={() => setCodes(null)}
+          >
+            Done
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 function Locked({ routeId, onClaimed }: { routeId: string; onClaimed: () => void }) {
   const unclaimed = useQuery({
     queryKey: ["admin-unclaimed", routeId],
