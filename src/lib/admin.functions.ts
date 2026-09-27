@@ -1443,3 +1443,89 @@ export const adminRegisterTelegramWebhook = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+/* ------------------------------------------------------------------ */
+/* Second factor: recovery codes                                       */
+/* ------------------------------------------------------------------ */
+
+function newRecoveryCode(): string {
+  // Ambiguous characters left out so a handwritten copy still works.
+  const alphabet = "abcdefghjkmnpqrstuvwxyz23456789";
+  const bytes = new Uint8Array(10);
+  crypto.getRandomValues(bytes);
+  const raw = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+  return `${raw.slice(0, 5)}-${raw.slice(5)}`;
+}
+
+/**
+ * Issues a fresh set of one-time recovery codes and forgets any earlier set.
+ * The plain codes are returned exactly once; only salted fingerprints are kept.
+ */
+export const adminIssueRecoveryCodes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string }) => input)
+  .handler(async ({ data, context }) => {
+    await guard(data.routeId, context);
+    const { hashRecoveryCode, writeAudit } = await import("./admin.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const codes = Array.from({ length: 10 }, () => newRecoveryCode());
+    await supabaseAdmin.from("admin_recovery_codes").delete().eq("user_id", context.userId);
+    const { error } = await supabaseAdmin
+      .from("admin_recovery_codes")
+      .insert(codes.map((c) => ({ user_id: context.userId, code_hash: hashRecoveryCode(c) })));
+    if (error) throw error;
+    await writeAudit({
+      adminUserId: context.userId,
+      actionType: "admin_mfa.recovery_codes_issued",
+      targetType: "admin",
+      targetId: context.userId,
+    });
+    return { codes };
+  });
+
+/**
+ * Lost-device escape hatch. A valid unused recovery code removes the existing
+ * authenticator so the operator can set up a new one; it never grants console
+ * access on its own.
+ */
+export const adminUseRecoveryCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string; code: string }) => input)
+  .handler(async ({ data, context }) => {
+    const { matchesConsoleRoute, requireAdmin, hashRecoveryCode, writeAudit } = await import(
+      "./admin.server"
+    );
+    if (!matchesConsoleRoute(data.routeId)) throw new Error("Not found");
+    await requireAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const hash = hashRecoveryCode(data.code ?? "");
+    const { data: row } = await supabaseAdmin
+      .from("admin_recovery_codes")
+      .select("id")
+      .eq("user_id", context.userId)
+      .eq("code_hash", hash)
+      .is("used_at", null)
+      .maybeSingle();
+    if (!row) throw new Error("That recovery code is not valid.");
+    const { data: claimed } = await supabaseAdmin
+      .from("admin_recovery_codes")
+      .update({ used_at: new Date().toISOString() })
+      .eq("id", row.id)
+      .is("used_at", null)
+      .select("id");
+    if (!claimed?.length) throw new Error("That recovery code is not valid.");
+    const { data: userData } = await supabaseAdmin.auth.admin.getUserById(context.userId);
+    const factors = (userData?.user?.factors ?? []) as Array<{ id: string; factor_type?: string }>;
+    for (const f of factors) {
+      if (f.factor_type === "totp") {
+        await supabaseAdmin.auth.admin.mfa.deleteFactor({ id: f.id, userId: context.userId });
+      }
+    }
+    await writeAudit({
+      adminUserId: context.userId,
+      actionType: "admin_mfa.recovery_code_used",
+      targetType: "admin",
+      targetId: context.userId,
+    });
+    return { ok: true };
+  });
