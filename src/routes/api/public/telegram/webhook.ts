@@ -58,6 +58,23 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
               { user_id: claimed.user_id, chat_id: chatId, linked_at: nowIso },
               { onConflict: "user_id" },
             );
+          // Operators also get an authoritative admin alert destination, kept
+          // separate so user-side disconnects never silence admin alerts.
+          if (!error) {
+            const { data: adminRow } = await supabaseAdmin
+              .from("admin_users")
+              .select("user_id")
+              .eq("user_id", claimed.user_id)
+              .maybeSingle();
+            if (adminRow) {
+              await supabaseAdmin
+                .from("telegram_admin_links")
+                .upsert(
+                  { user_id: claimed.user_id, chat_id: chatId, linked_at: nowIso },
+                  { onConflict: "user_id" },
+                );
+            }
+          }
           await sendTelegramMessage(
             chatId,
             error
