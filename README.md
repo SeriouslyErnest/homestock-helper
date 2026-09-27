@@ -72,7 +72,10 @@ Built with TanStack Start (React 19), Tailwind CSS v4 and Supabase
   Telegram panel, scheduler load with 20%-of-budget warnings read from
   `scheduler_runs`), account directory, complimentary/trial grants, promo
   codes, sign-up settings and invites, plan limits, category list and an
-  audit log.
+  audit log. Entry requires a TOTP second factor (`aal2`, enforced in every
+  admin server function) with ten one-time recovery codes issued at
+  enrolment; a recovery code only allows re-enrolling a new authenticator.
+
   Customer emails are stored only as salted HMAC fingerprints plus a masked
   display form — never in plain text.
 - **Light & dark mode** — follows the device automatically.
