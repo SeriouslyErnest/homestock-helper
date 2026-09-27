@@ -42,6 +42,8 @@ import {
   adminSetSchedulerBudget,
 } from "@/lib/admin.functions";
 import { CATEGORIES } from "@/lib/homestock";
+import { AdminMfaGate } from "@/components/admin-mfa";
+
 
 export const Route = createFileRoute("/ops/$")({
   ssr: false,
