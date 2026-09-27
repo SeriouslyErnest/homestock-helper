@@ -1316,7 +1316,7 @@ export const adminTelegramSettings = createServerFn({ method: "POST" })
     const { readSetting, expiryNotificationsEnabled, telegramCall } =
       await import("./telegram.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const [enabled, bot, info, links, prefs] = await Promise.all([
+    const [enabled, bot, info, links, prefs, myAlert] = await Promise.all([
       expiryNotificationsEnabled(),
       readSetting<{ username?: string }>("telegram_bot"),
       telegramCall("getWebhookInfo", {}),
@@ -1325,6 +1325,11 @@ export const adminTelegramSettings = createServerFn({ method: "POST" })
         .from("expiry_notification_prefs")
         .select("user_id", { count: "exact", head: true })
         .eq("enabled", true),
+      supabaseAdmin
+        .from("telegram_admin_links")
+        .select("user_id")
+        .eq("user_id", context.userId)
+        .maybeSingle(),
     ]);
     const url = (info.result as { url?: string } | undefined)?.url ?? "";
     return {
@@ -1334,7 +1339,29 @@ export const adminTelegramSettings = createServerFn({ method: "POST" })
       webhookRegistered: url.endsWith("/api/public/telegram/webhook"),
       linkedAccounts: links.count ?? 0,
       enabledPairs: prefs.count ?? 0,
+      myAlerts: !!myAlert.data,
     };
+  });
+
+/** Stop sign-up alert messages for the calling operator only. User reminders are untouched. */
+export const adminUnlinkTelegramAlerts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string }) => input)
+  .handler(async ({ data, context }) => {
+    await guard(data.routeId, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin
+      .from("telegram_admin_links")
+      .delete()
+      .eq("user_id", context.userId);
+    const { writeAudit } = await import("./admin.server");
+    await writeAudit({
+      adminUserId: context.userId,
+      actionType: "telegram_alerts.unlinked",
+      targetType: "admin",
+      targetId: context.userId,
+    });
+    return { ok: true };
   });
 
 export const adminSetTelegramEnabled = createServerFn({ method: "POST" })
