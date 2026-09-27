@@ -94,6 +94,15 @@ export const cacheManualProduct = createServerFn({ method: "POST" })
     const { isNameAllowed } = await import("./name-filter.server");
     // Rude names stay private to the household that typed them.
     if (!isNameAllowed(data.name)) return false;
+    // Only someone who actually has this barcode in one of their homes may
+    // share its name — stops strangers from seeding the catalogue with
+    // made-up names for barcodes they never scanned.
+    const { data: mine } = await context.supabase
+      .from("items")
+      .select("id")
+      .eq("barcode", data.barcode)
+      .limit(1);
+    if (!mine || mine.length === 0) return false;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("products")
