@@ -19,6 +19,7 @@ export type Database = {
           created_at: string
           decided_at: string | null
           decided_by: string | null
+          first_entered_at: string | null
           status: string
           user_id: string
         }
@@ -26,6 +27,7 @@ export type Database = {
           created_at?: string
           decided_at?: string | null
           decided_by?: string | null
+          first_entered_at?: string | null
           status?: string
           user_id: string
         }
@@ -33,6 +35,7 @@ export type Database = {
           created_at?: string
           decided_at?: string | null
           decided_by?: string | null
+          first_entered_at?: string | null
           status?: string
           user_id?: string
         }

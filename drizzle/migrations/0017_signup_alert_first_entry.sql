@@ -1,0 +1,2 @@
+ALTER TABLE public.account_approvals ADD COLUMN IF NOT EXISTS first_entered_at timestamptz;
+UPDATE public.account_approvals SET first_entered_at = now() WHERE status = 'approved' AND first_entered_at IS NULL;

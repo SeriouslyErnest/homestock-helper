@@ -990,25 +990,77 @@ async function approvalEnabled(): Promise<boolean> {
   return v?.enabled === true;
 }
 
+type SignupAlerts = { waiting: boolean; entered: boolean };
+
+async function signupAlerts(): Promise<SignupAlerts> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("app_settings")
+    .select("value")
+    .eq("key", "signup_alerts")
+    .maybeSingle();
+  const v = data?.value as Partial<SignupAlerts> | null;
+  return { waiting: v?.waiting === true, entered: v?.entered === true };
+}
+
+/** Best-effort Telegram note to every operator who linked Telegram. Never throws. */
+async function alertAdmins(kind: "waiting" | "entered", email: string | undefined) {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { sendTelegramMessage, escapeHtml } = await import("./telegram.server");
+    const { maskEmail } = await import("./admin.server");
+    const { data: admins } = await supabaseAdmin.from("admin_users").select("user_id");
+    const ids = (admins ?? []).map((a) => a.user_id);
+    if (!ids.length) return;
+    const { data: links } = await supabaseAdmin
+      .from("telegram_links")
+      .select("chat_id")
+      .in("user_id", ids);
+    if (!links?.length) return;
+    const masked = escapeHtml(email ? maskEmail(email) : "hidden");
+    const when = new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC";
+    const text =
+      kind === "waiting"
+        ? `🔐 <b>ADMIN — HomeStock</b>\n🟡 New account waiting for approval\n\nEmail: ${masked}\nSigned up: ${when}`
+        : `🔐 <b>ADMIN — HomeStock</b>\n🟢 ${masked} has signed up\n\nEntered: ${when}\nStatus: Approved &amp; active`;
+    await Promise.all(links.map((l) => sendTelegramMessage(Number(l.chat_id), text)));
+  } catch {
+    // Alerts must never affect the person signing in.
+  }
+}
+
 /** Called by the app after sign-in. Registers a pending application when needed. */
 export const myApprovalStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ status: "approved" | "pending" | "rejected" }> => {
     if (!(await approvalEnabled())) return { status: "approved" };
+    const email = (context.claims as { email?: string } | undefined)?.email;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row } = await supabaseAdmin
       .from("account_approvals")
-      .select("status")
+      .select("status, first_entered_at")
       .eq("user_id", context.userId)
       .maybeSingle();
     if (!row) {
-      await supabaseAdmin
+      const { data: inserted } = await supabaseAdmin
         .from("account_approvals")
         .upsert(
           { user_id: context.userId, status: "pending" },
           { onConflict: "user_id", ignoreDuplicates: true },
-        );
+        )
+        .select("user_id");
+      if (inserted?.length && (await signupAlerts()).waiting) await alertAdmins("waiting", email);
       return { status: "pending" };
+    }
+    if (row.status === "approved" && !row.first_entered_at) {
+      // Claim the first entry atomically so the alert goes out once.
+      const { data: claimed } = await supabaseAdmin
+        .from("account_approvals")
+        .update({ first_entered_at: new Date().toISOString() })
+        .eq("user_id", context.userId)
+        .is("first_entered_at", null)
+        .select("user_id");
+      if (claimed?.length && (await signupAlerts()).entered) await alertAdmins("entered", email);
     }
     return { status: row.status as "approved" | "pending" | "rejected" };
   });
@@ -1018,7 +1070,35 @@ export const adminApprovalSettings = createServerFn({ method: "POST" })
   .inputValidator((input: { routeId: string }) => input)
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context.userId);
-    return { enabled: await approvalEnabled() };
+    return { enabled: await approvalEnabled(), alerts: await signupAlerts() };
+  });
+
+export const adminSetSignupAlerts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string; waiting: boolean; entered: boolean }) => input)
+  .handler(async ({ data, context }) => {
+    await guard(data.routeId, context.userId, ["SUPER_ADMIN"]);
+    const { writeAudit } = await import("./admin.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const value = { waiting: data.waiting, entered: data.entered };
+    const { error } = await supabaseAdmin.from("app_settings").upsert(
+      {
+        key: "signup_alerts",
+        value: value as never,
+        updated_at: new Date().toISOString(),
+        updated_by: context.userId,
+      },
+      { onConflict: "key" },
+    );
+    if (error) throw error;
+    await writeAudit({
+      adminUserId: context.userId,
+      actionType: "signup_alerts.changed",
+      targetType: "setting",
+      targetId: "signup_alerts",
+      afterJson: value,
+    });
+    return { ok: true };
   });
 
 export const adminSetApprovalEnabled = createServerFn({ method: "POST" })
