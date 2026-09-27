@@ -95,7 +95,18 @@ function Console() {
     return <Locked routeId={routeId} onClaimed={() => void session.refetch()} />;
   }
 
+  if (!session.data.mfa.verified) {
+    return (
+      <AdminMfaGate
+        routeId={routeId}
+        enrolled={session.data.mfa.enrolled}
+        onVerified={() => void session.refetch()}
+      />
+    );
+  }
+
   const role = session.data.role;
+
   const tabs: Tab[] = [
     "dashboard",
     "accounts",
