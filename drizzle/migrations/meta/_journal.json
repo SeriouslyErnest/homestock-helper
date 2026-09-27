@@ -127,6 +127,13 @@
       "when": 1790479653233,
       "tag": "0017_signup_alert_first_entry",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790483880264,
+      "tag": "0018_telegram_multi_account_links",
+      "breakpoints": true
     }
   ]
 }
