@@ -41,7 +41,7 @@ Running low / buy request → Shop → Restock.
    (`ignoreDuplicates`), never overwriting an existing record
    (`source = 'manual'`; corrections are an explicit future flow).
 
-5. **Expiry is light-touch.** Optional, multiple per product conceptually;
+6. **Expiry is light-touch.** Optional, multiple per product conceptually;
    surfaced as "Exp 3 Oct" with a ⚠ within 14 days. Inventory shows
    "need attention" (low stock or expiring ≤ 3 days) and a separate
    "expiring soon" card (≤ 1 day), plus combinable Low / Expiring filters.
