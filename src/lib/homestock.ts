@@ -107,8 +107,12 @@ export function useCategories(): CategoryDef[] {
   return data ?? CATEGORIES;
 }
 
+/**
+ * Running low: some stock remains, but strictly below the "keep at least" amount.
+ * Quantity 0 is "out of stock", not low; quantity == minimum is comfortably stocked.
+ */
 export function isLow(item: Item): boolean {
-  return item.min_quantity > 0 && item.quantity <= item.min_quantity;
+  return item.min_quantity > 0 && item.quantity > 0 && item.quantity < item.min_quantity;
 }
 
 /**
