@@ -9,6 +9,9 @@
 - Add item: name-only minimum, pre-filled from barcode scan (Open Food Facts, cached)
 - Scan page: camera barcode scan + manual entry fallback
 - Shopping list: quick add, tick off (auto-restocks tracked items), running-low suggestions
+- Stock-status rule fixed: running low = current strictly below "keep at least"
+  (current = minimum is "in stock"); out of stock stays a separate state;
+  applies to inventory, filters, attention counter, item detail and shopping
 - More: rename household, invite code, members, join by code, sign out
 - Verified on a phone-sized screen: sign-up → add item → consume → shopping list
 - Auth switched to email link + Google (no passwords)

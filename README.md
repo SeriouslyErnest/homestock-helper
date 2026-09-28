@@ -29,7 +29,8 @@ Built with TanStack Start (React 19), Tailwind CSS v4 and Supabase
   or block join requests. One account can belong to several homes and switch
   between them.
 - **Running low & shopping list** — per-item "minimum stock" drives a
-  Running Low list, plus explicit buy requests with quantity, hint tags
+  Running Low list (current strictly below minimum; zero is "out of
+  stock"), plus explicit buy requests with quantity, hint tags
   (Optional, Only if on sale, Any brand, Call if unavailable) and notes.
   Completion is manual — nothing is auto-matched.
 - **Expiry tracking (optional)** — never blocks restock; quick 3/5/14-day
