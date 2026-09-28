@@ -47,11 +47,11 @@ Running low / buy request → Shop → Restock.
    "expiring soon" card (≤ 1 day), plus combinable Low / Expiring filters.
    Items fully consumed with no minimum set leave the everyday list (search
    still finds them), so "items tracked" counts only what's shown.
-6. **Time is UTC inside, local outside.** All timestamps are stored in UTC
+7. **Time is UTC inside, local outside.** All timestamps are stored in UTC
    (`nowUtc()`); display helpers (`formatLocalDate`, `daysUntilExpiry`)
    render in the viewer's device timezone. Daylight saving can never shift
    a stored date.
-7. **Remember instead of asking again.** The active household, per-screen
+8. **Remember instead of asking again.** The active household, per-screen
    list/card view choice and similar preferences persist
    (`localStorage` keys prefixed `homestock.`).
 
