@@ -26,7 +26,12 @@ Running low / buy request → Shop → Restock.
 3. **Stock changes are atomic deltas.** All +/− go through
    `adjust_item_quantity(_delta)` on the server — concurrent edits can't
    clobber each other and stock can't go below zero.
-4. **Barcodes are identity, not inventory.** Open Food Facts (v3, read-only,
+4. **Running low means strictly below the minimum.** With current = minimum
+   the item is still "in stock" (`isLow` in `src/lib/homestock.ts`:
+   `quantity > 0 && quantity < min_quantity`). Zero quantity is "out of
+   stock", a separate state that flags everywhere low does. The scanner,
+   inventory, item detail and shopping suggestions all share this rule.
+5. **Barcodes are identity, not inventory.** Open Food Facts (v3, read-only,
    custom User-Agent) supplies name/brand/image only. Quantity and expiry
    are always HomeStock's own. Lookup order: household items → shared cache
    table → OFF. A miss means "we haven't seen this", never an error, and
@@ -35,6 +40,7 @@ Running low / buy request → Shop → Restock.
    the barcode is the primary key, later saves are ignored
    (`ignoreDuplicates`), never overwriting an existing record
    (`source = 'manual'`; corrections are an explicit future flow).
+
 5. **Expiry is light-touch.** Optional, multiple per product conceptually;
    surfaced as "Exp 3 Oct" with a ⚠ within 14 days. Inventory shows
    "need attention" (low stock or expiring ≤ 3 days) and a separate
