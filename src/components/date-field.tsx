@@ -29,8 +29,8 @@ function autoFormat(next: string, prev: string): string {
   if (next.length < prev.length) return next; // deleting: leave alone
   if (!/^[\d/]*$/.test(next)) return next;
   const digits = next.replace(/\D/g, "").slice(0, 8);
-  if (next.includes("/") && next.replace(/\D/g, "").length < 8 && /\/\d?\//.test(next) === false)
-    return next;
+  // User typed their own slashes (e.g. 1/2/2027): don't fight them.
+  if (next.includes("/") && !/^\d{2}\/(\d{0,2}\/?)?\d{0,4}$/.test(next)) return next;
   let out = digits.slice(0, 2);
   if (digits.length > 2) out += "/" + digits.slice(2, 4);
   if (digits.length > 4) out += "/" + digits.slice(4, 8);

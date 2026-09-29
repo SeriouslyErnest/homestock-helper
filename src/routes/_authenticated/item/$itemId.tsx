@@ -1,3 +1,4 @@
+import { DateField } from "@/components/date-field";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -431,13 +432,7 @@ function ItemPage() {
               <label htmlFor="d-exp" className={label}>
                 Expires
               </label>
-              <input
-                id="d-exp"
-                type="date"
-                value={expires}
-                onChange={(e) => setExpires(e.target.value)}
-                className={field}
-              />
+              <DateField id="d-exp" value={expires} onChange={setExpires} className={field} />
             </div>
           )}
         </div>
