@@ -280,8 +280,83 @@ function ScanPage() {
     let controls: { stop: () => void } | null = null;
     let cancelled = false;
 
+    /** Native detector reads barcodes at any angle (Android Chrome, recent Safari). */
+    async function startNative(): Promise<boolean> {
+      type Detector = { detect: (s: CanvasImageSource) => Promise<{ rawValue: string }[]> };
+      const BD = (window as unknown as {
+        BarcodeDetector?: {
+          new (o: { formats: string[] }): Detector;
+          getSupportedFormats: () => Promise<string[]>;
+        };
+      }).BarcodeDetector;
+      if (!BD || !navigator.mediaDevices?.getUserMedia) return false;
+      const wanted = ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "qr_code"];
+      let formats: string[];
+      try {
+        const supported = await BD.getSupportedFormats();
+        formats = wanted.filter((f) => supported.includes(f));
+      } catch {
+        return false;
+      }
+      if (formats.length === 0) return false;
+      const detector = new BD({ formats });
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            advanced: [{ focusMode: "continuous" } as MediaTrackConstraintSet],
+          },
+        });
+      } catch {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      }
+      if (cancelled) {
+        stream.getTracks().forEach((t) => t.stop());
+        return true;
+      }
+      const video = videoRef.current;
+      if (!video) {
+        stream.getTracks().forEach((t) => t.stop());
+        return false;
+      }
+      video.srcObject = stream;
+      await video.play().catch(() => {});
+      let timer: ReturnType<typeof setTimeout> | null = null;
+      let stopped = false;
+      const tick = async () => {
+        if (stopped) return;
+        if (!handled.current && video.readyState >= 2) {
+          try {
+            const codes = await detector.detect(video);
+            if (codes[0]?.rawValue && !handled.current && !stopped) {
+              handled.current = true;
+              void handleCode.current(codes[0].rawValue);
+            }
+          } catch {
+            // Frame not ready — try the next one.
+          }
+        }
+        timer = setTimeout(tick, 120);
+      };
+      void tick();
+      controls = {
+        stop: () => {
+          stopped = true;
+          if (timer) clearTimeout(timer);
+          stream.getTracks().forEach((t) => t.stop());
+          video.srcObject = null;
+        },
+      };
+      return true;
+    }
+
     async function start() {
       try {
+        if (await startNative().catch(() => false)) return;
+        if (cancelled) return;
         const { BrowserMultiFormatReader } = await import("@zxing/browser");
         const { DecodeHintType, BarcodeFormat } = await import("@zxing/library");
         // tryHarder lets ZXing also try the frame rotated 90°, so vertical /
