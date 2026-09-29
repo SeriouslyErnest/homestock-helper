@@ -353,65 +353,116 @@ function ScanPage() {
       return true;
     }
 
+    /**
+     * ZXing fallback for browsers without the native detector. ZXing's own
+     * 90° rotation path is unreliable, so we run the scan loop ourselves and
+     * alternate between the frame as-is and a properly rotated copy — barcodes
+     * held upright or sideways both decode.
+     */
+    async function startZxing() {
+      const { BrowserMultiFormatReader } = await import("@zxing/browser");
+      const { DecodeHintType, BarcodeFormat } = await import("@zxing/library");
+      const hints = new Map<unknown, unknown>([
+        [DecodeHintType.TRY_HARDER, true],
+        [
+          DecodeHintType.POSSIBLE_FORMATS,
+          [
+            BarcodeFormat.EAN_13,
+            BarcodeFormat.EAN_8,
+            BarcodeFormat.UPC_A,
+            BarcodeFormat.UPC_E,
+            BarcodeFormat.CODE_128,
+            BarcodeFormat.QR_CODE,
+          ],
+        ],
+      ]);
+      const reader = new BrowserMultiFormatReader(hints as never);
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            advanced: [{ focusMode: "continuous" } as MediaTrackConstraintSet],
+          },
+        });
+      } catch {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      }
+      if (cancelled) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
+      const video = videoRef.current;
+      if (!video) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
+      video.srcObject = stream;
+      await video.play().catch(() => {});
+      const canvas = document.createElement("canvas");
+      const rotated = document.createElement("canvas");
+      const cctx = canvas.getContext("2d", { willReadFrequently: true });
+      const rctx = rotated.getContext("2d", { willReadFrequently: true });
+      let timer: ReturnType<typeof setTimeout> | null = null;
+      let stopped = false;
+      let busy = false;
+      let pass = 0;
+      const tick = async () => {
+        if (stopped) return;
+        if (!handled.current && !busy && video.readyState >= 2 && video.videoWidth > 0) {
+          busy = true;
+          try {
+            const w = video.videoWidth;
+            const h = video.videoHeight;
+            pass = 1 - pass;
+            let src: HTMLCanvasElement;
+            if (pass === 0) {
+              canvas.width = w;
+              canvas.height = h;
+              cctx?.drawImage(video, 0, 0);
+              src = canvas;
+            } else {
+              // Rotated 90° so upright barcodes read as horizontal scanlines.
+              rotated.width = h;
+              rotated.height = w;
+              if (rctx) {
+                rctx.save();
+                rctx.translate(h / 2, w / 2);
+                rctx.rotate(Math.PI / 2);
+                rctx.drawImage(video, -w / 2, -h / 2);
+                rctx.restore();
+              }
+              src = rotated;
+            }
+            const res = await reader.decodeFromCanvas(src).catch(() => null);
+            if (res && !handled.current && !stopped) {
+              handled.current = true;
+              void handleCode.current(res.getText());
+            }
+          } finally {
+            busy = false;
+          }
+        }
+        timer = setTimeout(tick, 150);
+      };
+      void tick();
+      controls = {
+        stop: () => {
+          stopped = true;
+          if (timer) clearTimeout(timer);
+          stream.getTracks().forEach((t) => t.stop());
+          video.srcObject = null;
+        },
+      };
+    }
+
     async function start() {
       try {
         if (await startNative().catch(() => false)) return;
         if (cancelled) return;
-        const { BrowserMultiFormatReader } = await import("@zxing/browser");
-        const { DecodeHintType, BarcodeFormat } = await import("@zxing/library");
-        // tryHarder lets ZXing also try the frame rotated 90°, so vertical /
-        // sideways barcodes decode. Restricting formats offsets the extra cost.
-        const hints = new Map<unknown, unknown>([
-          [DecodeHintType.TRY_HARDER, true],
-          [
-            DecodeHintType.POSSIBLE_FORMATS,
-            [
-              BarcodeFormat.EAN_13,
-              BarcodeFormat.EAN_8,
-              BarcodeFormat.UPC_A,
-              BarcodeFormat.UPC_E,
-              BarcodeFormat.CODE_128,
-              BarcodeFormat.QR_CODE,
-            ],
-          ],
-        ]);
-        const reader = new BrowserMultiFormatReader(hints as never);
-        const devices = await BrowserMultiFormatReader.listVideoInputDevices();
-        if (cancelled) return;
-        if (devices.length === 0) {
-          setPhase("error");
-          setMessage("No camera found. Enter the barcode by hand below.");
-          return;
-        }
-        const onResult = (res: { getText: () => string } | undefined) => {
-          if (res && !handled.current) {
-            handled.current = true;
-            void handleCode.current(res.getText());
-          }
-        };
-        try {
-          controls = await reader.decodeFromConstraints(
-            {
-              video: {
-                facingMode: { ideal: "environment" },
-                width: { ideal: 1280 },
-                height: { ideal: 720 },
-                advanced: [{ focusMode: "continuous" } as MediaTrackConstraintSet],
-              },
-            },
-            videoRef.current ?? undefined,
-            onResult,
-          );
-        } catch {
-          // Some devices reject the constraints — fall back to the default camera.
-          controls = await reader.decodeFromVideoDevice(
-            undefined,
-            videoRef.current ?? undefined,
-            onResult,
-          );
-        }
-        // Left the page while the camera was still starting up.
-        if (cancelled) controls.stop();
+        await startZxing();
       } catch {
         if (!cancelled) {
           setPhase("error");
@@ -530,13 +581,45 @@ function ScanPage() {
 
       {/* Kept mounted while a result is showing so the camera keeps running. */}
       <div className={phase === "result" ? "hidden" : ""}>
-        <div className="mx-auto w-full max-w-sm overflow-hidden rounded-3xl border border-border bg-foreground">
+        <div className="relative mx-auto w-full max-w-sm overflow-hidden rounded-3xl border border-border bg-foreground">
           <video
             ref={videoRef}
             className="aspect-[4/3] max-h-[42dvh] w-full object-cover"
             muted
             playsInline
           />
+          {/* Orientation guide: a horizontal barcode glyph over the target area. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2"
+          >
+            <svg
+              viewBox="0 0 120 48"
+              className="h-16 w-40 rounded-lg bg-black/35 p-2 text-white/90"
+              fill="currentColor"
+            >
+              <rect x="6" y="6" width="3" height="36" />
+              <rect x="12" y="6" width="2" height="36" />
+              <rect x="17" y="6" width="5" height="36" />
+              <rect x="25" y="6" width="2" height="36" />
+              <rect x="30" y="6" width="4" height="36" />
+              <rect x="37" y="6" width="2" height="36" />
+              <rect x="42" y="6" width="6" height="36" />
+              <rect x="51" y="6" width="3" height="36" />
+              <rect x="57" y="6" width="2" height="36" />
+              <rect x="62" y="6" width="5" height="36" />
+              <rect x="70" y="6" width="2" height="36" />
+              <rect x="75" y="6" width="4" height="36" />
+              <rect x="82" y="6" width="2" height="36" />
+              <rect x="87" y="6" width="6" height="36" />
+              <rect x="96" y="6" width="3" height="36" />
+              <rect x="102" y="6" width="2" height="36" />
+              <rect x="107" y="6" width="5" height="36" />
+            </svg>
+            <span className="rounded-full bg-black/35 px-3 py-1 text-xs font-semibold text-white/90">
+              Hold the barcode flat like this
+            </span>
+          </div>
         </div>
 
         <p role="status" aria-live="polite" className="mt-3 text-center text-sm">
