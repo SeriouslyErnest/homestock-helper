@@ -18,12 +18,12 @@ export const Route = createFileRoute("/auth")({
       { title: "Sign in — HomeStock" },
       {
         name: "description",
-        content: "Sign in to HomeStock with a link sent to your email — no password needed.",
+        content: "Sign in to HomeStock with your email and password, an email link, or Google.",
       },
       { property: "og:title", content: "Sign in — HomeStock" },
       {
         property: "og:description",
-        content: "Sign in to HomeStock with a link sent to your email — no password needed.",
+        content: "Sign in to HomeStock with your email and password, an email link, or Google.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -40,7 +40,9 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
-  // Email link only — password sign-in is intentionally not offered.
+  const [usePassword, setUsePassword] = useState(false);
+  const [password, setPassword] = useState("");
+  const [creating, setCreating] = useState(false);
   const { data: policy } = useQuery({
     queryKey: ["signup-policy"],
     queryFn: () => getSignupPolicy(),
@@ -86,6 +88,70 @@ function AuthPage() {
     setCooldown(30);
   }
 
+  async function passwordSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const address = email.trim().toLowerCase();
+    if (!address || !password) return;
+    if (creating && password.length < 8) {
+      setMessage("Use at least 8 characters for your password.");
+      return;
+    }
+    setBusy(true);
+    setMessage(null);
+    if (creating) {
+      const { data, error } = await supabase.auth.signUp({
+        email: address,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/inventory`,
+          ...(name.trim() ? { data: { display_name: name.trim() } } : {}),
+        },
+      });
+      setBusy(false);
+      if (error) {
+        setMessage(
+          /signups|not allowed/i.test(error.message)
+            ? "New accounts are invite only at the moment."
+            : error.message,
+        );
+        return;
+      }
+      if (data.session) {
+        navigate({ to: "/inventory", replace: true });
+        return;
+      }
+      setStep("sent");
+      return;
+    }
+    const { error } = await supabase.auth.signInWithPassword({ email: address, password });
+    setBusy(false);
+    if (error) {
+      setMessage(
+        /confirm/i.test(error.message)
+          ? "Please confirm your email first — check your inbox for our link."
+          : "That email and password don't match. Try again, or use “Forgot password?”.",
+      );
+      return;
+    }
+    navigate({ to: "/inventory", replace: true });
+  }
+
+  async function forgot() {
+    const address = email.trim().toLowerCase();
+    if (!address) {
+      setMessage("Enter your email above first, then tap “Forgot password?” again.");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(address, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setBusy(false);
+    setMessage(
+      error ? error.message : `If ${address} has an account, we've emailed a link to set a new password.`,
+    );
+  }
+
   async function google() {
     setBusy(true);
     setMessage(null);
@@ -108,12 +174,91 @@ function AuthPage() {
         <LogoWordmark className="mt-3 text-3xl" />
         <p className="mt-1 text-sm text-muted-foreground">
           {step === "email"
-            ? "Enter your email and we'll send you a sign-in link — no password needed."
+            ? usePassword
+              ? creating
+                ? "Create your account with an email and password."
+                : "Sign in with your email and password."
+              : "Enter your email and we'll send you a sign-in link."
             : `We emailed ${email}. Tap the link in that email and you're in.`}
+        </p>
+        {step === "email" && (
+          <button
+            type="button"
+            onClick={() => {
+              setUsePassword((u) => !u);
+              setMessage(null);
+            }}
+            className="mt-2 text-sm font-semibold text-brand"
+          >
+            {usePassword ? "Email me a link instead" : "Use a password instead"}
+          </button>
+        )}
+        <p className="hidden">
         </p>
       </div>
 
-      {step === "email" ? (
+      {step === "email" && usePassword ? (
+        <form onSubmit={passwordSubmit} className="flex flex-col gap-3">
+          {creating && (
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your name (optional)"
+              autoComplete="name"
+              className="rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
+            />
+          )}
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            aria-label="Email"
+            autoComplete="email"
+            inputMode="email"
+            className="rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
+          />
+          <input
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder={creating ? "Choose a password (8+ characters)" : "Password"}
+            aria-label="Password"
+            autoComplete={creating ? "new-password" : "current-password"}
+            className="rounded-2xl border border-border bg-surface-2 px-4 py-3 outline-none focus:border-brand"
+          />
+          <button
+            type="submit"
+            disabled={busy || !email.trim() || !password}
+            className="rounded-2xl bg-primary px-4 py-3.5 font-semibold text-primary-foreground disabled:opacity-60"
+          >
+            {busy ? "One moment…" : creating ? "Create account" : "Sign in"}
+          </button>
+          <div className="flex items-center justify-between text-sm">
+            {signupsOpen ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setCreating((c) => !c);
+                  setMessage(null);
+                }}
+                className="py-2 text-brand"
+              >
+                {creating ? "I already have an account" : "New here? Create an account"}
+              </button>
+            ) : (
+              <span />
+            )}
+            {!creating && (
+              <button type="button" onClick={forgot} className="py-2 text-muted-foreground underline">
+                Forgot password?
+              </button>
+            )}
+          </div>
+        </form>
+      ) : step === "email" ? (
         <form onSubmit={sendLink} className="flex flex-col gap-3">
           {!signupsOpen && (
             <p className="rounded-2xl bg-surface-2 px-4 py-3 text-center text-sm text-muted-foreground">
