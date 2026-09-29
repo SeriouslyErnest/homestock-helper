@@ -26,3 +26,5 @@ database read-back.
 | Scanner without camera | 2026-09-29 | Pass | Falls back to type-the-barcode |
 | Scanner sideways barcodes | — | Not verified | Needs a real phone camera |
 | Admin console + two-factor login | — | Not verified | Needs the operator's authenticator |
+
+## 2026-09-29 — Scanner: native BarcodeDetector (any angle) with ZXing fallback — typecheck only; needs real phone test
