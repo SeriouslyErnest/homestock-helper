@@ -10,12 +10,10 @@ function isoToDisplay(iso: string): string {
 /** Strict calendar check; returns ISO string or null. Never "rolls" dates. */
 export function parseDisplayDate(text: string): string | null {
   const t = text.trim();
-  let d: string, mo: string, y: string;
-  const slash = /^(\d{1,2})[/.\-\s](\d{1,2})[/.\-\s](\d{4})$/.exec(t);
-  const digits = /^(\d{2})(\d{2})(\d{4})$/.exec(t);
-  if (slash) [, d, mo, y] = slash;
-  else if (digits) [, d, mo, y] = digits;
-  else return null;
+  const m =
+    /^(\d{1,2})[/.\-\s](\d{1,2})[/.\-\s](\d{4})$/.exec(t) ?? /^(\d{2})(\d{2})(\d{4})$/.exec(t);
+  if (!m) return null;
+  const d = m[1] ?? "", mo = m[2] ?? "", y = m[3] ?? "";
   const day = Number(d), month = Number(mo), year = Number(y);
   if (year < 1900 || year > 2200 || month < 1 || month > 12 || day < 1) return null;
   const dt = new Date(Date.UTC(year, month - 1, day));
