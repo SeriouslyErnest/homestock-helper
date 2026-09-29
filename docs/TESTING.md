@@ -1,0 +1,27 @@
+# Test log
+
+What has been checked end-to-end, when, and how. Re-test a feature when its
+code has changed since its "Last tested" date.
+
+Test account: `e2e.tester@homestock.test` (id 401c1c70-8a8f-4e79-8e50-fc2bcfd07b60),
+home "E2E Home". Created with a confirmed email via the admin API; reset its
+password the same way before the next run (it is never stored in the repo).
+Method: headless browser at phone size (390x844) against the preview, plus
+database read-back.
+
+| Feature | Last tested (UTC) | Result | Notes |
+| --- | --- | --- | --- |
+| Password sign-in | 2026-09-29 | Pass | Right password signs in; wrong password shows the friendly "don't match" message |
+| Password sign-up | 2026-09-29 | Partial | Form works; a real inbox confirmation link was not tested (test domains can't receive mail) |
+| Forgot password / reset page | 2026-09-29 | Partial | Reset page loads and waits for the email link; the emailed link itself was not tested |
+| Account approval holding screen | 2026-09-29 | Pass | New account with approval ON sees "Thanks for signing up"; pending row created |
+| First entry after approval | 2026-09-29 | Pass | After approval, the user reaches setup; first_entered_at recorded |
+| Telegram sign-up alerts (waiting / first time in) | — | Not verified | Triggers ran; delivery to Telegram not observed from the test |
+| Create home (setup) | 2026-09-29 | Pass | |
+| Welcome tour (5 steps) | 2026-09-29 | Pass | Next x4 then Finish lands on Inventory |
+| Expiry date field DD/MM/YYYY | 2026-09-29 | Pass | 31/02/2026 refused with message; typing 15102026 becomes 15/10/2026; saved and shown the same on the item page |
+| Running low rule (current < minimum) | 2026-09-29 | Pass | 1 of min 1 = not low (inventory, item page, shopping); 1 of min 3 = LOW and suggested on Shopping |
+| Use one + Undo | 2026-09-29 | Pass | Consume then Undo; events logged consume, restock; quantity back to 1 |
+| Scanner without camera | 2026-09-29 | Pass | Falls back to type-the-barcode |
+| Scanner sideways barcodes | — | Not verified | Needs a real phone camera |
+| Admin console + two-factor login | — | Not verified | Needs the operator's authenticator |
