@@ -3,9 +3,10 @@
 What has been checked end-to-end, when, and how. Re-test a feature when its
 code has changed since its "Last tested" date.
 
-Test account: `e2e.tester@homestock.test` (id 401c1c70-8a8f-4e79-8e50-fc2bcfd07b60),
-home "E2E Home". Created with a confirmed email via the admin API; reset its
-password the same way before the next run (it is never stored in the repo).
+Test accounts: none. All test accounts and test homes were deleted on
+2026-09-29 after the end-to-end run. Create a fresh confirmed account via the
+admin API for the next run and delete it afterwards.
+
 Method: headless browser at phone size (390x844) against the preview, plus
 database read-back.
 
