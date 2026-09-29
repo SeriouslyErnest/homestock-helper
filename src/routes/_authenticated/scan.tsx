@@ -283,7 +283,24 @@ function ScanPage() {
     async function start() {
       try {
         const { BrowserMultiFormatReader } = await import("@zxing/browser");
-        const reader = new BrowserMultiFormatReader();
+        const { DecodeHintType, BarcodeFormat } = await import("@zxing/library");
+        // tryHarder lets ZXing also try the frame rotated 90°, so vertical /
+        // sideways barcodes decode. Restricting formats offsets the extra cost.
+        const hints = new Map<unknown, unknown>([
+          [DecodeHintType.TRY_HARDER, true],
+          [
+            DecodeHintType.POSSIBLE_FORMATS,
+            [
+              BarcodeFormat.EAN_13,
+              BarcodeFormat.EAN_8,
+              BarcodeFormat.UPC_A,
+              BarcodeFormat.UPC_E,
+              BarcodeFormat.CODE_128,
+              BarcodeFormat.QR_CODE,
+            ],
+          ],
+        ]);
+        const reader = new BrowserMultiFormatReader(hints as never);
         const devices = await BrowserMultiFormatReader.listVideoInputDevices();
         if (cancelled) return;
         if (devices.length === 0) {
@@ -291,16 +308,33 @@ function ScanPage() {
           setMessage("No camera found. Enter the barcode by hand below.");
           return;
         }
-        controls = await reader.decodeFromVideoDevice(
-          undefined,
-          videoRef.current ?? undefined,
-          (res) => {
-            if (res && !handled.current) {
-              handled.current = true;
-              void handleCode.current(res.getText());
-            }
-          },
-        );
+        const onResult = (res: { getText: () => string } | undefined) => {
+          if (res && !handled.current) {
+            handled.current = true;
+            void handleCode.current(res.getText());
+          }
+        };
+        try {
+          controls = await reader.decodeFromConstraints(
+            {
+              video: {
+                facingMode: { ideal: "environment" },
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                advanced: [{ focusMode: "continuous" } as MediaTrackConstraintSet],
+              },
+            },
+            videoRef.current ?? undefined,
+            onResult,
+          );
+        } catch {
+          // Some devices reject the constraints — fall back to the default camera.
+          controls = await reader.decodeFromVideoDevice(
+            undefined,
+            videoRef.current ?? undefined,
+            onResult,
+          );
+        }
         // Left the page while the camera was still starting up.
         if (cancelled) controls.stop();
       } catch {
