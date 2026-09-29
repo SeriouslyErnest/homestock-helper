@@ -1,3 +1,4 @@
+import { DateField } from "@/components/date-field";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Minus, Plus } from "lucide-react";
 import { useState } from "react";
@@ -280,13 +281,7 @@ function AddPage() {
               <label htmlFor="expires" className={label}>
                 Expires (optional)
               </label>
-              <input
-                id="expires"
-                type="date"
-                value={expires}
-                onChange={(e) => setExpires(e.target.value)}
-                className={field}
-              />
+              <DateField id="expires" value={expires} onChange={setExpires} className={field} />
               <div className="mt-2 flex gap-2">
                 {[3, 5, 14].map((d) => {
                   const target = quickExpiry(d);
