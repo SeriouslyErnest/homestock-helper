@@ -110,7 +110,7 @@ function AuthPage() {
       setBusy(false);
       if (error) {
         setMessage(
-          /signups|not allowed/i.test(error.message)
+          /signups? (are )?not allowed|signup is disabled/i.test(error.message)
             ? "New accounts are invite only at the moment."
             : error.message,
         );
