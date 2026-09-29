@@ -40,7 +40,7 @@ const FLOWS: Flow[] = [
     img: scan,
     alt: "Scan page with camera area, Restock several switch, barcode box and Add without a barcode",
     steps: [
-      "Tap the big scan button in the middle of the bottom bar and point the camera at a barcode — or type the number.",
+      "Tap the big scan button in the middle of the bottom bar and point the camera at a barcode — sideways or upside down works too — or type the number.",
       "Already at home? You'll see how many you have, where, and whether you need more. Set the amount and tap “Add 1 to stock” — it's added straight away with Undo, ready for the next scan.",
       "Switch on “Restock several” to keep scanning a whole bag, adjust amounts, then save once. Products HomeStock hasn't seen wait in the list until you give them a name.",
       "No barcode? Tap “Add without a barcode”.",
@@ -51,7 +51,7 @@ const FLOWS: Flow[] = [
     img: add,
     alt: "Add an item form with name, quantity stepper, category, location, expiry and keep-at-least",
     steps: [
-      "Give it a name, then optionally set how many, category, where it's kept and when it expires (quick 3, 5 and 14-day buttons).",
+      "Give it a name, then optionally set how many, category, where it's kept and when it expires — type it as DD/MM/YYYY, pick from the calendar, or tap the quick 3, 5 and 14-day buttons.",
       "“Keep at least” is the amount your home likes to have. Drop below it and the item shows as running low — for everyone.",
       "Names you give unknown barcodes are remembered, so the next scan in any home fills in instantly.",
     ],
