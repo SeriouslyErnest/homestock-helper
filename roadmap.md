@@ -55,3 +55,5 @@
 - [x] Docs + user guide updated; end-to-end test done; password sign-in reverted, test account removed
 - [x] Telegram admin alerts ("🔐 ADMIN") — waiting/first-entry toggles, dedicated admin destinations, multi-account chats
 - [x] Admin console two-factor (TOTP, mandatory) with one-time recovery codes
+
+- [x] Password sign-in re-enabled (with reset), DD/MM/YYYY date field, rotated-barcode scanning
