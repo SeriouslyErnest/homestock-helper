@@ -436,7 +436,13 @@ function ScanPage() {
               }
               src = rotated;
             }
-            const res = await reader.decodeFromCanvas(src).catch(() => null);
+            // decodeFromCanvas throws NotFound when there's no code in frame.
+            let res: { getText: () => string } | null = null;
+            try {
+              res = reader.decodeFromCanvas(src);
+            } catch {
+              res = null;
+            }
             if (res && !handled.current && !stopped) {
               handled.current = true;
               void handleCode.current(res.getText());
