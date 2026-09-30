@@ -13,3 +13,6 @@
 - Telegram links: one chat may serve many accounts (telegram_links keyed by user_id, no chat_id uniqueness); admin alert destinations live in telegram_admin_links — separate and authoritative, never touched by user-side disconnects or /stop.
 - Admin console requires a second factor: every admin server fn demands aal2 (TOTP-verified session); one-time recovery codes in public.admin_recovery_codes are salted hashes and only let an operator re-enroll, never bypass the gate.
 - Test log: docs/TESTING.md records what was tested and when; update it after every test run.
+
+- Abuse limits: per-user throttles use public.rate_limit_hits (join-code misses 10/h, promo misses 5/15min in SQL; recovery-code misses 5/15min and Open Food Facts lookups 30/min via admin.server underLimit). Text lengths and https-only image URLs are enforced by BEFORE triggers on items/shopping_items/households/profiles/household_members/limit_requests — why: every writer (browser or server) hits the same rule.
+- Homes are created only via create_household (no direct INSERT policy); item/shopping updates carry WITH CHECK membership; telegram_admin_links is written only by the bot webhook — why: stops plan-limit bypass, moving rows into others' homes, and redirecting admin alerts.

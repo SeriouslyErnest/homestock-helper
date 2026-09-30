@@ -28,3 +28,6 @@ database read-back.
 | Admin console + two-factor login | — | Not verified | Needs the operator's authenticator |
 
 ## 2026-09-29 — Scanner: native BarcodeDetector (any angle) with ZXing fallback — typecheck only; needs real phone test
+
+## 2026-09-30 — abuse hardening
+- Rate limits (join code, promo, recovery code, product lookup), text length limits, admin input checks, tightened access rules — typecheck only; not browser-tested.
