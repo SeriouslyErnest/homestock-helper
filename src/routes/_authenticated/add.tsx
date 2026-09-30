@@ -196,6 +196,7 @@ function AddPage() {
             Name *
           </label>
           <input
+            maxLength={200}
             id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -265,6 +266,7 @@ function AddPage() {
                 Location
               </label>
               <input
+                maxLength={200}
                 id="location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
@@ -330,6 +332,7 @@ function AddPage() {
             Notes
           </label>
           <textarea
+            maxLength={1000}
             id="notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}

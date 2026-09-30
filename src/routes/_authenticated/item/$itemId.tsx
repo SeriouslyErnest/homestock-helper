@@ -363,6 +363,7 @@ function ItemPage() {
             Name
           </label>
           <input
+            maxLength={200}
             id="d-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -393,6 +394,7 @@ function ItemPage() {
                 Location
               </label>
               <input
+                maxLength={200}
                 id="d-loc"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
@@ -407,6 +409,7 @@ function ItemPage() {
               Unit
             </label>
             <input
+              maxLength={200}
               id="d-unit"
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
@@ -444,6 +447,7 @@ function ItemPage() {
             Notes
           </label>
           <textarea
+            maxLength={1000}
             id="d-notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}

@@ -208,6 +208,7 @@ function ShoppingPage() {
       <form onSubmit={addQuick} className="mb-4">
         <div className="flex flex-wrap items-center gap-1.5 min-[360px]:flex-nowrap">
           <input
+            maxLength={200}
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Add something to buy…"
@@ -315,6 +316,7 @@ function ShoppingPage() {
             <label className="grid gap-1.5 text-sm font-bold">
               Notes
               <textarea
+                maxLength={1000}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 rows={2}

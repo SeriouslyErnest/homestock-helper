@@ -284,6 +284,7 @@ function MorePage() {
         ) : showCreateHome ? (
           <form onSubmit={createNewHome} className="mt-3 flex gap-2">
             <input
+              maxLength={200}
               value={newHomeName}
               onChange={(e) => setNewHomeName(e.target.value)}
               placeholder="Beach house"
@@ -316,6 +317,7 @@ function MorePage() {
         </label>
         <div className="flex gap-2">
           <input
+            maxLength={80}
             id="hh-name"
             value={householdName}
             onChange={(e) => setHouseholdName(e.target.value)}
@@ -579,6 +581,7 @@ function MorePage() {
         </p>
         <form onSubmit={join} className="flex gap-2">
           <input
+            maxLength={200}
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
             placeholder="AB12CD"

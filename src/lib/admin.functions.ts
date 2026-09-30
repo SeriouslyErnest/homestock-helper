@@ -147,7 +147,6 @@ async function guard(routeId: string, context: AdminContext, allowed?: AdminRole
   return role;
 }
 
-
 export const adminOverview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { routeId: string }) => cleanInput(input))
@@ -368,7 +367,9 @@ export const adminGrantAccess = createServerFn({ method: "POST" })
 
 export const adminRevokeGrant = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string; grantId: string; reason: string }) => cleanInput(input))
+  .inputValidator((input: { routeId: string; grantId: string; reason: string }) =>
+    cleanInput(input),
+  )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN", "BILLING_ADMIN"]);
     if (!data.reason.trim()) throw new Error("A reason is required");
@@ -480,7 +481,8 @@ export const adminCreatePromotion = createServerFn({ method: "POST" })
 export const adminSetPromotionStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (input: { routeId: string; code: string; status: "active" | "paused" | "expired" }) => cleanInput(input),
+    (input: { routeId: string; code: string; status: "active" | "paused" | "expired" }) =>
+      cleanInput(input),
   )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN", "BILLING_ADMIN"]);
@@ -536,7 +538,9 @@ export const adminPlans = createServerFn({ method: "POST" })
 
 export const adminSetPlanEnforcement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string; tier: string; enforced: boolean }) => cleanInput(input))
+  .inputValidator((input: { routeId: string; tier: string; enforced: boolean }) =>
+    cleanInput(input),
+  )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN"]);
     const { writeAudit } = await import("./admin.server");
@@ -991,7 +995,8 @@ export const adminProductReports = createServerFn({ method: "POST" })
 export const adminResolveProductReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (input: { routeId: string; barcode: string; action: "keep" | "remove" | "ban" }) => cleanInput(input),
+    (input: { routeId: string; barcode: string; action: "keep" | "remove" | "ban" }) =>
+      cleanInput(input),
   )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN", "SUPPORT_ADMIN"]);
@@ -1061,9 +1066,7 @@ async function alertAdmins(kind: "waiting" | "entered", email: string | undefine
     const { maskEmail } = await import("./admin.server");
     // Admin alert destinations are authoritative and separate from user reminder
     // links: disconnecting a user mapping never removes an admin mapping.
-    const { data: links } = await supabaseAdmin
-      .from("telegram_admin_links")
-      .select("chat_id");
+    const { data: links } = await supabaseAdmin.from("telegram_admin_links").select("chat_id");
     if (!links?.length) return;
     const masked = escapeHtml(email ? maskEmail(email) : "hidden");
     const when = new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC";
@@ -1123,7 +1126,9 @@ export const adminApprovalSettings = createServerFn({ method: "POST" })
 
 export const adminSetSignupAlerts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string; waiting: boolean; entered: boolean }) => cleanInput(input))
+  .inputValidator((input: { routeId: string; waiting: boolean; entered: boolean }) =>
+    cleanInput(input),
+  )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN"]);
     const { writeAudit } = await import("./admin.server");
@@ -1218,8 +1223,8 @@ export const adminListApplications = createServerFn({ method: "POST" })
 
 export const adminDecideApplication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(
-    (input: { routeId: string; userId: string; decision: "approved" | "rejected" }) => cleanInput(input),
+  .inputValidator((input: { routeId: string; userId: string; decision: "approved" | "rejected" }) =>
+    cleanInput(input),
   )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN", "SUPPORT_ADMIN"]);
@@ -1400,10 +1405,7 @@ export const adminUnlinkTelegramAlerts = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin
-      .from("telegram_admin_links")
-      .delete()
-      .eq("user_id", context.userId);
+    await supabaseAdmin.from("telegram_admin_links").delete().eq("user_id", context.userId);
     const { writeAudit } = await import("./admin.server");
     await writeAudit({
       adminUserId: context.userId,
@@ -1516,8 +1518,14 @@ export const adminUseRecoveryCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { routeId: string; code: string }) => cleanInput(input))
   .handler(async ({ data, context }) => {
-    const { matchesConsoleRoute, requireAdmin, hashRecoveryCode, writeAudit, underLimit, recordHit } =
-      await import("./admin.server");
+    const {
+      matchesConsoleRoute,
+      requireAdmin,
+      hashRecoveryCode,
+      writeAudit,
+      underLimit,
+      recordHit,
+    } = await import("./admin.server");
     if (!matchesConsoleRoute(data.routeId)) throw new Error("Not found");
     await requireAdmin(context.userId);
     if (!(await underLimit(context.userId, "recovery_miss", 5, 15 * 60, false))) {

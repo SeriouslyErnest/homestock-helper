@@ -45,7 +45,7 @@ export function PromoCard() {
           ? "You've already used this code."
           : raw.includes("promo_too_many")
             ? "Too many tries. Wait 15 minutes and try again."
-          : "That code can't be used. Check it and try again.",
+            : "That code can't be used. Check it and try again.",
       );
     },
   });
