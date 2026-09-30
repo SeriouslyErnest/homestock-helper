@@ -24,6 +24,8 @@ export function PromoCard() {
     mutationFn: async () => {
       const { data, error } = await supabase.rpc("redeem_promo", { _code: code.trim() });
       if (error) throw error;
+      const r = data as unknown as { error?: string };
+      if (r?.error) throw new Error(r.error);
       return data as unknown as { tier: string; ends_at: string | null; campaign: string };
     },
     onSuccess: (result) => {
@@ -41,6 +43,8 @@ export function PromoCard() {
       setMessage(
         raw.includes("promo_already_used")
           ? "You've already used this code."
+          : raw.includes("promo_too_many")
+            ? "Too many tries. Wait 15 minutes and try again."
           : "That code can't be used. Check it and try again.",
       );
     },

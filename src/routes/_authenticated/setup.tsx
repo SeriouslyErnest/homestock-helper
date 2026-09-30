@@ -74,10 +74,12 @@ function SetupPage() {
     });
     setBusy(false);
     if (error) {
-      setMessage(error.message);
+      setMessage("Something went wrong. Try again.");
     } else if (data === "member") {
       await queryClient.invalidateQueries();
       navigate({ to: "/inventory" });
+    } else if (data === "too_many") {
+      setMessage("Too many wrong codes. Wait an hour and try again.");
     } else if (data === "blocked") {
       setMessage("That home isn't accepting a request from you.");
     } else {

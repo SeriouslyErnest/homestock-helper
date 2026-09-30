@@ -226,11 +226,13 @@ function MorePage() {
     });
     setJoining(false);
     if (error) {
-      setJoinMessage(error.message);
+      setJoinMessage("Something went wrong. Try again.");
     } else if (data === "member") {
       setJoinMessage("You're already a member of that household.");
     } else if (data === "blocked") {
       setJoinMessage("That household isn't accepting a request from you.");
+    } else if (data === "too_many") {
+      setJoinMessage("Too many wrong codes. Wait an hour and try again.");
     } else if (data === "closed") {
       setJoinMessage("That household isn't accepting new members right now.");
     } else {
