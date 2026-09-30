@@ -1516,11 +1516,13 @@ export const adminUseRecoveryCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { routeId: string; code: string }) => cleanInput(input))
   .handler(async ({ data, context }) => {
-    const { matchesConsoleRoute, requireAdmin, hashRecoveryCode, writeAudit } = await import(
-      "./admin.server"
-    );
+    const { matchesConsoleRoute, requireAdmin, hashRecoveryCode, writeAudit, underLimit, recordHit } =
+      await import("./admin.server");
     if (!matchesConsoleRoute(data.routeId)) throw new Error("Not found");
     await requireAdmin(context.userId);
+    if (!(await underLimit(context.userId, "recovery_miss", 5, 15 * 60, false))) {
+      throw new Error("Too many wrong codes. Wait 15 minutes and try again.");
+    }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const hash = hashRecoveryCode(data.code ?? "");
     const { data: row } = await supabaseAdmin
@@ -1530,7 +1532,16 @@ export const adminUseRecoveryCode = createServerFn({ method: "POST" })
       .eq("code_hash", hash)
       .is("used_at", null)
       .maybeSingle();
-    if (!row) throw new Error("That recovery code is not valid.");
+    if (!row) {
+      await recordHit(context.userId, "recovery_miss");
+      await writeAudit({
+        adminUserId: context.userId,
+        actionType: "admin_mfa.recovery_code_failed",
+        targetType: "admin",
+        targetId: context.userId,
+      });
+      throw new Error("That recovery code is not valid.");
+    }
     const { data: claimed } = await supabaseAdmin
       .from("admin_recovery_codes")
       .update({ used_at: new Date().toISOString() })

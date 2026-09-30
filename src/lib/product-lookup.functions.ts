@@ -22,8 +22,12 @@ export const fetchAndCacheProduct = createServerFn({ method: "POST" })
     if (!/^[0-9]{6,18}$/.test(barcode)) throw new Error("Invalid barcode");
     return { barcode };
   })
-  .handler(async ({ data }): Promise<FetchedProduct | null> => {
+  .handler(async ({ data, context }): Promise<FetchedProduct | null> => {
     const code = data.barcode;
+    // At most 30 outside lookups per person per minute, so nobody can get the
+    // app blocked by Open Food Facts. Over the limit, the person just types the name.
+    const { underLimit } = await import("./admin.server");
+    if (!(await underLimit(context.userId, "off_lookup", 30, 60))) return null;
     let info: FetchedProduct | null = null;
     try {
       const res = await fetch(

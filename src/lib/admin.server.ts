@@ -73,6 +73,35 @@ export function hashRecoveryCode(code: string): string {
     .digest("hex");
 }
 
+/**
+ * Simple per-user throttle backed by public.rate_limit_hits. Returns false
+ * when the caller already has `max` hits in the window; otherwise records one
+ * (when `record`) and returns true.
+ */
+export async function underLimit(
+  userId: string,
+  bucket: string,
+  max: number,
+  windowSeconds: number,
+  record = true,
+): Promise<boolean> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const since = new Date(Date.now() - windowSeconds * 1000).toISOString();
+  const { count } = await supabaseAdmin
+    .from("rate_limit_hits")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("bucket", bucket)
+    .gt("created_at", since);
+  if ((count ?? 0) >= max) return false;
+  if (record) await supabaseAdmin.from("rate_limit_hits").insert({ user_id: userId, bucket });
+  return true;
+}
+
+export async function recordHit(userId: string, bucket: string): Promise<void> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  await supabaseAdmin.from("rate_limit_hits").insert({ user_id: userId, bucket });
+}
 
 export async function writeAudit(entry: {
   adminUserId: string;
