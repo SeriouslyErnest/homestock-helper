@@ -162,7 +162,7 @@ Telegram reminders, restart welcome, promo code, account).
 - No activity-history screen; events are used for undo, ranking and admin counts.
 - No automatic matching of buy requests to products — completion is manual.
 - No household deletion UI.
-- Sign-in is by email + password, email link, or Google — no 6-digit code. New password accounts confirm their email first; "Forgot password?" emails a reset link to /reset-password.
+- Sign-in is by email link or Google only — no passwords and no 6-digit code.
 - Expiry dates are typed as DD/MM/YYYY (or picked from a calendar); impossible dates are refused, never auto-corrected.
 - The scanner reads sideways/upside-down barcodes (EAN, UPC, Code 128, QR) using the rear camera.
 - Telegram admin alerts never include the admin console URL — the hidden route must not leak into chat histories.
