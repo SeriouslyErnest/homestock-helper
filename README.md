@@ -48,6 +48,7 @@ Built with TanStack Start (React 19), Tailwind CSS v4 and Supabase
   limit users can tap "Ask for another home", which lands in the admin
   dashboard inbox.
 - **Sign-in** — email link or Google only (no passwords). Admins can switch
+- **Abuse limits** — per-person throttles in `rate_limit_hits` (invite codes 10/h, promo codes 5/15 min, admin recovery codes 5/15 min, product lookups 30/min); text length caps and https-only photo links enforced in the database.
   sign-ups to invite-only and optionally require approval of new accounts.
 - **Welcome flow** — 5-step tour once per account (`user_onboarding`),
   skip/resume, restart from More; one-time first-use tips per screen.

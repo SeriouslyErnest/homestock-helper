@@ -163,6 +163,7 @@ Telegram reminders, restart welcome, promo code, account).
 - No automatic matching of buy requests to products — completion is manual.
 - No household deletion UI.
 - Sign-in is by email link or Google only — no passwords and no 6-digit code.
+- Abuse limits: 10 wrong invite codes per hour, 5 wrong promo codes per 15 minutes, 5 wrong admin recovery codes per 15 minutes, 30 product lookups per minute per person. Text caps: item/shopping names 200, notes 1,000, places 100, home names 80, people names 60; photo links must be https.
 - Expiry dates are typed as DD/MM/YYYY (or picked from a calendar); impossible dates are refused, never auto-corrected.
 - The scanner reads sideways/upside-down barcodes (EAN, UPC, Code 128, QR) using the rear camera.
 - Telegram admin alerts never include the admin console URL — the hidden route must not leak into chat histories.
