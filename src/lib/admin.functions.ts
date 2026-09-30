@@ -323,7 +323,7 @@ export const adminGrantAccess = createServerFn({ method: "POST" })
       source: "complimentary" | "trial";
       days: number | null;
       reason: string;
-    }) => input,
+    }) => cleanInput(input),
   )
   .handler(async ({ data, context }) => {
     const role = await guard(data.routeId, context, [
@@ -439,7 +439,7 @@ export const adminCreatePromotion = createServerFn({ method: "POST" })
       durationDays: number;
       endsAt: string | null;
       maxRedemptions: number | null;
-    }) => input,
+    }) => cleanInput(input),
   )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN", "BILLING_ADMIN"]);
@@ -480,7 +480,7 @@ export const adminCreatePromotion = createServerFn({ method: "POST" })
 export const adminSetPromotionStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (input: { routeId: string; code: string; status: "active" | "paused" | "expired" }) => input,
+    (input: { routeId: string; code: string; status: "active" | "paused" | "expired" }) => cleanInput(input),
   )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN", "BILLING_ADMIN"]);
@@ -566,7 +566,7 @@ export const adminSetPlanLimits = createServerFn({ method: "POST" })
       maxOwnedHouseholds: number;
       maxMembers: number;
       maxItems: number;
-    }) => input,
+    }) => cleanInput(input),
   )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN"]);
@@ -805,7 +805,7 @@ export const adminSetCategories = createServerFn({ method: "POST" })
       routeId: string;
       categories: AdminCategory[];
       renames: { from: string; to: string }[];
-    }) => input,
+    }) => cleanInput(input),
   )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN"]);
@@ -991,7 +991,7 @@ export const adminProductReports = createServerFn({ method: "POST" })
 export const adminResolveProductReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (input: { routeId: string; barcode: string; action: "keep" | "remove" | "ban" }) => input,
+    (input: { routeId: string; barcode: string; action: "keep" | "remove" | "ban" }) => cleanInput(input),
   )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN", "SUPPORT_ADMIN"]);
@@ -1219,7 +1219,7 @@ export const adminListApplications = createServerFn({ method: "POST" })
 export const adminDecideApplication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (input: { routeId: string; userId: string; decision: "approved" | "rejected" }) => input,
+    (input: { routeId: string; userId: string; decision: "approved" | "rejected" }) => cleanInput(input),
   )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN", "SUPPORT_ADMIN"]);
