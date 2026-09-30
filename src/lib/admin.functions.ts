@@ -1,6 +1,30 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+/** Rejects oversized or malformed payloads before any admin handler runs. */
+function cleanInput<T>(input: T): T {
+  const walk = (v: unknown, depth: number): void => {
+    if (depth > 4) throw new Error("Invalid input");
+    if (typeof v === "string") {
+      if (v.length > 2000) throw new Error("Input too long");
+    } else if (typeof v === "number") {
+      if (!Number.isFinite(v)) throw new Error("Invalid number");
+    } else if (Array.isArray(v)) {
+      if (v.length > 200) throw new Error("Too many values");
+      v.forEach((x) => walk(x, depth + 1));
+    } else if (v && typeof v === "object") {
+      Object.values(v).forEach((x) => walk(x, depth + 1));
+    } else if (v !== null && v !== undefined && typeof v !== "boolean") {
+      throw new Error("Invalid input");
+    }
+  };
+  if (!input || typeof input !== "object") throw new Error("Invalid input");
+  walk(input, 0);
+  const rid = (input as { routeId?: unknown }).routeId;
+  if (typeof rid !== "string" || rid.length > 200) throw new Error("Not found");
+  return input;
+}
+
 export type AdminRole = "SUPER_ADMIN" | "BILLING_ADMIN" | "SUPPORT_ADMIN" | "READ_ONLY_ADMIN";
 
 export type AdminAccount = {
@@ -89,7 +113,7 @@ export const syncAccountDirectory = createServerFn({ method: "POST" })
  */
 export const adminSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string }) => input)
+  .inputValidator((input: { routeId: string }) => cleanInput(input))
   .handler(async ({ data, context }) => {
     const { matchesConsoleRoute, requireAdmin } = await import("./admin.server");
     if (!matchesConsoleRoute(data.routeId)) throw new Error("Not found");
@@ -123,10 +147,9 @@ async function guard(routeId: string, context: AdminContext, allowed?: AdminRole
   return role;
 }
 
-
 export const adminOverview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string }) => input)
+  .inputValidator((input: { routeId: string }) => cleanInput(input))
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -188,7 +211,7 @@ export const adminOverview = createServerFn({ method: "POST" })
 
 export const adminListAccounts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string; search?: string }) => input)
+  .inputValidator((input: { routeId: string; search?: string }) => cleanInput(input))
   .handler(async ({ data, context }): Promise<AdminAccount[]> => {
     await guard(data.routeId, context);
     const { hashEmail } = await import("./admin.server");
@@ -229,7 +252,7 @@ export const adminListAccounts = createServerFn({ method: "POST" })
 
 export const adminAccountDetail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string; userId: string }) => input)
+  .inputValidator((input: { routeId: string; userId: string }) => cleanInput(input))
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -299,7 +322,7 @@ export const adminGrantAccess = createServerFn({ method: "POST" })
       source: "complimentary" | "trial";
       days: number | null;
       reason: string;
-    }) => input,
+    }) => cleanInput(input),
   )
   .handler(async ({ data, context }) => {
     const role = await guard(data.routeId, context, [
@@ -344,7 +367,9 @@ export const adminGrantAccess = createServerFn({ method: "POST" })
 
 export const adminRevokeGrant = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string; grantId: string; reason: string }) => input)
+  .inputValidator((input: { routeId: string; grantId: string; reason: string }) =>
+    cleanInput(input),
+  )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN", "BILLING_ADMIN"]);
     if (!data.reason.trim()) throw new Error("A reason is required");
@@ -373,7 +398,7 @@ export const adminRevokeGrant = createServerFn({ method: "POST" })
 
 export const adminListPromotions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string }) => input)
+  .inputValidator((input: { routeId: string }) => cleanInput(input))
   .handler(async ({ data, context }): Promise<AdminPromotion[]> => {
     await guard(data.routeId, context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -415,7 +440,7 @@ export const adminCreatePromotion = createServerFn({ method: "POST" })
       durationDays: number;
       endsAt: string | null;
       maxRedemptions: number | null;
-    }) => input,
+    }) => cleanInput(input),
   )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN", "BILLING_ADMIN"]);
@@ -456,7 +481,8 @@ export const adminCreatePromotion = createServerFn({ method: "POST" })
 export const adminSetPromotionStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (input: { routeId: string; code: string; status: "active" | "paused" | "expired" }) => input,
+    (input: { routeId: string; code: string; status: "active" | "paused" | "expired" }) =>
+      cleanInput(input),
   )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN", "BILLING_ADMIN"]);
@@ -479,7 +505,7 @@ export const adminSetPromotionStatus = createServerFn({ method: "POST" })
 
 export const adminAuditLog = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string }) => input)
+  .inputValidator((input: { routeId: string }) => cleanInput(input))
   .handler(async ({ data, context }): Promise<AdminAuditEntry[]> => {
     await guard(data.routeId, context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -502,7 +528,7 @@ export const adminAuditLog = createServerFn({ method: "POST" })
 
 export const adminPlans = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string }) => input)
+  .inputValidator((input: { routeId: string }) => cleanInput(input))
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -512,7 +538,9 @@ export const adminPlans = createServerFn({ method: "POST" })
 
 export const adminSetPlanEnforcement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string; tier: string; enforced: boolean }) => input)
+  .inputValidator((input: { routeId: string; tier: string; enforced: boolean }) =>
+    cleanInput(input),
+  )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN"]);
     const { writeAudit } = await import("./admin.server");
@@ -542,7 +570,7 @@ export const adminSetPlanLimits = createServerFn({ method: "POST" })
       maxOwnedHouseholds: number;
       maxMembers: number;
       maxItems: number;
-    }) => input,
+    }) => cleanInput(input),
   )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN"]);
@@ -577,7 +605,7 @@ export const adminSetPlanLimits = createServerFn({ method: "POST" })
  */
 export const adminClaimConsole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string }) => input)
+  .inputValidator((input: { routeId: string }) => cleanInput(input))
   .handler(async ({ data, context }) => {
     const { matchesConsoleRoute, writeAudit } = await import("./admin.server");
     if (!matchesConsoleRoute(data.routeId)) throw new Error("Not found");
@@ -611,7 +639,7 @@ export const adminClaimConsole = createServerFn({ method: "POST" })
 /** True when no operator exists yet, so the claim button can be offered. */
 export const adminConsoleUnclaimed = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string }) => input)
+  .inputValidator((input: { routeId: string }) => cleanInput(input))
   .handler(async ({ data }) => {
     const { matchesConsoleRoute } = await import("./admin.server");
     if (!matchesConsoleRoute(data.routeId)) return { unclaimed: false };
@@ -633,7 +661,7 @@ export type AdminInvite = {
 /** Current state of the "anyone can sign up" switch, for the console. */
 export const adminSignupSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string }) => input)
+  .inputValidator((input: { routeId: string }) => cleanInput(input))
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -647,7 +675,7 @@ export const adminSignupSettings = createServerFn({ method: "POST" })
 
 export const adminSetSignupsEnabled = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string; enabled: boolean }) => input)
+  .inputValidator((input: { routeId: string; enabled: boolean }) => cleanInput(input))
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN"]);
     const { writeAudit } = await import("./admin.server");
@@ -674,7 +702,7 @@ export const adminSetSignupsEnabled = createServerFn({ method: "POST" })
 
 export const adminListInvites = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string }) => input)
+  .inputValidator((input: { routeId: string }) => cleanInput(input))
   .handler(async ({ data, context }): Promise<AdminInvite[]> => {
     await guard(data.routeId, context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -699,7 +727,7 @@ export const adminListInvites = createServerFn({ method: "POST" })
  */
 export const adminInviteUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string; email: string; origin: string }) => input)
+  .inputValidator((input: { routeId: string; email: string; origin: string }) => cleanInput(input))
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN", "SUPPORT_ADMIN"]);
     const email = data.email.trim().toLowerCase();
@@ -756,7 +784,7 @@ export type AdminCategory = { id: string; emoji: string };
 /** The saved place list, or null when the app is still using its built-in one. */
 export const adminGetCategories = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string }) => input)
+  .inputValidator((input: { routeId: string }) => cleanInput(input))
   .handler(async ({ data, context }): Promise<{ categories: AdminCategory[] | null }> => {
     await guard(data.routeId, context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -781,7 +809,7 @@ export const adminSetCategories = createServerFn({ method: "POST" })
       routeId: string;
       categories: AdminCategory[];
       renames: { from: string; to: string }[];
-    }) => input,
+    }) => cleanInput(input),
   )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN"]);
@@ -860,7 +888,7 @@ export type AdminLimitRequest = {
  */
 export const adminLimitRequests = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string }) => input)
+  .inputValidator((input: { routeId: string }) => cleanInput(input))
   .handler(async ({ data, context }): Promise<AdminLimitRequest[]> => {
     await guard(data.routeId, context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -893,7 +921,7 @@ export const adminLimitRequests = createServerFn({ method: "POST" })
 /** Clears a handled request so the inbox stays empty when there's nothing to do. */
 export const adminDismissLimitRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string; id: string }) => input)
+  .inputValidator((input: { routeId: string; id: string }) => cleanInput(input))
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN", "BILLING_ADMIN", "SUPPORT_ADMIN"]);
     const { writeAudit } = await import("./admin.server");
@@ -924,7 +952,7 @@ export type AdminProductReport = {
 
 export const adminProductReports = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string }) => input)
+  .inputValidator((input: { routeId: string }) => cleanInput(input))
   .handler(async ({ data, context }): Promise<AdminProductReport[]> => {
     await guard(data.routeId, context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -967,7 +995,8 @@ export const adminProductReports = createServerFn({ method: "POST" })
 export const adminResolveProductReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (input: { routeId: string; barcode: string; action: "keep" | "remove" | "ban" }) => input,
+    (input: { routeId: string; barcode: string; action: "keep" | "remove" | "ban" }) =>
+      cleanInput(input),
   )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN", "SUPPORT_ADMIN"]);
@@ -1037,9 +1066,7 @@ async function alertAdmins(kind: "waiting" | "entered", email: string | undefine
     const { maskEmail } = await import("./admin.server");
     // Admin alert destinations are authoritative and separate from user reminder
     // links: disconnecting a user mapping never removes an admin mapping.
-    const { data: links } = await supabaseAdmin
-      .from("telegram_admin_links")
-      .select("chat_id");
+    const { data: links } = await supabaseAdmin.from("telegram_admin_links").select("chat_id");
     if (!links?.length) return;
     const masked = escapeHtml(email ? maskEmail(email) : "hidden");
     const when = new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC";
@@ -1091,7 +1118,7 @@ export const myApprovalStatus = createServerFn({ method: "POST" })
 
 export const adminApprovalSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string }) => input)
+  .inputValidator((input: { routeId: string }) => cleanInput(input))
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context);
     return { enabled: await approvalEnabled(), alerts: await signupAlerts() };
@@ -1099,7 +1126,9 @@ export const adminApprovalSettings = createServerFn({ method: "POST" })
 
 export const adminSetSignupAlerts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string; waiting: boolean; entered: boolean }) => input)
+  .inputValidator((input: { routeId: string; waiting: boolean; entered: boolean }) =>
+    cleanInput(input),
+  )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN"]);
     const { writeAudit } = await import("./admin.server");
@@ -1127,7 +1156,7 @@ export const adminSetSignupAlerts = createServerFn({ method: "POST" })
 
 export const adminSetApprovalEnabled = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string; enabled: boolean }) => input)
+  .inputValidator((input: { routeId: string; enabled: boolean }) => cleanInput(input))
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN"]);
     const { writeAudit } = await import("./admin.server");
@@ -1167,7 +1196,7 @@ export type AdminApplication = {
 
 export const adminListApplications = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string }) => input)
+  .inputValidator((input: { routeId: string }) => cleanInput(input))
   .handler(async ({ data, context }): Promise<AdminApplication[]> => {
     await guard(data.routeId, context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -1194,8 +1223,8 @@ export const adminListApplications = createServerFn({ method: "POST" })
 
 export const adminDecideApplication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(
-    (input: { routeId: string; userId: string; decision: "approved" | "rejected" }) => input,
+  .inputValidator((input: { routeId: string; userId: string; decision: "approved" | "rejected" }) =>
+    cleanInput(input),
   )
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN", "SUPPORT_ADMIN"]);
@@ -1226,7 +1255,7 @@ const DEFAULT_BUDGET: SchedulerBudget = { dailyQueries: 1000, warnPct: 20 };
 
 export const adminSchedulerLoad = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string }) => input)
+  .inputValidator((input: { routeId: string }) => cleanInput(input))
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -1336,7 +1365,7 @@ export const adminSetSchedulerBudget = createServerFn({ method: "POST" })
 
 export const adminTelegramSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string }) => input)
+  .inputValidator((input: { routeId: string }) => cleanInput(input))
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context);
     const { readSetting, expiryNotificationsEnabled, telegramCall } =
@@ -1372,14 +1401,11 @@ export const adminTelegramSettings = createServerFn({ method: "POST" })
 /** Stop sign-up alert messages for the calling operator only. User reminders are untouched. */
 export const adminUnlinkTelegramAlerts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string }) => input)
+  .inputValidator((input: { routeId: string }) => cleanInput(input))
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin
-      .from("telegram_admin_links")
-      .delete()
-      .eq("user_id", context.userId);
+    await supabaseAdmin.from("telegram_admin_links").delete().eq("user_id", context.userId);
     const { writeAudit } = await import("./admin.server");
     await writeAudit({
       adminUserId: context.userId,
@@ -1392,7 +1418,7 @@ export const adminUnlinkTelegramAlerts = createServerFn({ method: "POST" })
 
 export const adminSetTelegramEnabled = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string; enabled: boolean }) => input)
+  .inputValidator((input: { routeId: string; enabled: boolean }) => cleanInput(input))
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN"]);
     const { writeAudit } = await import("./admin.server");
@@ -1420,7 +1446,7 @@ export const adminSetTelegramEnabled = createServerFn({ method: "POST" })
 /** Points the bot at the published app. Secret is sent to Telegram server-to-server only. */
 export const adminRegisterTelegramWebhook = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string }) => input)
+  .inputValidator((input: { routeId: string }) => cleanInput(input))
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context, ["SUPER_ADMIN"]);
     const { telegramCall, APP_URL } = await import("./telegram.server");
@@ -1463,7 +1489,7 @@ function newRecoveryCode(): string {
  */
 export const adminIssueRecoveryCodes = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string }) => input)
+  .inputValidator((input: { routeId: string }) => cleanInput(input))
   .handler(async ({ data, context }) => {
     await guard(data.routeId, context);
     const { hashRecoveryCode, writeAudit } = await import("./admin.server");
@@ -1490,13 +1516,21 @@ export const adminIssueRecoveryCodes = createServerFn({ method: "POST" })
  */
 export const adminUseRecoveryCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string; code: string }) => input)
+  .inputValidator((input: { routeId: string; code: string }) => cleanInput(input))
   .handler(async ({ data, context }) => {
-    const { matchesConsoleRoute, requireAdmin, hashRecoveryCode, writeAudit } = await import(
-      "./admin.server"
-    );
+    const {
+      matchesConsoleRoute,
+      requireAdmin,
+      hashRecoveryCode,
+      writeAudit,
+      underLimit,
+      recordHit,
+    } = await import("./admin.server");
     if (!matchesConsoleRoute(data.routeId)) throw new Error("Not found");
     await requireAdmin(context.userId);
+    if (!(await underLimit(context.userId, "recovery_miss", 5, 15 * 60, false))) {
+      throw new Error("Too many wrong codes. Wait 15 minutes and try again.");
+    }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const hash = hashRecoveryCode(data.code ?? "");
     const { data: row } = await supabaseAdmin
@@ -1506,7 +1540,16 @@ export const adminUseRecoveryCode = createServerFn({ method: "POST" })
       .eq("code_hash", hash)
       .is("used_at", null)
       .maybeSingle();
-    if (!row) throw new Error("That recovery code is not valid.");
+    if (!row) {
+      await recordHit(context.userId, "recovery_miss");
+      await writeAudit({
+        adminUserId: context.userId,
+        actionType: "admin_mfa.recovery_code_failed",
+        targetType: "admin",
+        targetId: context.userId,
+      });
+      throw new Error("That recovery code is not valid.");
+    }
     const { data: claimed } = await supabaseAdmin
       .from("admin_recovery_codes")
       .update({ used_at: new Date().toISOString() })

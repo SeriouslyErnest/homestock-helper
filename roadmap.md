@@ -57,3 +57,4 @@
 - [x] Admin console two-factor (TOTP, mandatory) with one-time recovery codes
 
 - [x] Password sign-in re-enabled (with reset), DD/MM/YYYY date field, rotated-barcode scanning
+- [x] Abuse hardening (rate limits, length caps, access rules)

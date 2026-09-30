@@ -767,6 +767,27 @@ export type Database = {
           },
         ]
       }
+      rate_limit_hits: {
+        Row: {
+          bucket: string
+          created_at: string
+          id: number
+          user_id: string
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+          id?: never
+          user_id: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          id?: never
+          user_id?: string
+        }
+        Relationships: []
+      }
       scheduler_runs: {
         Row: {
           errors: number
@@ -1059,7 +1080,6 @@ export type Database = {
         Args: { _household_id: string }
         Returns: number
       }
-      join_household_by_code: { Args: { _code: string }; Returns: string }
       my_access: {
         Args: never
         Returns: {
