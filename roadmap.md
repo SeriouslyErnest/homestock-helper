@@ -58,3 +58,4 @@
 
 - [x] Password sign-in re-enabled (with reset), DD/MM/YYYY date field, rotated-barcode scanning
 - [x] Abuse hardening (rate limits, length caps, access rules)
+- [x] Disable password login (UI), clean up test data, docs + user guide updated
