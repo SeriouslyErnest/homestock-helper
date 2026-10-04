@@ -601,22 +601,24 @@ export const adminSetPlanLimits = createServerFn({ method: "POST" })
 
 /**
  * Break-glass bootstrap: the very first operator claims the console by signing
- * in and visiting the secret address while no operators exist yet.
+ * in, visiting the secret address, and entering the one-time bootstrap code
+ * (ADMIN_BOOTSTRAP_CODE secret) while no operators exist yet.
  */
 export const adminClaimConsole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string }) => cleanInput(input))
+  .inputValidator((input: { routeId: string; code: string }) => cleanInput(input))
   .handler(async ({ data, context }) => {
     const { matchesConsoleRoute, writeAudit } = await import("./admin.server");
     if (!matchesConsoleRoute(data.routeId)) throw new Error("Not found");
+    const expected = process.env["ADMIN_BOOTSTRAP_CODE"];
+    if (!expected || typeof data.code !== "string" || data.code.trim() !== expected) {
+      throw new Error("Wrong bootstrap code.");
+    }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { count } = await supabaseAdmin
       .from("admin_users")
       .select("user_id", { count: "exact", head: true });
     if ((count ?? 0) > 0) throw new Error("This console already has an operator.");
-    // Any signed-in account may claim an unclaimed console. The secret address
-    // is the gate; the unique bootstrap index below guarantees only one claim
-    // can ever win, even if two people hit this at the same moment.
     // bootstrap=true is guarded by a unique index, so only one claim can ever win,
     // even if two people hit this at the same moment.
     const { error } = await supabaseAdmin.from("admin_users").insert({

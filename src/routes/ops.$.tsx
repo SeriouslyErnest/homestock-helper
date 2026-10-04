@@ -214,8 +214,9 @@ function Locked({ routeId, onClaimed }: { routeId: string; onClaimed: () => void
     retry: false,
     queryFn: () => adminConsoleUnclaimed({ data: { routeId } }),
   });
+  const [code, setCode] = useState("");
   const claim = useMutation({
-    mutationFn: () => adminClaimConsole({ data: { routeId } }),
+    mutationFn: () => adminClaimConsole({ data: { routeId, code } }),
     onSuccess: () => {
       toast.success("You are now the operator of this console");
       onClaimed();
@@ -231,14 +232,24 @@ function Locked({ routeId, onClaimed }: { routeId: string; onClaimed: () => void
           This page does not exist, or your account is not an operator.
         </p>
         {unclaimed.data?.unclaimed && (
-          <button
-            type="button"
-            onClick={() => claim.mutate()}
-            disabled={claim.isPending}
-            className="mt-4 h-11 rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
-          >
-            {claim.isPending ? "Claiming…" : "Claim this console"}
-          </button>
+          <div className="mt-4 space-y-3">
+            <input
+              type="password"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="Bootstrap code"
+              autoComplete="off"
+              className="h-11 w-full max-w-xs rounded-2xl border border-border bg-card px-4 text-sm"
+            />
+            <button
+              type="button"
+              onClick={() => claim.mutate()}
+              disabled={claim.isPending || !code.trim()}
+              className="h-11 rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+            >
+              {claim.isPending ? "Claiming…" : "Claim this console"}
+            </button>
+          </div>
         )}
       </div>
     </div>
