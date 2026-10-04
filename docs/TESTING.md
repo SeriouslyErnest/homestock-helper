@@ -33,3 +33,5 @@ database read-back.
 - Rate limits (join code, promo, recovery code, product lookup), text length limits, admin input checks, tightened access rules — typecheck only; not browser-tested.
 - 2026-09-30 E2E (390px, temp account, pre-approved so no alerts): sign-in, create home, add item (name capped at 200, typed date), inventory OK. Limits verified: 11th wrong invite code -> too_many; 6th wrong promo -> "Too many tries" on screen; old direct-join removed (404); direct home insert 403; 100-char home name rejected; moving item to another home 403; 1,500-char notes rejected; javascript: photo link cleared; telegram admin link insert 403. PASS. Not tested: recovery-code limit, product-lookup limit. Test account deleted afterwards.
 - 2026-09-30 Password sign-in removed from the sign-in page and the reset-password page deleted; sign-in is email link or Google only.
+
+- 2026-10-04 — Inventory product grouping (collapsed product row, expand breakdown, group − uses soonest expiry, "Add expiry" after +1 with split of new unit) — typecheck only; needs browser test.

@@ -277,7 +277,7 @@ function InventoryPage() {
   }
 
   /** Group "−": use the soonest-expiring row that still has stock. */
-  function useFromGroup(rows: Item[]) {
+  function takeFromGroup(rows: Item[]) {
     const pick = rows
       .filter((r) => r.quantity > 0)
       .sort((a, b) => (a.expires_on ?? "9999").localeCompare(b.expires_on ?? "9999"))[0];
@@ -574,7 +574,7 @@ function InventoryPage() {
           </button>
           <div className="flex shrink-0 items-center gap-0.5">
             <button
-              onClick={() => useFromGroup(rows)}
+              onClick={() => takeFromGroup(rows)}
               disabled={total <= 0 || busy}
               aria-label={`Use one ${first.name} (soonest to expire first)`}
               className="grid h-10 w-10 place-items-center rounded-xl border border-border text-muted-foreground active:bg-surface-2 disabled:opacity-40"
