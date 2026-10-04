@@ -39,21 +39,14 @@ export function AddExpiryDialog({
         .single();
       if (readErr || !row) throw readErr ?? new Error("missing");
       const current = row as Item;
-      if (Number(current.quantity) <= 1 || !current.expires_on || current.expires_on === date) {
-        if (current.expires_on && current.expires_on !== date && Number(current.quantity) > 1) {
-          // unreachable, kept for clarity
-        }
-        if (!current.expires_on && Number(current.quantity) > 1) {
-          // Existing undated stock: split so only the new unit gets the date.
-          await split(current);
-        } else {
-          const { error } = await supabase
-            .from("items")
-            .update({ expires_on: date })
-            .eq("id", current.id);
-          if (error) throw error;
-        }
+      if (Number(current.quantity) <= 1 || current.expires_on === date) {
+        const { error } = await supabase
+          .from("items")
+          .update({ expires_on: date })
+          .eq("id", current.id);
+        if (error) throw error;
       } else {
+        // Older stock keeps its own date; only the new unit gets this one.
         await split(current);
       }
       toast.success(`Expiry saved for ${current.name}`);

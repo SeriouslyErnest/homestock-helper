@@ -2,11 +2,21 @@ import { FirstUseTip } from "@/lib/onboarding";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlignJustify, ArrowDown, ArrowUp, LayoutGrid, List, Plus, Minus } from "lucide-react";
+import {
+  AlignJustify,
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  LayoutGrid,
+  List,
+  Plus,
+  Minus,
+} from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { CorrectQuantityDialog } from "@/components/correct-quantity";
 import { ProductPhotoDialog } from "@/components/product-photo-dialog";
+import { AddExpiryDialog } from "@/components/add-expiry-dialog";
 import {
   emojiFor,
   useCategories,
@@ -108,6 +118,8 @@ function InventoryPage() {
   const [sort, setSort] = useState<"name" | "location" | "expiry" | "updated">("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  const [expiryFor, setExpiryFor] = useState<Item | null>(null);
 
   // Read the remembered view/sort after mount so the first render always matches the server.
   useEffect(() => {
@@ -191,6 +203,18 @@ function InventoryPage() {
     return leaders;
   }, [visible]);
 
+  /** Rows of the same product, in the order the sort first meets them. */
+  const groups = useMemo(() => {
+    const map = new Map<string, Item[]>();
+    for (const i of visible) {
+      const key = productKey(i);
+      const list = map.get(key);
+      if (list) list.push(i);
+      else map.set(key, [i]);
+    }
+    return [...map.entries()].map(([key, rows]) => ({ key, rows }));
+  }, [visible]);
+
   // Needs attention = out / below minimum, or expiring within 3 days.
   // Used-up items without a minimum are retired, so they don't nag here.
   const attention = (items ?? []).filter(
@@ -240,9 +264,38 @@ function InventoryPage() {
     setBusyId(null);
     // Only offer Undo once the change actually landed on the server.
     if (!ok) return;
+    const offerExpiry = delta > 0 && household?.show_expiry !== false;
     toast(delta < 0 ? `Took one ${item.name}` : `Added one ${item.name}`, {
-      action: { label: "Undo", onClick: () => void apply(item, -delta) },
-      duration: 5000,
+      ...(offerExpiry
+        ? {
+            action: { label: "Add expiry", onClick: () => setExpiryFor(item) },
+            cancel: { label: "Undo", onClick: () => void apply(item, -delta) },
+          }
+        : { action: { label: "Undo", onClick: () => void apply(item, -delta) } }),
+      duration: offerExpiry ? 7000 : 5000,
+    });
+  }
+
+  /** Group "−": use the soonest-expiring row that still has stock. */
+  function useFromGroup(rows: Item[]) {
+    const pick = rows
+      .filter((r) => r.quantity > 0)
+      .sort((a, b) => (a.expires_on ?? "9999").localeCompare(b.expires_on ?? "9999"))[0];
+    if (pick) void adjust(pick, -1);
+  }
+
+  /** Group "+": add to the most recently touched row (where restocks usually land). */
+  function addToGroup(rows: Item[]) {
+    const pick = [...rows].sort((a, b) => b.updated_at.localeCompare(a.updated_at))[0];
+    if (pick) void adjust(pick, 1);
+  }
+
+  function toggleGroup(key: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
     });
   }
 
@@ -252,6 +305,296 @@ function InventoryPage() {
     setCategory(c);
     setShowLow(false);
     setShowExpiring(false);
+  }
+
+  function renderRow(item: Item, nested: boolean) {
+          const status = statusOf(item);
+          const key = productKey(item);
+          const group = spread.get(key);
+          const multiPlace = (group?.places ?? 1) > 1;
+          // Only the first row of a cluster carries the "3 total across 2 places" note.
+          const leadsGroup = !nested && multiPlace && groupLeaders.has(item.id);
+          const place = item.location?.trim();
+          // updated_at is a UTC timestamp; render the calendar day in the viewer's own timezone.
+          const updated = `Upd ${new Date(item.updated_at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`;
+          const meta = [
+            item.category,
+            item.expires_on
+              ? `${isExpiringSoon(item) ? "⚠ " : ""}Exp ${formatLocalDate(item.expires_on, { day: "numeric", month: "short", ...(item.expires_on.slice(0, 4) === String(new Date().getFullYear()) ? {} : { year: "numeric" }) })}`
+              : null,
+            item.min_quantity > 0 ? `Min ${item.min_quantity}` : null,
+            updated,
+          ]
+            .filter(Boolean)
+            .slice(0, 3)
+            .join(" · ");
+
+          const image = item.image_url ? (
+            <img
+              src={item.image_url}
+              alt={item.name}
+              loading="lazy"
+              className="block h-full max-h-full w-full max-w-full object-contain"
+            />
+          ) : null;
+          const thumb = image ?? emojiFor(item.category, categories);
+
+          if (view === "compact" || nested) {
+            return (
+              <article
+                key={item.id}
+                className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-1 rounded-xl border border-border bg-card px-2.5 py-1.5"
+              >
+                <Link to="/item/$itemId" params={{ itemId: item.id }} className="min-w-0">
+                  <strong className="block truncate text-sm">
+                    {item.name}
+                    {place && <span className="font-normal text-muted-foreground"> ({place})</span>}
+                  </strong>
+                  <div className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-[11px]">
+                    <span
+                      className={`shrink-0 font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}
+                    >
+                      {status.label}
+                    </span>
+                    {item.expires_on && (
+                      <span
+                        className={`truncate ${isExpiringSoon(item) ? "text-destructive" : "text-muted-foreground"}`}
+                      >
+                        · Exp {formatLocalDate(item.expires_on, { day: "numeric", month: "short" })}
+                      </span>
+                    )}
+                    {leadsGroup && (
+                      <span className="truncate text-muted-foreground">
+                        · {group?.total} in {group?.places} places
+                      </span>
+                    )}
+                  </div>
+                </Link>
+                <div className="flex shrink-0 items-center gap-0.5">
+                  <button
+                    onClick={() => adjust(item, -1)}
+                    disabled={item.quantity <= 0 || busyId === item.id}
+                    aria-label={`Use one ${item.name}`}
+                    className="grid h-9 w-9 place-items-center rounded-lg border border-border text-muted-foreground active:bg-surface-2 disabled:opacity-40"
+                  >
+                    <Minus size={15} />
+                  </button>
+                  <strong className="w-9 text-center text-base leading-none">
+                    {item.quantity}
+                  </strong>
+                  <button
+                    onClick={() => adjust(item, 1)}
+                    disabled={busyId === item.id}
+                    aria-label={`Restock one ${item.name}`}
+                    className="grid h-9 w-9 place-items-center rounded-lg border border-border text-muted-foreground active:bg-surface-2 disabled:opacity-40"
+                  >
+                    <Plus size={15} />
+                  </button>
+                </div>
+              </article>
+            );
+          }
+
+          if (view === "cards") {
+            return (
+              <article
+                key={item.id}
+                className="block min-w-0 rounded-2xl border border-border bg-card p-3"
+              >
+                {item.image_url ? (
+                  <ProductPhotoDialog
+                    src={item.image_url}
+                    name={item.name}
+                    triggerClassName="mb-2 grid h-20 w-full place-items-center rounded-xl bg-surface-2"
+                  >
+                    {image}
+                  </ProductPhotoDialog>
+                ) : (
+                  <Link
+                    to="/item/$itemId"
+                    params={{ itemId: item.id }}
+                    className="mb-2 grid h-20 w-full place-items-center overflow-hidden rounded-xl bg-surface-2 text-3xl"
+                  >
+                    {thumb}
+                  </Link>
+                )}
+                <Link to="/item/$itemId" params={{ itemId: item.id }} className="block min-w-0">
+                  <strong className="block line-clamp-2 min-h-10 text-sm break-words">
+                    {item.name}
+                    {place && <span className="font-normal text-muted-foreground"> ({place})</span>}
+                  </strong>
+                  <div className="mt-1 h-4 truncate text-xs text-muted-foreground">
+                    {multiPlace ? `${group?.total} in total · ${group?.places} places` : meta}
+                  </div>
+                  <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1">
+                    <span className="text-lg font-bold">{item.quantity}</span>
+                    <span
+                      className={`truncate text-right text-[10px] font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}
+                    >
+                      {status.label}
+                    </span>
+                  </div>
+                </Link>
+              </article>
+            );
+          }
+
+          return (
+            <article
+              key={item.id}
+              className="grid min-w-0 grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-2xl border border-border bg-card p-2.5"
+            >
+              {item.image_url ? (
+                <ProductPhotoDialog
+                  src={item.image_url}
+                  name={item.name}
+                  triggerClassName="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-surface-2"
+                >
+                  {image}
+                </ProductPhotoDialog>
+              ) : (
+                <Link
+                  to="/item/$itemId"
+                  params={{ itemId: item.id }}
+                  className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-surface-2 text-2xl"
+                >
+                  {thumb}
+                </Link>
+              )}
+              <Link to="/item/$itemId" params={{ itemId: item.id }} className="min-w-0 flex-1">
+                <strong className="block line-clamp-2 text-sm break-words">
+                  {item.name}
+                  {place && <span className="font-normal text-muted-foreground"> ({place})</span>}
+                </strong>
+                <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                  {leadsGroup ? `${group?.total} in total · ${group?.places} places · ` : ""}
+                  {meta}
+                </div>
+              </Link>
+              <div className="col-span-2 grid min-w-0 grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-1 border-t border-border pt-2">
+                <button
+                  onClick={() => adjust(item, -1)}
+                  disabled={item.quantity <= 0 || busyId === item.id}
+                  aria-label={`Use one ${item.name}`}
+                  className="grid h-11 w-11 place-items-center rounded-xl border border-border text-muted-foreground active:bg-surface-2 disabled:opacity-40"
+                >
+                  <Minus size={18} />
+                </button>
+                <CorrectQuantityDialog
+                  item={item}
+                  triggerClassName="min-w-0 rounded-xl px-1 text-center active:bg-surface-2"
+                  trigger={
+                    <span className="block min-w-0">
+                      <strong className="block truncate text-lg leading-tight">
+                        {item.quantity} {item.unit}
+                      </strong>
+                      <span
+                        className={`block truncate text-[9px] font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}
+                      >
+                        {status.label}
+                      </span>
+                    </span>
+                  }
+                />
+
+                <button
+                  onClick={() => adjust(item, 1)}
+                  disabled={busyId === item.id}
+                  aria-label={`Restock one ${item.name}`}
+                  className="grid h-11 w-11 place-items-center rounded-xl border border-border text-muted-foreground active:bg-surface-2 disabled:opacity-40"
+                >
+                  <Plus size={18} />
+                </button>
+              </div>
+            </article>
+          );
+  }
+
+  function renderGroup(key: string, rows: Item[]) {
+    const first = rows[0]!;
+    const total = rows.reduce((n, r) => n + Number(r.quantity), 0);
+    const min = Math.max(...rows.map((r) => Number(r.min_quantity)));
+    const status =
+      total <= 0
+        ? { label: "Out", low: true }
+        : min > 0 && total < min
+          ? { label: "Low", low: true }
+          : { label: "In stock", low: false };
+    const soonest = rows
+      .filter((r) => r.quantity > 0 && r.expires_on)
+      .sort((a, b) => a.expires_on!.localeCompare(b.expires_on!))[0];
+    const places = new Set(rows.map((r) => r.location?.trim() || "—")).size;
+    const open = expanded.has(key);
+    const busy = rows.some((r) => r.id === busyId);
+    const thumb = first.image_url ? (
+      <img
+        src={first.image_url}
+        alt=""
+        loading="lazy"
+        className="block h-full w-full object-contain"
+      />
+    ) : (
+      emojiFor(first.category, categories)
+    );
+    return (
+      <section
+        key={`g-${key}`}
+        className={`min-w-0 rounded-2xl border border-border bg-card p-2.5 ${view === "cards" ? "col-span-2" : ""}`}
+      >
+        <div className="grid min-w-0 grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-2">
+          <div className="grid h-10 w-10 place-items-center overflow-hidden rounded-xl bg-surface-2 text-xl">
+            {thumb}
+          </div>
+          <button
+            onClick={() => toggleGroup(key)}
+            aria-expanded={open}
+            aria-label={`${open ? "Hide" : "Show"} where ${first.name} is kept`}
+            className="min-w-0 text-left"
+          >
+            <strong className="flex min-w-0 items-center gap-1 text-sm">
+              <span className="truncate">{first.name}</span>
+              <ChevronDown
+                size={14}
+                className={`shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+              />
+            </strong>
+            <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
+              <span
+                className={`font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}
+              >
+                {status.label}
+              </span>
+              {` · ${rows.length} ${places > 1 ? "places" : "lots"}`}
+              {soonest?.expires_on && (
+                <span className={isExpiringSoon(soonest) ? "text-destructive" : ""}>
+                  {` · Next exp ${formatLocalDate(soonest.expires_on, { day: "numeric", month: "short" })}`}
+                </span>
+              )}
+            </span>
+          </button>
+          <div className="flex shrink-0 items-center gap-0.5">
+            <button
+              onClick={() => useFromGroup(rows)}
+              disabled={total <= 0 || busy}
+              aria-label={`Use one ${first.name} (soonest to expire first)`}
+              className="grid h-10 w-10 place-items-center rounded-xl border border-border text-muted-foreground active:bg-surface-2 disabled:opacity-40"
+            >
+              <Minus size={16} />
+            </button>
+            <strong className="w-9 text-center text-base leading-none">{total}</strong>
+            <button
+              onClick={() => addToGroup(rows)}
+              disabled={busy}
+              aria-label={`Restock one ${first.name}`}
+              className="grid h-10 w-10 place-items-center rounded-xl border border-border text-muted-foreground active:bg-surface-2 disabled:opacity-40"
+            >
+              <Plus size={16} />
+            </button>
+          </div>
+        </div>
+        {open && <div className="mt-2 grid gap-1.5">{rows.map((r) => renderRow(r, true))}</div>}
+      </section>
+    );
   }
 
   return (
@@ -494,209 +837,15 @@ function InventoryPage() {
               : "grid gap-2"
         }
       >
-        {visible.map((item) => {
-          const status = statusOf(item);
-          const key = productKey(item);
-          const group = spread.get(key);
-          const multiPlace = (group?.places ?? 1) > 1;
-          // Only the first row of a cluster carries the "3 total across 2 places" note.
-          const leadsGroup = multiPlace && groupLeaders.has(item.id);
-          const place = item.location?.trim();
-          // updated_at is a UTC timestamp; render the calendar day in the viewer's own timezone.
-          const updated = `Upd ${new Date(item.updated_at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`;
-          const meta = [
-            item.category,
-            item.expires_on
-              ? `${isExpiringSoon(item) ? "⚠ " : ""}Exp ${formatLocalDate(item.expires_on, { day: "numeric", month: "short", ...(item.expires_on.slice(0, 4) === String(new Date().getFullYear()) ? {} : { year: "numeric" }) })}`
-              : null,
-            item.min_quantity > 0 ? `Min ${item.min_quantity}` : null,
-            updated,
-          ]
-            .filter(Boolean)
-            .slice(0, 3)
-            .join(" · ");
-
-          const image = item.image_url ? (
-            <img
-              src={item.image_url}
-              alt={item.name}
-              loading="lazy"
-              className="block h-full max-h-full w-full max-w-full object-contain"
-            />
-          ) : null;
-          const thumb = image ?? emojiFor(item.category, categories);
-
-          if (view === "compact") {
-            return (
-              <article
-                key={item.id}
-                className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-1 rounded-xl border border-border bg-card px-2.5 py-1.5"
-              >
-                <Link to="/item/$itemId" params={{ itemId: item.id }} className="min-w-0">
-                  <strong className="block truncate text-sm">
-                    {item.name}
-                    {place && <span className="font-normal text-muted-foreground"> ({place})</span>}
-                  </strong>
-                  <div className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-[11px]">
-                    <span
-                      className={`shrink-0 font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}
-                    >
-                      {status.label}
-                    </span>
-                    {item.expires_on && (
-                      <span
-                        className={`truncate ${isExpiringSoon(item) ? "text-destructive" : "text-muted-foreground"}`}
-                      >
-                        · Exp {formatLocalDate(item.expires_on, { day: "numeric", month: "short" })}
-                      </span>
-                    )}
-                    {leadsGroup && (
-                      <span className="truncate text-muted-foreground">
-                        · {group?.total} in {group?.places} places
-                      </span>
-                    )}
-                  </div>
-                </Link>
-                <div className="flex shrink-0 items-center gap-0.5">
-                  <button
-                    onClick={() => adjust(item, -1)}
-                    disabled={item.quantity <= 0 || busyId === item.id}
-                    aria-label={`Use one ${item.name}`}
-                    className="grid h-9 w-9 place-items-center rounded-lg border border-border text-muted-foreground active:bg-surface-2 disabled:opacity-40"
-                  >
-                    <Minus size={15} />
-                  </button>
-                  <strong className="w-9 text-center text-base leading-none">
-                    {item.quantity}
-                  </strong>
-                  <button
-                    onClick={() => adjust(item, 1)}
-                    disabled={busyId === item.id}
-                    aria-label={`Restock one ${item.name}`}
-                    className="grid h-9 w-9 place-items-center rounded-lg border border-border text-muted-foreground active:bg-surface-2 disabled:opacity-40"
-                  >
-                    <Plus size={15} />
-                  </button>
-                </div>
-              </article>
-            );
-          }
-
-          if (view === "cards") {
-            return (
-              <article
-                key={item.id}
-                className="block min-w-0 rounded-2xl border border-border bg-card p-3"
-              >
-                {item.image_url ? (
-                  <ProductPhotoDialog
-                    src={item.image_url}
-                    name={item.name}
-                    triggerClassName="mb-2 grid h-20 w-full place-items-center rounded-xl bg-surface-2"
-                  >
-                    {image}
-                  </ProductPhotoDialog>
-                ) : (
-                  <Link
-                    to="/item/$itemId"
-                    params={{ itemId: item.id }}
-                    className="mb-2 grid h-20 w-full place-items-center overflow-hidden rounded-xl bg-surface-2 text-3xl"
-                  >
-                    {thumb}
-                  </Link>
-                )}
-                <Link to="/item/$itemId" params={{ itemId: item.id }} className="block min-w-0">
-                  <strong className="block line-clamp-2 min-h-10 text-sm break-words">
-                    {item.name}
-                    {place && <span className="font-normal text-muted-foreground"> ({place})</span>}
-                  </strong>
-                  <div className="mt-1 h-4 truncate text-xs text-muted-foreground">
-                    {multiPlace ? `${group?.total} in total · ${group?.places} places` : meta}
-                  </div>
-                  <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1">
-                    <span className="text-lg font-bold">{item.quantity}</span>
-                    <span
-                      className={`truncate text-right text-[10px] font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}
-                    >
-                      {status.label}
-                    </span>
-                  </div>
-                </Link>
-              </article>
-            );
-          }
-
-          return (
-            <article
-              key={item.id}
-              className="grid min-w-0 grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-2xl border border-border bg-card p-2.5"
-            >
-              {item.image_url ? (
-                <ProductPhotoDialog
-                  src={item.image_url}
-                  name={item.name}
-                  triggerClassName="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-surface-2"
-                >
-                  {image}
-                </ProductPhotoDialog>
-              ) : (
-                <Link
-                  to="/item/$itemId"
-                  params={{ itemId: item.id }}
-                  className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-surface-2 text-2xl"
-                >
-                  {thumb}
-                </Link>
-              )}
-              <Link to="/item/$itemId" params={{ itemId: item.id }} className="min-w-0 flex-1">
-                <strong className="block line-clamp-2 text-sm break-words">
-                  {item.name}
-                  {place && <span className="font-normal text-muted-foreground"> ({place})</span>}
-                </strong>
-                <div className="mt-0.5 truncate text-xs text-muted-foreground">
-                  {leadsGroup ? `${group?.total} in total · ${group?.places} places · ` : ""}
-                  {meta}
-                </div>
-              </Link>
-              <div className="col-span-2 grid min-w-0 grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-1 border-t border-border pt-2">
-                <button
-                  onClick={() => adjust(item, -1)}
-                  disabled={item.quantity <= 0 || busyId === item.id}
-                  aria-label={`Use one ${item.name}`}
-                  className="grid h-11 w-11 place-items-center rounded-xl border border-border text-muted-foreground active:bg-surface-2 disabled:opacity-40"
-                >
-                  <Minus size={18} />
-                </button>
-                <CorrectQuantityDialog
-                  item={item}
-                  triggerClassName="min-w-0 rounded-xl px-1 text-center active:bg-surface-2"
-                  trigger={
-                    <span className="block min-w-0">
-                      <strong className="block truncate text-lg leading-tight">
-                        {item.quantity} {item.unit}
-                      </strong>
-                      <span
-                        className={`block truncate text-[9px] font-extrabold tracking-wide uppercase ${status.low ? "text-warning" : "text-success"}`}
-                      >
-                        {status.label}
-                      </span>
-                    </span>
-                  }
-                />
-
-                <button
-                  onClick={() => adjust(item, 1)}
-                  disabled={busyId === item.id}
-                  aria-label={`Restock one ${item.name}`}
-                  className="grid h-11 w-11 place-items-center rounded-xl border border-border text-muted-foreground active:bg-surface-2 disabled:opacity-40"
-                >
-                  <Plus size={18} />
-                </button>
-              </div>
-            </article>
-          );
-        })}
+        {groups.map((g) =>
+          g.rows.length === 1 ? renderRow(g.rows[0]!, false) : renderGroup(g.key, g.rows),
+        )}
       </div>
+      <AddExpiryDialog
+        item={expiryFor}
+        onClose={() => setExpiryFor(null)}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ["items", household?.id] })}
+      />
     </AppShell>
   );
 }
