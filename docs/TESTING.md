@@ -35,3 +35,4 @@ database read-back.
 - 2026-09-30 Password sign-in removed from the sign-in page and the reset-password page deleted; sign-in is email link or Google only.
 
 - 2026-10-04 — Inventory product grouping (collapsed product row, expand breakdown, group − uses soonest expiry, "Add expiry" after +1 with split of new unit) — typecheck only; needs browser test.
+- 2026-10-05 — Stock Breakdown Step 2: optional expiry per line in the scanner basket, "Add expiry" after a single scan add and after ticking off a tracked shopping item (new units get their own date) — typecheck only; needs browser test.
