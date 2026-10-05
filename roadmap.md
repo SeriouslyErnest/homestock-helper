@@ -61,4 +61,4 @@
 - [x] Disable password login (UI), clean up test data, docs + user guide updated
 
 - [x] Grouped inventory by product with expandable breakdown + optional expiry after +1 (Step 1)
-- [ ] Step 2: optional expiry in scanner basket and shopping check-off
+- [x] Step 2: optional expiry in scanner basket and shopping check-off
