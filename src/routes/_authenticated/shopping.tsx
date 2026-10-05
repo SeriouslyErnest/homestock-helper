@@ -6,6 +6,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { ProductPhotoDialog } from "@/components/product-photo-dialog";
+import { AddExpiryDialog } from "@/components/add-expiry-dialog";
 import {
   emojiFor,
   formatLocalDateTime,
@@ -47,6 +48,9 @@ function ShoppingPage() {
   const [note, setNote] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const toggling = useRef<Set<string>>(new Set());
+  const [expiryFor, setExpiryFor] = useState<{ id: string; name: string; qty: number } | null>(
+    null,
+  );
 
   const toggleTag = (tag: string) =>
     setTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
@@ -141,6 +145,16 @@ function ShoppingPage() {
               .eq("id", entry.id);
             toast.error("Ticked off, but the stock count didn't update. Try again.");
             return;
+          }
+          if (household?.show_expiry !== false && delta > 0) {
+            const itemId = entry.item_id;
+            toast.success(`Added ${delta} × ${entry.name} to stock`, {
+              action: {
+                label: "Add expiry",
+                onClick: () => setExpiryFor({ id: itemId, name: entry.name, qty: delta }),
+              },
+              duration: 7000,
+            });
           }
         }
       } else {
@@ -502,6 +516,12 @@ function ShoppingPage() {
           </div>
         </section>
       )}
+      <AddExpiryDialog
+        item={expiryFor}
+        qty={expiryFor?.qty ?? 1}
+        onClose={() => setExpiryFor(null)}
+        onSaved={invalidate}
+      />
     </AppShell>
   );
 }
