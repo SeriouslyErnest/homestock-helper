@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Minus, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
+import { AddExpiryDialog, applyExpiry } from "@/components/add-expiry-dialog";
+import { DateField } from "@/components/date-field";
 import { lookupProduct } from "@/lib/product-lookup";
 import { cacheManualProduct } from "@/lib/product-lookup.functions";
 import { useHousehold, type Item } from "@/lib/homestock";
@@ -19,6 +21,10 @@ type BasketLine = {
   /** Nobody has named this barcode yet. */
   unknown?: boolean;
   qty: number;
+  /** Optional expiry (ISO yyyy-mm-dd) for the units being added. */
+  expires?: string;
+  /** The optional date field has been opened. */
+  dating?: boolean;
 };
 
 export const Route = createFileRoute("/_authenticated/scan")({
@@ -57,6 +63,10 @@ function ScanPage() {
   const [batch, setBatch] = useState(false);
   const [basket, setBasket] = useState<BasketLine[]>([]);
   const [committing, setCommitting] = useState(false);
+  const showExpiry = household?.show_expiry !== false;
+  const [expiryFor, setExpiryFor] = useState<{ id: string; name: string; qty: number } | null>(
+    null,
+  );
   const lastScan = useRef<{ code: string; at: number } | null>(null);
   const batchRef = useRef(false);
   batchRef.current = batch;
@@ -122,6 +132,13 @@ function ScanPage() {
             _delta: line.qty,
           });
           if (error) throw error;
+          if (line.expires) {
+            try {
+              await applyExpiry(line.itemId, line.qty, line.expires);
+            } catch {
+              // The stock is saved; a missing date never undoes a restock.
+            }
+          }
         } else {
           const { error } = await supabase.from("items").insert({
             household_id: household.id,
@@ -130,6 +147,7 @@ function ScanPage() {
             image_url: line.image ?? null,
             quantity: line.qty,
             unit: "pcs",
+            expires_on: line.expires || null,
             created_by: user?.id ?? null,
           });
           if (error) throw error;
@@ -253,6 +271,15 @@ function ScanPage() {
           void supabase.rpc("adjust_item_quantity", { _item_id: item.id, _delta: -qty });
         },
       },
+      ...(showExpiry
+        ? {
+            cancel: {
+              label: "Add expiry",
+              onClick: () => setExpiryFor({ id: item.id, name: item.name, qty }),
+            },
+          }
+        : {}),
+      duration: 7000,
     });
     setAddQty(1);
     scanAnother();
@@ -741,6 +768,31 @@ function ScanPage() {
                         {!line.itemId && !line.unknown && (
                           <span className="text-xs text-muted-foreground">New to your home</span>
                         )}
+                        {showExpiry &&
+                          (line.dating || line.expires ? (
+                            <DateField
+                              value={line.expires ?? ""}
+                              onChange={(iso) =>
+                                setBasket((b) =>
+                                  b.map((l) => (l.key === line.key ? { ...l, expires: iso } : l)),
+                                )
+                              }
+                              aria-label={`Expiry date for ${line.name || line.barcode}`}
+                              className="min-w-0 rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
+                            />
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setBasket((b) =>
+                                  b.map((l) => (l.key === line.key ? { ...l, dating: true } : l)),
+                                )
+                              }
+                              className="justify-self-start text-xs font-semibold text-brand"
+                            >
+                              + Expiry date (optional)
+                            </button>
+                          ))}
                       </li>
                     ))}
                   </ul>
@@ -787,6 +839,14 @@ function ScanPage() {
           <p className="mt-2 text-center text-xs text-muted-foreground">
             We remember every product you identify, so the next scan is instant.
           </p>
-PLACEHOLDER
+        </>
+      )}
+      <AddExpiryDialog
+        item={expiryFor}
+        qty={expiryFor?.qty ?? 1}
+        onClose={() => setExpiryFor(null)}
+        onSaved={() => {}}
+      />
+    </AppShell>
   );
 }
