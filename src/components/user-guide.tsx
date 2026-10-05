@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import inventory from "@/assets/guide/inventory.jpg";
 import useUp from "@/assets/guide/use-up.jpg";
 import shopping from "@/assets/guide/shopping.jpg";
@@ -8,7 +9,15 @@ import correct from "@/assets/guide/correct.jpg";
 import stockCheck from "@/assets/guide/stock-check.jpg";
 import more from "@/assets/guide/more.jpg";
 
-type Flow = { title: string; img: string; alt: string; steps: string[]; tip?: string };
+type Flow = {
+  title: string;
+  img?: string;
+  alt?: string;
+  illustration?: ReactNode;
+  steps: string[];
+  tip?: string;
+  commands?: { cmd: string; what: string }[];
+};
 
 const FLOWS: Flow[] = [
   {
@@ -105,18 +114,82 @@ const FLOWS: Flow[] = [
   },
   {
     title: "10. HomeStock on Telegram (optional)",
-    img: more,
-    alt: "More page where the Telegram card appears",
+    illustration: <TelegramChatMock />,
     steps: [
       "Under More, tap “Connect Telegram”. The HomeStock bot opens — tap Start. The link works once and expires after 15 minutes.",
-      "In the chat: /add milk puts one “milk” on Shopping (the words are kept exactly — “/add eggs 12” adds one “eggs 12”). Tap Undo if it was a mistake.",
-      "/shopping, /low and /expiring show your list, what's low or out, and what's expiring. /home picks which home Telegram uses (it doesn't change the app). /help lists them.",
+      "Type a command in the chat, or tap it from the bot’s menu (☰). It only works in a private chat with the bot.",
       "Turn on expiry reminders per home and choose how early. You get one heads-up and one on the day. Tap “Got it” to stop reminders for that item — you can also tap “Got it” on the item page in the app.",
-      "Disconnect in the app, or send /stop to the bot. Telegram only works in a private chat with the bot.",
+      "Disconnect in the app, or send /stop to the bot.",
+    ],
+    commands: [
+      {
+        cmd: "/add <item>",
+        what: "Puts one thing on Shopping. The words are kept exactly — “/add eggs 12” adds one request called “eggs 12”. Tap Undo if it was a mistake.",
+      },
+      { cmd: "/shopping", what: "Shows your shopping list." },
+      { cmd: "/low", what: "Shows what's running low or out." },
+      { cmd: "/expiring", what: "Shows what's expiring soon." },
+      { cmd: "/home", what: "Picks which home Telegram uses — it doesn't change the app." },
+      { cmd: "/help", what: "Lists the commands." },
+      { cmd: "/stop", what: "Disconnects this chat." },
     ],
     tip: "The card only appears once your admin has switched Telegram on. Telegram can't change stock — that stays in the app.",
   },
 ];
+
+/**
+ * Example chat with the bot. Drawn in the page rather than screenshotted so the
+ * guide never shows a real home's items or a link the reader can't use yet.
+ */
+function TelegramChatMock() {
+  return (
+    <figure
+      aria-label="Example: a private chat with the HomeStock bot"
+      className="overflow-hidden rounded-3xl border border-border bg-card shadow-lg"
+    >
+      <div className="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-2">
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
+          H
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate text-[12px] font-semibold">HomeStock bot</span>
+          <span className="block text-[10px] text-muted-foreground">Telegram · private chat</span>
+        </span>
+      </div>
+
+      <div className="space-y-2 px-3 py-3">
+        <p className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-md bg-primary px-3 py-1.5 text-[11px] text-primary-foreground">
+          /shopping
+        </p>
+        <div className="w-fit max-w-[92%] rounded-2xl rounded-bl-md bg-muted px-3 py-2 text-[11px]">
+          <span className="font-semibold">Shopping — Maple Street</span>
+          <span className="mt-1 block text-muted-foreground">• eggs 12</span>
+          <span className="block text-muted-foreground">• oat milk</span>
+          <span className="mt-2 block rounded-lg border border-border bg-background px-2 py-1 text-center text-[10px] font-semibold">
+            Open HomeStock
+          </span>
+        </div>
+
+        <p className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-md bg-primary px-3 py-1.5 text-[11px] text-primary-foreground">
+          /add soap
+        </p>
+        <div className="w-fit max-w-[92%] rounded-2xl rounded-bl-md bg-muted px-3 py-2 text-[11px]">
+          <span className="block">
+            Added <span className="font-semibold">soap</span> to Shopping.
+          </span>
+          <span className="mt-1 inline-block rounded-lg border border-border bg-background px-2 py-0.5 text-[10px] font-semibold">
+            Undo
+          </span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 border-t border-border px-3 py-2 text-[10px] text-muted-foreground">
+        <span aria-hidden>☰</span>
+        <span className="truncate">add · shopping · low · expiring · home</span>
+      </div>
+    </figure>
+  );
+}
 
 export function UserGuide() {
   return (
@@ -124,9 +197,9 @@ export function UserGuide() {
       {FLOWS.map((f, i) => (
         <article
           key={f.title}
-          className={`grid items-center gap-6 md:grid-cols-[minmax(0,1fr)_260px] md:gap-10 ${
+          className={`grid gap-6 md:grid-cols-[minmax(0,1fr)_260px] md:gap-10 ${
             i % 2 ? "md:grid-cols-[260px_minmax(0,1fr)]" : ""
-          }`}
+          } ${f.illustration ? "items-start" : "items-center"}`}
         >
           <div className={i % 2 ? "md:order-2" : ""}>
             <h3 className="text-xl font-bold">{f.title}</h3>
@@ -138,24 +211,53 @@ export function UserGuide() {
                 </li>
               ))}
             </ul>
+            {f.commands && (
+              <>
+                <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Commands
+                </p>
+                <dl className="mt-2 overflow-hidden rounded-2xl border border-border text-sm">
+                  {f.commands.map((c, idx) => (
+                    <div
+                      key={c.cmd}
+                      className={`grid grid-cols-[minmax(0,6.5rem)_minmax(0,1fr)] gap-3 px-4 py-2.5 ${
+                        idx % 2 ? "bg-muted/50" : ""
+                      }`}
+                    >
+                      <dt className="font-mono text-[13px] font-semibold text-foreground">
+                        {c.cmd}
+                      </dt>
+                      <dd className="min-w-0 text-muted-foreground">{c.what}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </>
+            )}
             {f.tip && (
               <p className="mt-3 rounded-2xl bg-brand-soft px-4 py-3 text-sm">Tip: {f.tip}</p>
             )}
           </div>
-          <img
-            src={f.img}
-            alt={f.alt}
-            loading="lazy"
-            width={390}
-            height={844}
-            className={`mx-auto w-full max-w-[240px] rounded-3xl border border-border shadow-lg ${
-              i % 2 ? "md:order-1" : ""
+          <div
+            className={`mx-auto w-full max-w-[240px] ${i % 2 ? "md:order-1" : ""} ${
+              f.illustration ? "md:sticky md:top-24" : ""
             }`}
-          />
+          >
+            {f.illustration ??
+              (f.img && (
+                <img
+                  src={f.img}
+                  alt={f.alt ?? ""}
+                  loading="lazy"
+                  width={390}
+                  height={844}
+                  className="w-full rounded-3xl border border-border shadow-lg"
+                />
+              ))}
+          </div>
         </article>
       ))}
       <p className="text-center text-xs text-muted-foreground">
-        Screenshots use a sample home with made-up items.
+        Screenshots use a sample home with made-up items; the Telegram chat is an example.
       </p>
     </div>
   );
