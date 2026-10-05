@@ -162,7 +162,7 @@ function TelegramChatMock() {
           /shopping
         </p>
         <div className="w-fit max-w-[92%] rounded-2xl rounded-bl-md bg-muted px-3 py-2 text-[11px]">
-          <span className="font-semibold">🛒 Shopping — Maple Street</span>
+          <span className="font-semibold">Shopping — Maple Street</span>
           <span className="mt-1 block text-muted-foreground">• eggs 12</span>
           <span className="block text-muted-foreground">• oat milk</span>
           <span className="mt-2 block rounded-lg border border-border bg-background px-2 py-1 text-center text-[10px] font-semibold">
@@ -197,9 +197,9 @@ export function UserGuide() {
       {FLOWS.map((f, i) => (
         <article
           key={f.title}
-          className={`grid items-center gap-6 md:grid-cols-[minmax(0,1fr)_260px] md:gap-10 ${
+          className={`grid gap-6 md:grid-cols-[minmax(0,1fr)_260px] md:gap-10 ${
             i % 2 ? "md:grid-cols-[260px_minmax(0,1fr)]" : ""
-          }`}
+          } ${f.illustration ? "items-start" : "items-center"}`}
         >
           <div className={i % 2 ? "md:order-2" : ""}>
             <h3 className="text-xl font-bold">{f.title}</h3>
@@ -238,7 +238,9 @@ export function UserGuide() {
             )}
           </div>
           <div
-            className={`mx-auto w-full max-w-[240px] ${i % 2 ? "md:order-1" : ""}`}
+            className={`mx-auto w-full max-w-[240px] ${i % 2 ? "md:order-1" : ""} ${
+              f.illustration ? "md:sticky md:top-24" : ""
+            }`}
           >
             {f.illustration ??
               (f.img && (
