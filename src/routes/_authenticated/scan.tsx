@@ -787,8 +787,6 @@ function ScanPage() {
           <p className="mt-2 text-center text-xs text-muted-foreground">
             We remember every product you identify, so the next scan is instant.
           </p>
-        </>
-      )}
-    </AppShell>
+PLACEHOLDER
   );
 }
