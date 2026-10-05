@@ -53,6 +53,7 @@
 - [x] Owner can close join requests and regenerate the invite code
 - [x] Telegram expiry reminders (daily digest, admin kill switch, scheduler load panel)
 - [x] Docs + user guide updated; end-to-end test done; password sign-in reverted, test account removed
+- [x] Telegram companion: /add /shopping /low /expiring /home /help, Got it acknowledgements, 2-stage reminders
 - [x] Telegram admin alerts ("🔐 ADMIN") — waiting/first-entry toggles, dedicated admin destinations, multi-account chats
 - [x] Admin console two-factor (TOTP, mandatory) with one-time recovery codes
 

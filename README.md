@@ -64,6 +64,14 @@ Built with TanStack Start (React 19), Tailwind CSS v4 and Supabase
   `TELEGRAM_WEBHOOK_SECRET` live only in protected server secrets.
   One Telegram chat may serve many accounts (`telegram_links` is keyed by
   user, not chat); `/stop` disconnects every account on that chat and says so.
+- **Telegram companion** — webhook handles `/add`, `/shopping`, `/low`,
+  `/expiring`, `/home`, `/help` plus buttons (Undo, Got it, home pick) in
+  `src/lib/telegram-bot.server.ts`. Shared rules in `src/lib/stock-rules.ts`.
+  Tables: `telegram_chat_context` (active home per chat), `telegram_updates`
+  (idempotency, ids only), `telegram_undo`, `telegram_command_log` (type +
+  status only), `expiry_acks` (per user + stock record + date),
+  `expiry_reminders` (advance/day stages). Admin must press "Turn on
+  Telegram buttons" once so the webhook also receives button taps.
 - **Telegram admin sign-up alerts** — two independent switches in the admin
   console (waiting-for-approval, first-time-in). Alerts go to operators via
   `telegram_admin_links`, a dedicated table separate from user reminder

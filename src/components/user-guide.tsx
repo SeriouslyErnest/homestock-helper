@@ -104,15 +104,17 @@ const FLOWS: Flow[] = [
     ],
   },
   {
-    title: "10. Expiry reminders on Telegram (optional)",
+    title: "10. HomeStock on Telegram (optional)",
     img: more,
-    alt: "More page where the Telegram reminders card appears",
+    alt: "More page where the Telegram card appears",
     steps: [
       "Under More, tap “Connect Telegram”. The HomeStock bot opens — tap Start. The link works once and expires after 15 minutes.",
-      "Turn reminders on for each home and choose how early: on the day, 1 day, 3 days or a week before.",
-      "You get at most one short message a day per home listing what's expiring. Disconnect in the app, or send /stop to the bot.",
+      "In the chat: /add milk puts one “milk” on Shopping (the words are kept exactly — “/add eggs 12” adds one “eggs 12”). Tap Undo if it was a mistake.",
+      "/shopping, /low and /expiring show your list, what's low or out, and what's expiring. /home picks which home Telegram uses (it doesn't change the app). /help lists them.",
+      "Turn on expiry reminders per home and choose how early. You get one heads-up and one on the day. Tap “Got it” to stop reminders for that item — you can also tap “Got it” on the item page in the app.",
+      "Disconnect in the app, or send /stop to the bot. Telegram only works in a private chat with the bot.",
     ],
-    tip: "The card only appears once your admin has switched Telegram reminders on.",
+    tip: "The card only appears once your admin has switched Telegram on. Telegram can't change stock — that stays in the app.",
   },
 ];
 

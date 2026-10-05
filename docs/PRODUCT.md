@@ -149,6 +149,19 @@ Telegram reminders, restart welcome, promo code, account).
   admin Scheduler load panel (default budget 1,000 queries/day, warning at
   20%). One Telegram chat can be linked to many accounts; each account links
   independently and `/stop` disconnects all accounts on that chat.
+- **Telegram companion** — six commands only: `/add <text>` (one Buy
+  Request, text kept literally, home named in the reply, Undo button),
+  `/shopping`, `/low` (product-level, current = minimum is not low),
+  `/expiring`, `/home` (Telegram's own active home, never the web app's),
+  `/help`. Private chats only; no AI or free-text parsing; Telegram never
+  changes stock, expiry, minimums or membership. Every command re-checks home
+  membership. Reminders: one advance reminder (per the person's notice days)
+  and one expiry-day reminder per stock record + date, grouped per home, with
+  "Got it" buttons. "Got it" is per person, shared with the app's item page,
+  survives quantity changes, resets when the date changes, and can be undone
+  ("Resume reminders"). Blocked bots stop delivery until reconnected. Admin
+  can pause commands separately from reminders and sees 7-day usage counts
+  (command type only — no message text is stored).
 - **Telegram admin sign-up alerts** — two independent toggles: "waiting for
   approval" fires when a newcomer lands on the approval holding screen,
   "first time in" fires once when an approved user first enters the app
