@@ -1373,7 +1373,8 @@ export const adminTelegramSettings = createServerFn({ method: "POST" })
     const { readSetting, expiryNotificationsEnabled, telegramCall } =
       await import("./telegram.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const [enabled, bot, info, links, prefs, myAlert] = await Promise.all([
+    const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+    const [enabled, bot, info, links, prefs, myAlert, commands, cmdLog, sent7, inactive] = await Promise.all([
       expiryNotificationsEnabled(),
       readSetting<{ username?: string }>("telegram_bot"),
       telegramCall("getWebhookInfo", {}),
@@ -1387,13 +1388,42 @@ export const adminTelegramSettings = createServerFn({ method: "POST" })
         .select("user_id")
         .eq("user_id", context.userId)
         .maybeSingle(),
+      readSetting<{ enabled?: boolean }>("telegram_commands_enabled"),
+      supabaseAdmin
+        .from("telegram_command_log")
+        .select("command, status")
+        .gte("created_at", weekAgo)
+        .limit(5000),
+      supabaseAdmin
+        .from("expiry_reminders")
+        .select("user_id", { count: "exact", head: true })
+        .gte("sent_at", weekAgo)
+        .eq("status", "sent"),
+      supabaseAdmin
+        .from("telegram_links")
+        .select("user_id", { count: "exact", head: true })
+        .eq("active", false),
     ]);
-    const url = (info.result as { url?: string } | undefined)?.url ?? "";
+    const hookInfo = info.result as { url?: string; allowed_updates?: string[] } | undefined;
+    const url = hookInfo?.url ?? "";
+    const usage: Record<string, number> = {};
+    let failed = 0;
+    for (const r of cmdLog.data ?? []) {
+      usage[r.command] = (usage[r.command] ?? 0) + 1;
+      if (r.status !== "ok") failed++;
+    }
     return {
       enabled,
       botUsername: bot?.username ?? null,
       tokenConfigured: !!process.env["TELEGRAM_BOT_TOKEN"],
       webhookRegistered: url.endsWith("/api/public/telegram/webhook"),
+      buttonsEnabled:
+        !hookInfo?.allowed_updates || hookInfo.allowed_updates.includes("callback_query"),
+      commandsEnabled: commands?.enabled !== false,
+      usage7d: usage,
+      notDone7d: failed,
+      remindersSent7d: sent7.count ?? 0,
+      blockedChats: inactive.count ?? 0,
       linkedAccounts: links.count ?? 0,
       enabledPairs: prefs.count ?? 0,
       myAlerts: !!myAlert.data,
@@ -1445,6 +1475,33 @@ export const adminSetTelegramEnabled = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const adminSetTelegramCommands = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { routeId: string; enabled: boolean }) => cleanInput(input))
+  .handler(async ({ data, context }) => {
+    await guard(data.routeId, context, ["SUPER_ADMIN"]);
+    const { writeAudit } = await import("./admin.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("app_settings").upsert(
+      {
+        key: "telegram_commands_enabled",
+        value: { enabled: !!data.enabled } as never,
+        updated_at: new Date().toISOString(),
+        updated_by: context.userId,
+      },
+      { onConflict: "key" },
+    );
+    if (error) throw error;
+    await writeAudit({
+      adminUserId: context.userId,
+      actionType: "telegram_commands.toggled",
+      targetType: "setting",
+      targetId: "telegram_commands_enabled",
+      afterJson: { enabled: !!data.enabled },
+    });
+    return { ok: true };
+  });
+
 /** Points the bot at the published app. Secret is sent to Telegram server-to-server only. */
 export const adminRegisterTelegramWebhook = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -1457,7 +1514,7 @@ export const adminRegisterTelegramWebhook = createServerFn({ method: "POST" })
     const res = await telegramCall("setWebhook", {
       url: `${APP_URL}/api/public/telegram/webhook`,
       secret_token: secret,
-      allowed_updates: ["message"],
+      allowed_updates: ["message", "callback_query"],
       drop_pending_updates: true,
     });
     if (!res.ok)
