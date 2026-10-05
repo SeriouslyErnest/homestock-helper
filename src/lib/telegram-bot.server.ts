@@ -298,7 +298,7 @@ async function cmdExpiring(ctx: Ctx, home: Home) {
     .filter((i) => i.d <= windowDays)
     .sort((a, b) => a.d - b.d);
   const lines = due.map((i) => {
-    const verb = i.d < 0 ? (i.quantity === 1 ? "expired" : "expired") : i.quantity === 1 ? "expires" : "expire";
+    const verb = i.d < 0 ? "expired" : i.quantity === 1 ? "expires" : "expire";
     const ack = ackSet.has(`${i.id}:${i.expires_on}`) ? " ✓ Got it" : "";
     return `${escapeHtml(i.name)} — ${i.quantity} ${verb} ${shortDate(i.expires_on!)}${ack}`;
   });
