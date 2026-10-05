@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import inventory from "@/assets/guide/inventory.jpg";
 import useUp from "@/assets/guide/use-up.jpg";
 import shopping from "@/assets/guide/shopping.jpg";
@@ -10,8 +11,9 @@ import more from "@/assets/guide/more.jpg";
 
 type Flow = {
   title: string;
-  img: string;
-  alt: string;
+  img?: string;
+  alt?: string;
+  illustration?: ReactNode;
   steps: string[];
   tip?: string;
   commands?: { cmd: string; what: string }[];
@@ -112,8 +114,7 @@ const FLOWS: Flow[] = [
   },
   {
     title: "10. HomeStock on Telegram (optional)",
-    img: more,
-    alt: "More page where the Telegram card appears",
+    illustration: <TelegramChatMock />,
     steps: [
       "Under More, tap “Connect Telegram”. The HomeStock bot opens — tap Start. The link works once and expires after 15 minutes.",
       "Type a command in the chat, or tap it from the bot’s menu (☰). It only works in a private chat with the bot.",
@@ -135,6 +136,60 @@ const FLOWS: Flow[] = [
     tip: "The card only appears once your admin has switched Telegram on. Telegram can't change stock — that stays in the app.",
   },
 ];
+
+/**
+ * Example chat with the bot. Drawn in the page rather than screenshotted so the
+ * guide never shows a real home's items or a link the reader can't use yet.
+ */
+function TelegramChatMock() {
+  return (
+    <figure
+      aria-label="Example: a private chat with the HomeStock bot"
+      className="overflow-hidden rounded-3xl border border-border bg-card shadow-lg"
+    >
+      <div className="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-2">
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
+          H
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate text-[12px] font-semibold">HomeStock bot</span>
+          <span className="block text-[10px] text-muted-foreground">Telegram · private chat</span>
+        </span>
+      </div>
+
+      <div className="space-y-2 px-3 py-3">
+        <p className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-md bg-primary px-3 py-1.5 text-[11px] text-primary-foreground">
+          /shopping
+        </p>
+        <div className="w-fit max-w-[92%] rounded-2xl rounded-bl-md bg-muted px-3 py-2 text-[11px]">
+          <span className="font-semibold">🛒 Shopping — Maple Street</span>
+          <span className="mt-1 block text-muted-foreground">• eggs 12</span>
+          <span className="block text-muted-foreground">• oat milk</span>
+          <span className="mt-2 block rounded-lg border border-border bg-background px-2 py-1 text-center text-[10px] font-semibold">
+            Open HomeStock
+          </span>
+        </div>
+
+        <p className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-md bg-primary px-3 py-1.5 text-[11px] text-primary-foreground">
+          /add soap
+        </p>
+        <div className="w-fit max-w-[92%] rounded-2xl rounded-bl-md bg-muted px-3 py-2 text-[11px]">
+          <span className="block">
+            Added <span className="font-semibold">soap</span> to Shopping.
+          </span>
+          <span className="mt-1 inline-block rounded-lg border border-border bg-background px-2 py-0.5 text-[10px] font-semibold">
+            Undo
+          </span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 border-t border-border px-3 py-2 text-[10px] text-muted-foreground">
+        <span aria-hidden>☰</span>
+        <span className="truncate">add · shopping · low · expiring · home</span>
+      </div>
+    </figure>
+  );
+}
 
 export function UserGuide() {
   return (
@@ -182,20 +237,25 @@ export function UserGuide() {
               <p className="mt-3 rounded-2xl bg-brand-soft px-4 py-3 text-sm">Tip: {f.tip}</p>
             )}
           </div>
-          <img
-            src={f.img}
-            alt={f.alt}
-            loading="lazy"
-            width={390}
-            height={844}
-            className={`mx-auto w-full max-w-[240px] rounded-3xl border border-border shadow-lg ${
-              i % 2 ? "md:order-1" : ""
-            }`}
-          />
+          <div
+            className={`mx-auto w-full max-w-[240px] ${i % 2 ? "md:order-1" : ""}`}
+          >
+            {f.illustration ??
+              (f.img && (
+                <img
+                  src={f.img}
+                  alt={f.alt ?? ""}
+                  loading="lazy"
+                  width={390}
+                  height={844}
+                  className="w-full rounded-3xl border border-border shadow-lg"
+                />
+              ))}
+          </div>
         </article>
       ))}
       <p className="text-center text-xs text-muted-foreground">
-        Screenshots use a sample home with made-up items.
+        Screenshots use a sample home with made-up items; the Telegram chat is an example.
       </p>
     </div>
   );
