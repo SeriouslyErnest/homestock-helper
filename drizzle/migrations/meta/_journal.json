@@ -148,6 +148,13 @@
       "when": 1790770868810,
       "tag": "0020_abuse_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1791208191196,
+      "tag": "0021_telegram_companion",
+      "breakpoints": true
     }
   ]
 }

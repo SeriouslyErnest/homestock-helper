@@ -278,6 +278,48 @@ export type Database = {
           },
         ]
       }
+      expiry_acks: {
+        Row: {
+          acknowledged_at: string
+          expires_on: string
+          household_id: string
+          item_id: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          expires_on: string
+          household_id: string
+          item_id: string
+          source?: string
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string
+          expires_on?: string
+          household_id?: string
+          item_id?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expiry_acks_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expiry_acks_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expiry_notification_deliveries: {
         Row: {
           created_at: string
@@ -333,6 +375,41 @@ export type Database = {
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expiry_reminders: {
+        Row: {
+          expires_on: string
+          item_id: string
+          sent_at: string
+          stage: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          expires_on: string
+          item_id: string
+          sent_at?: string
+          stage: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          expires_on?: string
+          item_id?: string
+          sent_at?: string
+          stage?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expiry_reminders_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
             referencedColumns: ["id"]
           },
         ]
@@ -938,6 +1015,56 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_chat_context: {
+        Row: {
+          chat_id: number
+          household_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chat_id: number
+          household_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: number
+          household_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_chat_context_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_command_log: {
+        Row: {
+          command: string
+          created_at: string
+          id: number
+          status: string
+        }
+        Insert: {
+          command: string
+          created_at?: string
+          id?: number
+          status: string
+        }
+        Update: {
+          command?: string
+          created_at?: string
+          id?: number
+          status?: string
+        }
+        Relationships: []
+      }
       telegram_link_tokens: {
         Row: {
           created_at: string
@@ -964,19 +1091,64 @@ export type Database = {
       }
       telegram_links: {
         Row: {
+          active: boolean
           chat_id: number
           linked_at: string
+          telegram_user_id: number | null
           user_id: string
         }
         Insert: {
+          active?: boolean
           chat_id: number
           linked_at?: string
+          telegram_user_id?: number | null
           user_id: string
         }
         Update: {
+          active?: boolean
           chat_id?: number
           linked_at?: string
+          telegram_user_id?: number | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      telegram_undo: {
+        Row: {
+          created_at: string
+          id: string
+          shopping_item_id: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          shopping_item_id: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          shopping_item_id?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      telegram_updates: {
+        Row: {
+          created_at: string
+          update_id: number
+        }
+        Insert: {
+          created_at?: string
+          update_id: number
+        }
+        Update: {
+          created_at?: string
+          update_id?: number
         }
         Relationships: []
       }
