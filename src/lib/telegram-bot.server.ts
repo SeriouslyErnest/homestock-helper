@@ -11,6 +11,7 @@ import {
 import {
   APP_URL,
   BOT_COMMANDS,
+  cleanText,
   escapeHtml,
   isPermanentFailure,
   markChatInactive,
@@ -154,7 +155,7 @@ async function cmdHome(ctx: Ctx) {
 }
 
 async function cmdAdd(ctx: Ctx, home: Home, text: string) {
-  const name = text.trim();
+  const name = cleanText(text);
   if (!name) {
     await send(ctx.chatId, "What should I add?\nTry /add milk");
     return "empty";
@@ -162,6 +163,25 @@ async function cmdAdd(ctx: Ctx, home: Home, text: string) {
   if (name.length > 200) {
     await send(ctx.chatId, "I couldn't add that request. Please shorten the item name and try again.");
     return "invalid";
+  }
+  // Caps so a linked chat can't flood a home's list.
+  const { underLimit } = await import("./admin.server");
+  if (!(await underLimit(home.userId, "tg_add_day", 60, 86400))) {
+    await send(ctx.chatId, "That's a lot of additions from Telegram today. Please use the app for more.", [
+      [OPEN("/shopping")],
+    ]);
+    return "throttled";
+  }
+  const { count: pendingCount } = await ctx.db
+    .from("shopping_items")
+    .select("id", { count: "exact", head: true })
+    .eq("household_id", home.householdId)
+    .eq("status", "pending");
+  if ((pendingCount ?? 0) >= 300) {
+    await send(ctx.chatId, "The Shopping list is very full. Tick off or remove some items in the app first.", [
+      [OPEN("/shopping")],
+    ]);
+    return "full";
   }
   const { data: row, error } = await ctx.db
     .from("shopping_items")
@@ -466,14 +486,18 @@ export async function handleBotUpdate(db: Admin, update: Update): Promise<void> 
 
   // Generous per-account limit: stops loops and scripts, never normal use.
   const { underLimit } = await import("./admin.server");
-  if (!(await underLimit(ctx.userIds[0]!, "tg_cmd", 30, 60))) {
+  if (
+    !(await underLimit(ctx.userIds[0]!, "tg_cmd", 30, 60)) ||
+    !(await underLimit(ctx.userIds[0]!, "tg_cmd_hour", 300, 3600))
+  ) {
     await answer("Slow down a little");
     if (!cb) await send(chatId, "That's a lot of messages — please wait a minute and try again.");
     return;
   }
 
   if (cb) {
-    const [kind, id] = (cb.data ?? "").split(":");
+    const data = typeof cb.data === "string" && cb.data.length <= 64 ? cb.data : "";
+    const [kind, id] = data.split(":");
     let reply = "Done";
     const uuid = /^[0-9a-f-]{36}$/i.test(id ?? "") ? id! : null;
     if (!uuid) reply = "This button is no longer active.";
@@ -482,12 +506,14 @@ export async function handleBotUpdate(db: Admin, update: Update): Promise<void> 
     else if (kind === "a") reply = await cbAck(ctx, uuid, true);
     else if (kind === "r") reply = await cbAck(ctx, uuid, false);
     else reply = "This button is no longer active.";
-    await log(db, `button:${kind ?? "?"}`, "ok");
+    const known = ["h", "u", "a", "r"].includes(kind ?? "") ? kind : "other";
+    await log(db, `button:${known}`, "ok");
     await answer(reply);
     return;
   }
 
-  const text = (update.message?.text ?? "").trim();
+  const rawText = update.message?.text;
+  const text = (typeof rawText === "string" ? rawText : "").slice(0, 1000).trim();
   const m = /^\/([a-z]+)(?:@\w+)?(?:\s+([\s\S]*))?$/i.exec(text);
   const cmd = m?.[1]?.toLowerCase() ?? "";
   const rest = m?.[2] ?? "";

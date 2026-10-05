@@ -183,3 +183,6 @@ Telegram reminders, restart welcome, promo code, account).
 - Six security-linter EXECUTE warnings on SECURITY DEFINER helper functions
   are expected: they must be callable by signed-in users and each verifies
   its caller internally.
+
+### Telegram limits
+Per chat 40 messages/min and 300/h (silently dropped above that), 5 link attempts per 15 min, per account 30 commands/min and 300/h, /add 60/day and blocked at 300 pending Shopping items. Oversized/garbled updates and messages from other bots are ignored; /add text is cleaned of hidden characters and capped at 200 characters.

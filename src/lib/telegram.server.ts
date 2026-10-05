@@ -91,3 +91,29 @@ export async function expiryNotificationsEnabled(): Promise<boolean> {
 }
 
 export const APP_URL = "https://homestock-helper.lovable.app";
+
+/** Stable per-chat key so chats (linked or not) can share the rate_limit_hits table. */
+export async function chatKey(chatId: number): Promise<string> {
+  const h = await sha256Hex(`tgchat:${chatId}`);
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20, 32)}`;
+}
+
+/** Per-chat throttle; works before we know which account (if any) the chat belongs to. */
+export async function chatUnderLimit(
+  chatId: number,
+  bucket: string,
+  max: number,
+  windowSeconds: number,
+): Promise<boolean> {
+  const { underLimit } = await import("./admin.server");
+  return underLimit(await chatKey(chatId), bucket, max, windowSeconds);
+}
+
+/** Strip control / invisible / bidi characters and collapse whitespace in user text. */
+export function cleanText(s: string): string {
+  return s
+    .normalize("NFKC")
+    .replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
