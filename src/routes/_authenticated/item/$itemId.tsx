@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { CorrectQuantityDialog } from "@/components/correct-quantity";
 import { ProductPhotoDialog } from "@/components/product-photo-dialog";
+import { ExpiryAck } from "@/components/expiry-ack";
 import {
   emojiFor,
   useCategories,
@@ -255,6 +256,7 @@ function ItemPage() {
             {item.expires_on &&
               ` · ${expiring ? "⚠ " : ""}Expires ${formatLocalDate(item.expires_on)}`}
           </div>
+          {expiring && <ExpiryAck item={item as Item} />}
           {item.barcode && (
             <div className="mt-0.5 text-xs text-muted-foreground">Barcode {item.barcode}</div>
           )}

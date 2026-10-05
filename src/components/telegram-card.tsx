@@ -51,11 +51,17 @@ export function TelegramCard({
 
   return (
     <section className="mb-6 rounded-2xl border border-border bg-card p-4">
-      <h2 className="mb-1 text-sm font-bold">Telegram reminders</h2>
+      <h2 className="mb-1 text-sm font-bold">Telegram</h2>
       {!d.linked ? (
         <>
           <p className="text-xs text-muted-foreground">
-            Get one short message a day when things are about to expire. Only you get it.
+            {d.stopped
+              ? "Telegram stopped accepting our messages (the bot may have been blocked). Connect again to resume."
+              : "Add to Shopping with /add milk, check /shopping, /low or /expiring, and get expiry reminders you can silence with Got it."}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Connecting sends item names, amounts and expiry dates from your homes to your private
+            Telegram chat. Nothing else.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button
@@ -77,8 +83,11 @@ export function TelegramCard({
         </>
       ) : (
         <>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Connected. In Telegram: /add milk · /shopping · /low · /expiring · /home · /help
+          </p>
           <label className="flex items-center justify-between gap-3 text-sm">
-            <span className="min-w-0">Remind me about {householdName}</span>
+            <span className="min-w-0">Send my expiry reminders for {householdName} to Telegram</span>
             <input
               type="checkbox"
               className="h-5 w-5"
