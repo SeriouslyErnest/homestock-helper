@@ -63,3 +63,4 @@
 
 - [x] Grouped inventory by product with expandable breakdown + optional expiry after +1 (Step 1)
 - [x] Step 2: optional expiry in scanner basket and shopping check-off
+- [x] User guide: Telegram section now has a command table (7 commands) and an example-chat illustration instead of an unrelated screenshot
