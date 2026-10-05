@@ -2,7 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 
 type Update = {
   update_id?: number;
-  message?: { chat?: { id?: number; type?: string }; text?: string };
+  message?: {
+    chat?: { id?: number; type?: string };
+    from?: { id?: number };
+    text?: string;
+  };
+  callback_query?: {
+    id: string;
+    data?: string;
+    from?: { id?: number };
+    message?: { chat?: { id?: number; type?: string } };
+  };
 };
 
 export const Route = createFileRoute("/api/public/telegram/webhook")({
@@ -17,20 +27,34 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           return new Response("Unauthorized", { status: 401 });
         }
         const update = (await request.json().catch(() => ({}))) as Update;
-        const chatId = update.message?.chat?.id;
-        const text = (update.message?.text ?? "").trim();
-        if (!chatId || update.message?.chat?.type !== "private") {
-          return Response.json({ ok: true });
-        }
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+        // Telegram retries deliveries: handle each update once. Only the id is kept.
+        if (typeof update.update_id === "number") {
+          const { error: dupErr } = await supabaseAdmin
+            .from("telegram_updates")
+            .insert({ update_id: update.update_id });
+          if (dupErr) return Response.json({ ok: true, duplicate: true });
+        }
+
+        const chatId = update.message?.chat?.id;
+        const text = (update.message?.text ?? "").trim();
+        const isPrivate = update.message?.chat?.type === "private";
+
         const startMatch = /^\/start(?:@\w+)?(?:\s+([A-Za-z0-9_-]{16,64}))?$/.exec(text);
-        if (startMatch) {
+        if (chatId && isPrivate && startMatch) {
           const token = startMatch[1];
           if (!token) {
+            const { count } = await supabaseAdmin
+              .from("telegram_links")
+              .select("user_id", { count: "exact", head: true })
+              .eq("chat_id", chatId)
+              .eq("active", true);
             await sendTelegramMessage(
               chatId,
-              `👋 This is the HomeStock bot.\n\nTo get expiry reminders, open HomeStock → <b>More</b> → <b>Telegram reminders</b> and tap <b>Connect Telegram</b>.\n\n${APP_URL}/more`,
+              count
+                ? "✅ This chat is connected to HomeStock. Send /help to see what I can do."
+                : `👋 This is the HomeStock bot.\n\nTo connect, open HomeStock → <b>More</b> → <b>Telegram</b> and tap <b>Connect Telegram</b>.\n\n${APP_URL}/more`,
             );
             return Response.json({ ok: true });
           }
@@ -47,17 +71,21 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           if (!claimed) {
             await sendTelegramMessage(
               chatId,
-              "That link has expired or was already used. Open HomeStock → More → Telegram reminders and tap Connect again.",
+              "That link has expired or was already used. Open HomeStock → More → Telegram and tap Connect again.",
             );
             return Response.json({ ok: true });
           }
           // Many accounts may share one Telegram chat; each account links independently.
-          const { error } = await supabaseAdmin
-            .from("telegram_links")
-            .upsert(
-              { user_id: claimed.user_id, chat_id: chatId, linked_at: nowIso },
-              { onConflict: "user_id" },
-            );
+          const { error } = await supabaseAdmin.from("telegram_links").upsert(
+            {
+              user_id: claimed.user_id,
+              chat_id: chatId,
+              telegram_user_id: update.message?.from?.id ?? null,
+              active: true,
+              linked_at: nowIso,
+            },
+            { onConflict: "user_id" },
+          );
           // Operators also get an authoritative admin alert destination, kept
           // separate so user-side disconnects never silence admin alerts.
           if (!error) {
@@ -75,19 +103,25 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
                 );
             }
           }
+          let extra = "";
+          if (!error) {
+            const { afterLink } = await import("@/lib/telegram-bot.server");
+            extra = await afterLink(supabaseAdmin, chatId).catch(() => "");
+          }
           await sendTelegramMessage(
             chatId,
             error
               ? "Something went wrong connecting. Please try again from HomeStock."
-              : "✅ Connected to HomeStock. You'll get a short daily note when things in your homes are about to expire. Send /stop any time to disconnect.",
+              : `✅ Connected to HomeStock. ${extra}\n\nTry /add milk, /shopping, /low or /expiring. Send /help any time, or /stop to disconnect.`,
           );
           return Response.json({ ok: true });
         }
 
-        if (/^\/stop(?:@\w+)?$/.test(text)) {
+        if (chatId && isPrivate && /^\/stop(?:@\w+)?$/.test(text)) {
           // /stop disconnects every account linked to this chat. Admin alert
           // destinations live in telegram_admin_links and are not touched here.
           await supabaseAdmin.from("telegram_links").delete().eq("chat_id", chatId);
+          await supabaseAdmin.from("telegram_chat_context").delete().eq("chat_id", chatId);
           await sendTelegramMessage(
             chatId,
             "Disconnected all HomeStock accounts from this chat. You can reconnect any time from inside HomeStock.",
@@ -95,10 +129,12 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           return Response.json({ ok: true });
         }
 
-        await sendTelegramMessage(
-          chatId,
-          "I only send expiry reminders. Manage them in HomeStock → More → Telegram reminders.",
-        );
+        try {
+          const { handleBotUpdate } = await import("@/lib/telegram-bot.server");
+          await handleBotUpdate(supabaseAdmin, update);
+        } catch (e) {
+          console.error("telegram update failed", e instanceof Error ? e.message : "unknown");
+        }
         return Response.json({ ok: true });
       },
     },

@@ -28,14 +28,40 @@ export async function telegramCall(
   }
 }
 
-export function sendTelegramMessage(chatId: number, html: string) {
+export type InlineButton = { text: string; callback_data?: string; url?: string };
+
+export function sendTelegramMessage(chatId: number, html: string, buttons?: InlineButton[][]) {
   return telegramCall("sendMessage", {
     chat_id: chatId,
     text: html,
     parse_mode: "HTML",
     disable_web_page_preview: true,
+    ...(buttons && buttons.length ? { reply_markup: { inline_keyboard: buttons } } : {}),
   });
 }
+
+/** Telegram says delivery to this chat is permanently impossible (blocked, deleted, …). */
+export function isPermanentFailure(description: string | undefined): boolean {
+  return /blocked|chat not found|user is deactivated|bot can't initiate|kicked/i.test(
+    description ?? "",
+  );
+}
+
+/** Stop delivering to a chat that blocked the bot; the person can reconnect later. */
+export async function markChatInactive(chatId: number): Promise<void> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  await supabaseAdmin.from("telegram_links").update({ active: false }).eq("chat_id", chatId);
+}
+
+/** The six everyday commands shown in Telegram's menu. */
+export const BOT_COMMANDS = [
+  { command: "add", description: "Add one thing to Shopping" },
+  { command: "shopping", description: "Show the Shopping list" },
+  { command: "low", description: "Show low and out-of-stock items" },
+  { command: "expiring", description: "Show what's expiring soon" },
+  { command: "home", description: "Choose which home to use" },
+  { command: "help", description: "Show these commands" },
+];
 
 export async function sha256Hex(value: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));

@@ -10,7 +10,7 @@ export const telegramStatus = createServerFn({ method: "POST" })
       readSetting<{ username?: string }>("telegram_bot"),
       context.supabase
         .from("telegram_links")
-        .select("linked_at")
+        .select("linked_at, active")
         .eq("user_id", context.userId)
         .maybeSingle(),
       context.supabase
@@ -21,7 +21,8 @@ export const telegramStatus = createServerFn({ method: "POST" })
     return {
       featureEnabled: enabled,
       botUsername: bot?.username ?? null,
-      linked: !!link.data,
+      linked: !!link.data && link.data.active !== false,
+      stopped: !!link.data && link.data.active === false,
       linkedAt: link.data?.linked_at ?? null,
       prefs: (prefs.data ?? []).map((p) => ({
         householdId: p.household_id,

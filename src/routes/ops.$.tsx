@@ -37,6 +37,7 @@ import {
   adminSchedulerLoad,
   adminTelegramSettings,
   adminSetTelegramEnabled,
+  adminSetTelegramCommands,
   adminRegisterTelegramWebhook,
   adminUnlinkTelegramAlerts,
   adminSetSchedulerBudget,
@@ -296,6 +297,11 @@ function TelegramPanel({ routeId }: { routeId: string }) {
     onSuccess: refresh,
     onError: (e: Error) => toast.error(e.message),
   });
+  const toggleCmds = useMutation({
+    mutationFn: (enabled: boolean) => adminSetTelegramCommands({ data: { routeId, enabled } }),
+    onSuccess: refresh,
+    onError: (e: Error) => toast.error(e.message),
+  });
   const hook = useMutation({
     mutationFn: () => adminRegisterTelegramWebhook({ data: { routeId } }),
     onSuccess: () => {
@@ -334,14 +340,33 @@ function TelegramPanel({ routeId }: { routeId: string }) {
         accounts · {d.enabledPairs} reminders turned on. One run a day at 00:00 UTC. When off,
         nothing is sent and members can't connect.
       </p>
-      {!d.webhookRegistered && (
+      <label className="mt-3 flex items-center justify-between gap-2 text-sm">
+        <span>Telegram commands (/add, /shopping, /low, /expiring, /home)</span>
+        <span className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={d.commandsEnabled}
+            disabled={toggleCmds.isPending}
+            onChange={(e) => toggleCmds.mutate(e.target.checked)}
+          />
+          {d.commandsEnabled ? "On" : "Paused"}
+        </span>
+      </label>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Last 7 days: {d.remindersSent7d} expiry reminders sent ·{" "}
+        {Object.entries(d.usage7d)
+          .map(([k, v]) => `${k} ${v}`)
+          .join(" · ") || "no commands yet"}{" "}
+        · {d.notDone7d} not completed · {d.blockedChats} chats stopped delivery (blocked bot)
+      </p>
+      {(!d.webhookRegistered || !d.buttonsEnabled) && (
         <button
           type="button"
           onClick={() => hook.mutate()}
           disabled={hook.isPending}
           className="mt-3 h-9 rounded-xl border border-border px-3 text-xs font-semibold disabled:opacity-50"
         >
-          Connect bot to the published app
+          {d.webhookRegistered ? "Turn on Telegram buttons (reconnect bot)" : "Connect bot to the published app"}
         </button>
       )}
       <p className="mt-3 text-xs text-muted-foreground">
