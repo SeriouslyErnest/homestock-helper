@@ -133,7 +133,7 @@ const FLOWS: Flow[] = [
       { cmd: "/help", what: "Lists the commands." },
       { cmd: "/stop", what: "Disconnects this chat." },
     ],
-    tip: "The card only appears once your admin has switched Telegram on. Telegram can't change stock — that stays in the app.",
+    tip: "The card only appears once your admin has switched Telegram on. Telegram can't change stock — that stays in the app. To keep things safe the bot has limits: about 30 commands a minute, 60 additions a day, and a full Shopping list (300 items) must be tidied in the app first. If you hit a limit, wait a minute or use the app.",
   },
 ];
 
