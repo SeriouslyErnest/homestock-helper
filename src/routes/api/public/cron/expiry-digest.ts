@@ -179,7 +179,9 @@ export const Route = createFileRoute("/api/public/cron/expiry-digest")({
                 if (toSend.length > 15) lines.push(`…and ${toSend.length - 15} more`);
                 html = `⚠️ <b>${toSend.length} things are expiring soon in ${escapeHtml(home.name)}</b>\n\n${lines.join("\n")}`;
               }
-              const buttons = toSend.slice(0, MAX_BUTTONS).map((i) => [
+              const buttons: { text: string; callback_data?: string; url?: string }[][] = toSend
+                .slice(0, MAX_BUTTONS)
+                .map((i) => [
                 {
                   text: toSend.length === 1 ? "Got it" : `Got it: ${i.name}`.slice(0, 60),
                   callback_data: `a:${i.id}`,
