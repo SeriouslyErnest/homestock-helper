@@ -190,10 +190,11 @@ export const Route = createFileRoute("/api/public/cron/expiry-digest")({
               if (res.ok) sent++;
               else {
                 errors++;
-                if (isPermanentFailure(res.description)) await markChatInactive(Number(chatId));
-                await supabaseAdmin
-                  .from("expiry_reminders")
-                  .update({ status: "failed" })
+                const permanent = isPermanentFailure(res.description);
+                if (permanent) await markChatInactive(Number(chatId));
+                // Permanent: keep as failed (no endless retries). Temporary: release so the next run retries.
+                const q = supabaseAdmin.from("expiry_reminders");
+                await (permanent ? q.update({ status: "failed" }) : q.delete())
                   .eq("user_id", p.user_id)
                   .in(
                     "item_id",
