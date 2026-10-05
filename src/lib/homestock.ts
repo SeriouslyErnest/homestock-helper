@@ -107,13 +107,7 @@ export function useCategories(): CategoryDef[] {
   return data ?? CATEGORIES;
 }
 
-/**
- * Running low: some stock remains, but strictly below the "keep at least" amount.
- * Quantity 0 is "out of stock", not low; quantity == minimum is comfortably stocked.
- */
-export function isLow(item: Item): boolean {
-  return item.min_quantity > 0 && item.quantity > 0 && item.quantity < item.min_quantity;
-}
+export { isLow } from "./stock-rules";
 
 /**
  * Parse a plain calendar date ("2026-09-20") in the viewer's own timezone.
