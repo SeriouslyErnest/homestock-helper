@@ -8,7 +8,14 @@ import correct from "@/assets/guide/correct.jpg";
 import stockCheck from "@/assets/guide/stock-check.jpg";
 import more from "@/assets/guide/more.jpg";
 
-type Flow = { title: string; img: string; alt: string; steps: string[]; tip?: string };
+type Flow = {
+  title: string;
+  img: string;
+  alt: string;
+  steps: string[];
+  tip?: string;
+  commands?: { cmd: string; what: string }[];
+};
 
 const FLOWS: Flow[] = [
   {
@@ -109,10 +116,21 @@ const FLOWS: Flow[] = [
     alt: "More page where the Telegram card appears",
     steps: [
       "Under More, tap “Connect Telegram”. The HomeStock bot opens — tap Start. The link works once and expires after 15 minutes.",
-      "In the chat: /add milk puts one “milk” on Shopping (the words are kept exactly — “/add eggs 12” adds one “eggs 12”). Tap Undo if it was a mistake.",
-      "/shopping, /low and /expiring show your list, what's low or out, and what's expiring. /home picks which home Telegram uses (it doesn't change the app). /help lists them.",
+      "Type a command in the chat, or tap it from the bot’s menu (☰). It only works in a private chat with the bot.",
       "Turn on expiry reminders per home and choose how early. You get one heads-up and one on the day. Tap “Got it” to stop reminders for that item — you can also tap “Got it” on the item page in the app.",
-      "Disconnect in the app, or send /stop to the bot. Telegram only works in a private chat with the bot.",
+      "Disconnect in the app, or send /stop to the bot.",
+    ],
+    commands: [
+      {
+        cmd: "/add <item>",
+        what: "Puts one thing on Shopping. The words are kept exactly — “/add eggs 12” adds one request called “eggs 12”. Tap Undo if it was a mistake.",
+      },
+      { cmd: "/shopping", what: "Shows your shopping list." },
+      { cmd: "/low", what: "Shows what's running low or out." },
+      { cmd: "/expiring", what: "Shows what's expiring soon." },
+      { cmd: "/home", what: "Picks which home Telegram uses — it doesn't change the app." },
+      { cmd: "/help", what: "Lists the commands." },
+      { cmd: "/stop", what: "Disconnects this chat." },
     ],
     tip: "The card only appears once your admin has switched Telegram on. Telegram can't change stock — that stays in the app.",
   },
@@ -138,6 +156,28 @@ export function UserGuide() {
                 </li>
               ))}
             </ul>
+            {f.commands && (
+              <>
+                <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Commands
+                </p>
+                <dl className="mt-2 overflow-hidden rounded-2xl border border-border text-sm">
+                  {f.commands.map((c, idx) => (
+                    <div
+                      key={c.cmd}
+                      className={`grid grid-cols-[minmax(0,6.5rem)_minmax(0,1fr)] gap-3 px-4 py-2.5 ${
+                        idx % 2 ? "bg-muted/50" : ""
+                      }`}
+                    >
+                      <dt className="font-mono text-[13px] font-semibold text-foreground">
+                        {c.cmd}
+                      </dt>
+                      <dd className="min-w-0 text-muted-foreground">{c.what}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </>
+            )}
             {f.tip && (
               <p className="mt-3 rounded-2xl bg-brand-soft px-4 py-3 text-sm">Tip: {f.tip}</p>
             )}
