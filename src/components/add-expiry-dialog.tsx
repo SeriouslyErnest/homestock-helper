@@ -20,7 +20,7 @@ export async function applyExpiry(itemId: string, qty: number, date: string): Pr
   if (readErr || !row) throw readErr ?? new Error("missing");
   const current = row as Item;
   const move = Math.min(Math.max(1, qty), Number(current.quantity));
-  if (Number(current.quantity) <= move || current.expires_on === date || !current.expires_on && Number(current.quantity) <= move) {
+  if (Number(current.quantity) <= move || current.expires_on === date) {
     const { error } = await supabase.from("items").update({ expires_on: date }).eq("id", current.id);
     if (error) throw error;
     return current.name;
