@@ -40,6 +40,48 @@ export function sendTelegramMessage(chatId: number, html: string, buttons?: Inli
   });
 }
 
+/** Button grid pinned under the chat; each tap sends its label as a message. */
+export const KEYBOARD_BUTTONS: Record<string, string> = {
+  "🛒 Shopping": "shopping",
+  "⚠️ Low stock": "low",
+  "⏳ Expiring": "expiring",
+  "➕ Add item": "add",
+  "🏠 Home": "home",
+  "❓ Help": "help",
+};
+
+export const COMMAND_KEYBOARD = {
+  keyboard: [
+    [{ text: "🛒 Shopping" }, { text: "⚠️ Low stock" }],
+    [{ text: "⏳ Expiring" }, { text: "➕ Add item" }],
+    [{ text: "🏠 Home" }, { text: "❓ Help" }],
+  ],
+  resize_keyboard: true,
+  is_persistent: true,
+  input_field_placeholder: "Tap a button or type /add milk",
+};
+
+/** Send a message that also (re)shows the button grid. */
+export function sendWithKeyboard(chatId: number, html: string) {
+  return telegramCall("sendMessage", {
+    chat_id: chatId,
+    text: html,
+    parse_mode: "HTML",
+    disable_web_page_preview: true,
+    reply_markup: COMMAND_KEYBOARD,
+  });
+}
+
+export const WELCOME_TEXT =
+  "👋 <b>Welcome to HomeStock on Telegram!</b>\n\n" +
+  "Use the buttons below to check your home at any time:\n" +
+  "🛒 <b>Shopping</b> — what's on the list\n" +
+  "⚠️ <b>Low stock</b> — running low or out\n" +
+  "⏳ <b>Expiring</b> — use these soon\n" +
+  "➕ <b>Add item</b> — add to Shopping (or type /add milk)\n" +
+  "🏠 <b>Home</b> — switch home\n\n" +
+  "Send /stop any time to disconnect.";
+
 /** Telegram says delivery to this chat is permanently impossible (blocked, deleted, …). */
 export function isPermanentFailure(description: string | undefined): boolean {
   return /blocked|chat not found|user is deactivated|bot can't initiate|kicked/i.test(

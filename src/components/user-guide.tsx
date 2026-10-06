@@ -117,7 +117,7 @@ const FLOWS: Flow[] = [
     illustration: <TelegramChatMock />,
     steps: [
       "Under More, tap “Connect Telegram”. The HomeStock bot opens — tap Start. The link works once and expires after 15 minutes.",
-      "Type a command in the chat, or tap it from the bot’s menu (☰). It only works in a private chat with the bot.",
+      "The bot welcomes you and shows a set of buttons under the chat — Shopping, Low stock, Expiring, Add item, Home and Help. Tap one to check your home, or type a command. It only works in a private chat with the bot.",
       "Turn on expiry reminders per home and choose how early. You get one heads-up and one on the day. Tap “Got it” to stop reminders for that item — you can also tap “Got it” on the item page in the app.",
       "Disconnect in the app, or send /stop to the bot.",
     ],
