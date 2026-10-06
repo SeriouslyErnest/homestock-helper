@@ -164,10 +164,12 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           // destinations live in telegram_admin_links and are not touched here.
           await supabaseAdmin.from("telegram_links").delete().eq("chat_id", chatId);
           await supabaseAdmin.from("telegram_chat_context").delete().eq("chat_id", chatId);
-          await sendTelegramMessage(
-            chatId,
-            "Disconnected all HomeStock accounts from this chat. You can reconnect any time from inside HomeStock.",
-          );
+          const { telegramCall } = await import("@/lib/telegram.server");
+          await telegramCall("sendMessage", {
+            chat_id: chatId,
+            text: "Disconnected all HomeStock accounts from this chat. You can reconnect any time from inside HomeStock.",
+            reply_markup: { remove_keyboard: true },
+          });
           return Response.json({ ok: true });
         }
 
