@@ -514,13 +514,23 @@ export async function handleBotUpdate(db: Admin, update: Update): Promise<void> 
 
   const rawText = update.message?.text;
   const text = (typeof rawText === "string" ? rawText : "").slice(0, 1000).trim();
-  const m = /^\/([a-z]+)(?:@\w+)?(?:\s+([\s\S]*))?$/i.exec(text);
-  const cmd = m?.[1]?.toLowerCase() ?? "";
+  const { KEYBOARD_BUTTONS, sendWithKeyboard } = await import("./telegram.server");
+  // Button taps arrive as their exact label; map only known labels.
+  const fromButton = Object.prototype.hasOwnProperty.call(KEYBOARD_BUTTONS, text)
+    ? KEYBOARD_BUTTONS[text]
+    : undefined;
+  const m = fromButton ? null : /^\/([a-z]+)(?:@\w+)?(?:\s+([\s\S]*))?$/i.exec(text);
+  const cmd = fromButton ?? m?.[1]?.toLowerCase() ?? "";
   const rest = m?.[2] ?? "";
 
   if (cmd === "help") {
     await log(db, "help", "ok");
-    await send(chatId, HELP_TEXT, [[OPEN()]]);
+    await sendWithKeyboard(chatId, HELP_TEXT);
+    return;
+  }
+  if (fromButton === "add") {
+    await log(db, "add", "prompt");
+    await send(chatId, "What would you like to add? Type <b>/add</b> and the item, for example <b>/add milk</b>.");
     return;
   }
   if (cmd === "home") {

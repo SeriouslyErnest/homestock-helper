@@ -79,12 +79,15 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
               .select("user_id", { count: "exact", head: true })
               .eq("chat_id", chatId)
               .eq("active", true);
-            await sendTelegramMessage(
-              chatId,
-              count
-                ? "✅ This chat is connected to HomeStock. Send /help to see what I can do."
-                : `👋 This is the HomeStock bot.\n\nTo connect, open HomeStock → <b>More</b> → <b>Telegram</b> and tap <b>Connect Telegram</b>.\n\n${APP_URL}/more`,
-            );
+            if (count) {
+              const { sendWithKeyboard, WELCOME_TEXT } = await import("@/lib/telegram.server");
+              await sendWithKeyboard(chatId, WELCOME_TEXT);
+            } else {
+              await sendTelegramMessage(
+                chatId,
+                `👋 This is the HomeStock bot.\n\nTo connect, open HomeStock → <b>More</b> → <b>Telegram</b> and tap <b>Connect Telegram</b>.\n\n${APP_URL}/more`,
+              );
+            }
             return Response.json({ ok: true });
           }
           // Link codes are long and random; still cap guesses per chat.
@@ -141,17 +144,18 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
                 );
             }
           }
-          let extra = "";
-          if (!error) {
-            const { afterLink } = await import("@/lib/telegram-bot.server");
-            extra = await afterLink(supabaseAdmin, chatId).catch(() => "");
+          if (error) {
+            await sendTelegramMessage(
+              chatId,
+              "Something went wrong connecting. Please try again from HomeStock.",
+            );
+            return Response.json({ ok: true });
           }
-          await sendTelegramMessage(
-            chatId,
-            error
-              ? "Something went wrong connecting. Please try again from HomeStock."
-              : `✅ Connected to HomeStock. ${extra}\n\nTry /add milk, /shopping, /low or /expiring. Send /help any time, or /stop to disconnect.`,
-          );
+          const { sendWithKeyboard, WELCOME_TEXT } = await import("@/lib/telegram.server");
+          await sendWithKeyboard(chatId, `✅ Connected.\n\n${WELCOME_TEXT}`);
+          const { afterLink } = await import("@/lib/telegram-bot.server");
+          const extra = await afterLink(supabaseAdmin, chatId).catch(() => "");
+          if (extra) await sendTelegramMessage(chatId, extra);
           return Response.json({ ok: true });
         }
 
