@@ -46,7 +46,7 @@ export const KEYBOARD_BUTTONS: Record<string, string> = {
   "⚠️ Low stock": "low",
   "⏳ Expiring": "expiring",
   "➕ Add item": "add",
-  "🏠 Home": "home",
+  "🏠 Switch home": "home",
   "❓ Help": "help",
 };
 
@@ -54,7 +54,7 @@ export const COMMAND_KEYBOARD = {
   keyboard: [
     [{ text: "🛒 Shopping" }, { text: "⚠️ Low stock" }],
     [{ text: "⏳ Expiring" }, { text: "➕ Add item" }],
-    [{ text: "🏠 Home" }, { text: "❓ Help" }],
+    [{ text: "🏠 Switch home" }, { text: "❓ Help" }],
   ],
   resize_keyboard: true,
   is_persistent: true,
