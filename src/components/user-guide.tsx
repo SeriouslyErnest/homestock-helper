@@ -117,7 +117,7 @@ const FLOWS: Flow[] = [
     illustration: <TelegramChatMock />,
     steps: [
       "Under More, tap “Connect Telegram”. The HomeStock bot opens — tap Start. The link works once and expires after 15 minutes.",
-      "The bot welcomes you and shows a set of buttons under the chat — Shopping, Low stock, Expiring, Add item, Home and Help. Tap one to check your home, or type a command. It only works in a private chat with the bot.",
+      "The bot welcomes you and shows a set of buttons under the chat — Shopping, Low stock, Expiring, Add item, Switch home and Help. Tap one to check your home, or type a command. It only works in a private chat with the bot.",
       "Turn on expiry reminders per home and choose how early. You get one heads-up and one on the day. Tap “Got it” to stop reminders for that item — you can also tap “Got it” on the item page in the app.",
       "Disconnect in the app, or send /stop to the bot.",
     ],
@@ -185,7 +185,7 @@ function TelegramChatMock() {
 
       <div className="flex items-center gap-2 border-t border-border px-3 py-2 text-[10px] text-muted-foreground">
         <span aria-hidden>☰</span>
-        <span className="truncate">add · shopping · low · expiring · home</span>
+        <span className="truncate">add · shopping · low · expiring · switch home</span>
       </div>
     </figure>
   );
