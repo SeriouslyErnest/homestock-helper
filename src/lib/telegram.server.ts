@@ -79,7 +79,7 @@ export const WELCOME_TEXT =
   "⚠️ <b>Low stock</b> — running low or out\n" +
   "⏳ <b>Expiring</b> — use these soon\n" +
   "➕ <b>Add item</b> — add to Shopping (or type /add milk)\n" +
-  "🏠 <b>Home</b> — switch home\n\n" +
+  "🏠 <b>Switch home</b> — pick which home Telegram uses\n\n" +
   "Send /stop any time to disconnect.";
 
 /** Telegram says delivery to this chat is permanently impossible (blocked, deleted, …). */
