@@ -44,3 +44,6 @@ database read-back.
 - 2026-10-05 — Telegram hardening (typecheck only, not live-tested): per-chat flood guard 40/min + 300/h for all chats (silent drop), link-code guesses 5/15min per chat, per-account 30/min + 300/h commands, /add 60/day per account and refused when home has 300 pending, 64 KB body cap, bad JSON ignored, bot senders ignored, text clipped to 1000 chars, control/invisible/bidi characters stripped from /add, callback data ≤64 chars and only known kinds logged. Retest on a phone after publish.
 
 - 2026-10-05 — Telegram button grid + welcome message (typecheck only, not live-tested): persistent 6-button keyboard (Shopping, Low stock, Expiring, Add item, Home, Help) sent with the welcome on first connect, on /start when already connected, and with /help; button labels map to commands by exact match only; "Add item" prompts for /add <item>; /stop removes the keyboard. Retest on a phone after publish.
+
+## 2026-10-10 — Telegram conversational Add item + Main Menu buttons
+- Add item button waits 10 min for a typed name (no /add needed); Cancel, Add more and Main Menu inline buttons on every reply. Typecheck only; needs real Telegram test after publish.

@@ -48,10 +48,44 @@ export function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+const MENU: InlineButton = { text: "🔙 Main Menu", callback_data: "m:menu" };
+const ADD_PROMPT = "What would you like to add to Shopping? Just type the item name below:";
+
+/** Every bot reply carries a way back to the main menu. */
 async function send(chatId: number, html: string, buttons?: InlineButton[][]) {
-  const res = await sendTelegramMessage(chatId, html, buttons);
+  const rows = [...(buttons ?? []), [MENU]];
+  const res = await sendTelegramMessage(chatId, html, rows);
   if (!res.ok && isPermanentFailure(res.description)) await markChatInactive(chatId);
   return res;
+}
+
+async function setAwaitingAdd(db: Admin, chatId: number) {
+  await db.from("telegram_chat_state").upsert(
+    { chat_id: chatId, awaiting: "add", expires_at: new Date(Date.now() + 10 * 60_000).toISOString() },
+    { onConflict: "chat_id" },
+  );
+}
+
+async function clearState(db: Admin, chatId: number) {
+  await db.from("telegram_chat_state").delete().eq("chat_id", chatId);
+}
+
+/** True (and cleared) when this chat was waiting for an item name. */
+async function takeAwaitingAdd(db: Admin, chatId: number): Promise<boolean> {
+  const { data } = await db
+    .from("telegram_chat_state")
+    .delete()
+    .eq("chat_id", chatId)
+    .select("awaiting, expires_at")
+    .maybeSingle();
+  return !!data && data.awaiting === "add" && Date.parse(data.expires_at) > Date.now();
+}
+
+async function promptAdd(db: Admin, chatId: number) {
+  await setAwaitingAdd(db, chatId);
+  await sendTelegramMessage(chatId, ADD_PROMPT, [
+    [{ text: "🔙 Cancel & Return to Main Menu", callback_data: "m:menu" }],
+  ]);
 }
 
 async function log(db: Admin, command: string, status: string) {
@@ -157,8 +191,8 @@ async function cmdHome(ctx: Ctx) {
 async function cmdAdd(ctx: Ctx, home: Home, text: string) {
   const name = cleanText(text);
   if (!name) {
-    await send(ctx.chatId, "What should I add?\nTry /add milk");
-    return "empty";
+    await promptAdd(ctx.db, ctx.chatId);
+    return "prompt";
   }
   if (name.length > 200) {
     await send(ctx.chatId, "I couldn't add that request. Please shorten the item name and try again.");
@@ -199,7 +233,7 @@ async function cmdAdd(ctx: Ctx, home: Home, text: string) {
     .single();
   const buttons: InlineButton[] = [];
   if (undo) buttons.push({ text: "Undo", callback_data: `u:${undo.id}` });
-  buttons.push(OPEN("/shopping"));
+  buttons.push({ text: "➕ Add more", callback_data: "m:add" });
   await send(
     ctx.chatId,
     `Added <b>${escapeHtml(name)}</b> to <b>${escapeHtml(home.name)}</b>.`,
@@ -495,6 +529,21 @@ export async function handleBotUpdate(db: Admin, update: Update): Promise<void> 
     return;
   }
 
+  if (cb && (cb.data === "m:menu" || cb.data === "m:add")) {
+    if (cb.data === "m:add") {
+      await promptAdd(db, chatId);
+      await log(db, "button:add_more", "ok");
+      await answer("Type the item name");
+    } else {
+      await clearState(db, chatId);
+      const { sendWithKeyboard } = await import("./telegram.server");
+      await sendWithKeyboard(chatId, "Here is the main menu. Tap a button below to check your home:");
+      await log(db, "button:menu", "ok");
+      await answer("Main menu");
+    }
+    return;
+  }
+
   if (cb) {
     const data = typeof cb.data === "string" && cb.data.length <= 64 ? cb.data : "";
     const [kind, id] = data.split(":");
@@ -520,17 +569,18 @@ export async function handleBotUpdate(db: Admin, update: Update): Promise<void> 
     ? KEYBOARD_BUTTONS[text]
     : undefined;
   const m = fromButton ? null : /^\/([a-z]+)(?:@\w+)?(?:\s+([\s\S]*))?$/i.exec(text);
-  const cmd = fromButton ?? m?.[1]?.toLowerCase() ?? "";
-  const rest = m?.[2] ?? "";
+  let cmd = fromButton ?? m?.[1]?.toLowerCase() ?? "";
+  let rest = m?.[2] ?? "";
+  // Any message ends a waiting "add" prompt; plain text answers it.
+  const wasAwaiting = await takeAwaitingAdd(db, chatId);
+  if (wasAwaiting && !fromButton && !m && text) {
+    cmd = "add";
+    rest = text;
+  }
 
   if (cmd === "help") {
     await log(db, "help", "ok");
     await sendWithKeyboard(chatId, HELP_TEXT);
-    return;
-  }
-  if (fromButton === "add") {
-    await log(db, "add", "prompt");
-    await send(chatId, "What would you like to add? Type <b>/add</b> and the item, for example <b>/add milk</b>.");
     return;
   }
   if (cmd === "home") {
