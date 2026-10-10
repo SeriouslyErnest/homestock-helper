@@ -58,7 +58,7 @@ export const COMMAND_KEYBOARD = {
   ],
   resize_keyboard: true,
   is_persistent: true,
-  input_field_placeholder: "Tap a button or type /add milk",
+  input_field_placeholder: "Tap a button below",
 };
 
 /** Send a message that also (re)shows the button grid. */
@@ -78,7 +78,7 @@ export const WELCOME_TEXT =
   "🛒 <b>Shopping</b> — what's on the list\n" +
   "⚠️ <b>Low stock</b> — running low or out\n" +
   "⏳ <b>Expiring</b> — use these soon\n" +
-  "➕ <b>Add item</b> — add to Shopping (or type /add milk)\n" +
+  "➕ <b>Add item</b> — tap it, then type the item name\n" +
   "🏠 <b>Switch home</b> — pick which home Telegram uses\n\n" +
   "Send /stop any time to disconnect.";
 
