@@ -1044,6 +1044,24 @@ export type Database = {
           },
         ]
       }
+      telegram_chat_state: {
+        Row: {
+          awaiting: string
+          chat_id: number
+          expires_at: string
+        }
+        Insert: {
+          awaiting: string
+          chat_id: number
+          expires_at: string
+        }
+        Update: {
+          awaiting?: string
+          chat_id?: number
+          expires_at?: string
+        }
+        Relationships: []
+      }
       telegram_command_log: {
         Row: {
           command: string
