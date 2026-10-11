@@ -660,6 +660,7 @@ function AboutPage() {
               Support / Contact
             </a>
             <Link to="/auth">Open HomeStock</Link>
+            <Link to="/pro">HomeStock Pro</Link>
           </nav>
           <p className="text-xs leading-relaxed text-muted-foreground">
             Product names, brands and images come from{" "}
@@ -694,7 +695,7 @@ function AboutPage() {
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} HomeStock
             {/* Bump this when the app ships meaningful changes. */}
-            <span className="sr-only">·</span> Last updated 26 September 2026
+            <span className="sr-only">·</span> Last updated 11 October 2026
           </p>
         </div>
       </footer>

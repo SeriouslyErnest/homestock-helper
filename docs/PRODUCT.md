@@ -194,8 +194,11 @@ Per chat 40 messages/min and 300/h (silently dropped above that), 5 link attempt
 
 ## Pro homes & Household insights (2026-10-11)
 - A home is Pro when any of its owners is on the paid plan (base plan set by admin, a trial/complimentary grant, a redeemed promo code, or later a live subscription). Every member of a Pro home sees Insights; a PRO badge shows next to the home on More.
-- Insights: will run out within a week (units used over the last 30 days), expiring in 7 days, untouched 60+ days, top staples, restock rhythm, weekly in/out (8 weeks), units spoiled on the shelf.
+- Insights: will run out within a week (units used over the last 30 days), expiring in 7 days, untouched 60+ days, top staples, restock rhythm, weekly in/out (8 weeks), stock recorded on its expiry date. “Spoiled on shelf” is not confirmed discarded food.
 - Existing stock events stay as they are. Extra data (one daily stock snapshot per item) is recorded only for Pro homes, from the day Pro is switched on.
 - Admin: set an account Paid/Free, give 30- or 90-day trials, and quick 30/90-day promo templates.
 - Payments: prepared, not connected. A future verified payment webhook writes subscriptions; an active live subscription counts as paid automatically.
 - Stock reaching zero clears that row's expiry date (Use one, corrections, any decrease).
+- Public `/pro` is a separate Pro teaser, not a second About page. Three captured fictional sample screens cover forecasting/staples/restock intervals, pantry audit and weekly flow. No sample rows are written to the database.
+- About's user guide section 11 explains access through an owner, the PRO badge, the three insight groups, trial-code redemption, estimate limitations and Pro-only daily recording; it links to `/pro`. More and the locked Insights screen also link there.
+- Detailed code map, query limits, snapshot semantics and screenshot regeneration: [PRO.md](PRO.md). No category charts, savings totals, guaranteed forecasts, automatic purchases or checkout are promised.

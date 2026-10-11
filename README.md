@@ -92,8 +92,6 @@ Built with TanStack Start (React 19), Tailwind CSS v4 and Supabase
 - **Times in your timezone** — everything is stored in UTC and rendered in
   the viewer's local timezone, so daylight saving never shifts a date.
 
-## Product lookup
-
 ## HomeStock Pro
 
 The public `/pro` preview is separate from `/about` and the user guide. It
@@ -174,13 +172,19 @@ After that the route answers plain "Not found" to everyone else.
 src/routes/                  TanStack Start file routes
   index.tsx                  Landing page
   about.tsx                  Product/marketing page
+  pro.tsx                    Public Pro preview with fictional screenshots
   auth.tsx                   Sign-in (email link + Google)
   ops.$.tsx                  Hidden admin console (ssr: false, noindex)
   _authenticated/            App screens behind the auth gate
     inventory.tsx  consume.tsx  scan.tsx  add.tsx  shopping.tsx
-    more.tsx       setup.tsx    item/$itemId.tsx
+    more.tsx       setup.tsx    item/$itemId.tsx   insights.tsx
 src/lib/
   homestock.ts               Shared queries, household switching, date helpers
+  insights.ts                Pure deterministic Pro calculations
+  insights.test.ts           Tests for consumption, forecasts and snapshots
+  billing.ts                 Payment preparation; no connected checkout
+src/components/
+  pro-samples.tsx             Fictional screenshot subjects (no household queries)
   admin.server.ts            Server-only: email HMAC/masking, console path check
   admin.functions.ts         Admin server functions (guarded by role)
 src/integrations/supabase/   Generated clients + auth middleware (do not edit)

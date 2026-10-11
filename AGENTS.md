@@ -21,3 +21,4 @@
 - Pro is per home, derived: household_is_pro() = any owner whose effective_tier() is 'paid'; effective_tier also reads live billing_subscriptions, which only a verified payment webhook (service role) may write — why: one source of truth for trials, promos, admin plans and future payments.
 - Pro-only extra data lives in public.stock_snapshots, written by the daily pg_cron job record_pro_snapshots() for Pro homes only; insights maths is pure in src/lib/insights.ts with vitest tests — why: free homes never accumulate extra data and the numbers stay deterministic.
 - adjust_item_quantity/set_item_quantity clear expires_on when a row reaches 0 — why: empty stock must never show as expiring.
+- Public Pro previews use isolated, fictional read-only screenshot subjects and CDN asset pointers; never fetch or seed household data for marketing — why: sample screenshots must not disclose real homes or trigger telemetry/billing writes.

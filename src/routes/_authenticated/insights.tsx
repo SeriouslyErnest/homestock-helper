@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { AppShell } from "@/components/app-shell";
 import { ProBadge } from "@/components/pro-badge";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useHousehold, useHouseholdPro, useItems } from "@/lib/homestock";
 import { PRO_FEATURES } from "@/lib/billing";
@@ -125,6 +126,7 @@ function InsightsPage() {
               <li key={f}>{f}</li>
             ))}
           </ul>
+          <Button variant="outline" asChild className="mt-4"><Link to="/pro">Preview Pro with sample screenshots</Link></Button>
           <p className="mt-4 text-sm text-muted-foreground">
             Have a trial or promo code? Enter it under{" "}
             <Link to="/more" className="font-semibold text-brand underline">
