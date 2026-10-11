@@ -4,7 +4,6 @@
 import {
   DEFAULT_EXPIRY_WINDOW_DAYS,
   daysBetweenDates,
-  isLow,
   productKey,
   productStatus,
 } from "./stock-rules";

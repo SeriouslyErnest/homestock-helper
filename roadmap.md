@@ -64,3 +64,6 @@
 - [x] Grouped inventory by product with expandable breakdown + optional expiry after +1 (Step 1)
 - [x] Step 2: optional expiry in scanner basket and shopping check-off
 - [x] User guide: Telegram section now has a command table (7 commands) and an example-chat illustration instead of an unrelated screenshot
+- [x] Telegram: pinned button pad, Switch home, conversational Add item, /menu fallback, Main Menu inline buttons removed (2026-10-11)
+- [x] Telegram Shopping: Running Low grouped per product as separate lines (2026-10-11)
+- [x] New stock never inherits existing expiry (2026-10-11)

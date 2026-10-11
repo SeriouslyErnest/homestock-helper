@@ -186,3 +186,8 @@ Telegram reminders, restart welcome, promo code, account).
 
 ### Telegram limits
 Per chat 40 messages/min and 300/h (silently dropped above that), 5 link attempts per 15 min, per account 30 commands/min and 300/h, /add 60/day and blocked at 300 pending Shopping items. Oversized/garbled updates and messages from other bots are ignored; /add text is cleaned of hidden characters and capped at 200 characters.
+
+## Telegram buttons and new-stock expiry (2026-10-11)
+- The pinned six-button pad is the bot's main menu. Replies no longer carry a "Main Menu" button; /menu (also in Telegram's [/] list) or the ❌ Cancel button on the Add prompt brings the pad back. ➕ Add item asks for a name; plain text answers it.
+- Telegram Shopping shows Running Low as one bullet line per product (stock rows grouped, same rule as /low), then Buy Requests as bullet lines.
+- New stock never inherits an existing expiry date: adding to a dated row puts the new units on the product's undated row (created if missing). The optional "Add expiry" step then dates only those units.

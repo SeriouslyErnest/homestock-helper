@@ -47,3 +47,6 @@ database read-back.
 
 ## 2026-10-10 — Telegram conversational Add item + Main Menu buttons
 - Add item button waits 10 min for a typed name (no /add needed); Cancel, Add more and Main Menu inline buttons on every reply. Typecheck only; needs real Telegram test after publish.
+
+## 2026-10-11 — Telegram menu cleanup, grouped Running Low, no expiry inheritance
+- Typecheck only. Not tested in Telegram or browser yet (app unpublished).
