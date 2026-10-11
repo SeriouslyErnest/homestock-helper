@@ -12,7 +12,7 @@ const title = "HomeStock Pro — Household insights & consumption forecasts";
 const description = "Explore HomeStock Pro with fictional sample screenshots: run-out forecasts, pantry checks, staples and weekly stock flow for your whole home.";
 
 export const Route = createFileRoute("/pro")({
-  validateSearch: (search: Record<string, unknown>) => ({ sample: search['sample'] === true || search['sample'] === "true" }),
+  validateSearch: (search: Record<string, unknown>): { sample?: boolean } => ({ sample: search['sample'] === true || search['sample'] === "true" }),
   head: () => ({ meta: [
     { title }, { name: "description", content: description },
     { property: "og:title", content: title }, { property: "og:description", content: description },

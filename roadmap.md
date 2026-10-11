@@ -69,7 +69,7 @@
 - [x] New stock never inherits existing expiry (2026-10-11)
 
 ## Pro & Insights (2026-10-11)
-- [ ] Public /pro teaser with sample-only screenshots, updated user guide and technical documentation, browser verification
+- [x] Public /pro teaser with sample-only screenshots, updated user guide and technical documentation, browser verification (1280/390/320px, dark, guide navigation, image delivery; six maths tests passed)
 - [x] Pro homes (owner on paid tier unlocks for members), PRO badge on More
 - [x] Household Insights page (audit, forecasting, dashboard); Pro-only daily snapshots
 - [x] Admin: set account paid/free, 30/90-day trial presets, promo templates

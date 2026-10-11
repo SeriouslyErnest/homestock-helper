@@ -55,3 +55,9 @@ database read-back.
 - E2E (temp password account, 390px, deleted afterwards): home not Pro on free plan; 30-day trial grant made the home Pro (status says "through your plan"); PRO badge + Household insights link on More; Insights page shows used/added totals and staples from real events; consuming dated Yoghurt to 0 cleared its expiry; daily snapshot job skipped the free home and recorded the Pro home; free home cannot read snapshots; a user cannot write their own subscription row (403). PASS.
 - Unit tests (bunx vitest run): burn rate, 30-day window, dead stock at 60 days, restock rhythm, weekly flow, spoiled units — 6/6 PASS.
 - Not tested: admin console Paid toggle, trial presets and promo templates (need the operator's authenticator).
+
+## 2026-10-11 08:55 UTC — Public Pro preview and user guide
+- Browser PASS: `/pro` loads three captured fictional sample screenshots at 1280, 390 and 320px; every image has a positive natural width, no horizontal overflow, unique Pro title present. Dark appearance checked at 320px. No page errors.
+- Navigation PASS: Pro → User guide → section 11 → Explore HomeStock Pro → Household insights sends a signed-out visitor to sign-in. Guide Pro section and image render without overflow. No account, home, entitlement or settings were created or changed.
+- Existing calculation tests rerun with `bunx vitest run src/lib/insights.test.ts`: 6/6 PASS. These are regression checks, not fresh authenticated entitlement/admin/payment E2E tests.
+- Screenshot subjects mirror Insights using explicit fictional data; not captures of a real home's recorded history. Captures stored as CDN assets. Payments remain unconnected; earlier real-Telegram and admin-TOTP checks remain pending.
