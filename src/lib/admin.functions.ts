@@ -299,6 +299,7 @@ export const adminAccountDetail = createServerFn({ method: "POST" })
             firstSeenAt: account.data.first_seen_at,
             lastSeenAt: account.data.last_seen_at,
             tier: (tier.data as string | null) ?? "free",
+            basePlan: tier.base,
             signInMethods,
           }
         : null,

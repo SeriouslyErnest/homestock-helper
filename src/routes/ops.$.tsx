@@ -20,6 +20,7 @@ import {
   adminOverview,
   adminPlans,
   adminRevokeGrant,
+  adminSetBasePlan,
   adminSession,
   adminSetCategories,
   adminSetPlanEnforcement,
@@ -653,6 +654,21 @@ function AccountDetail({
     queryFn: () => adminAccountDetail({ data: { routeId, userId } }),
   });
 
+  const [source, setSource] = useState<"complimentary" | "trial">("trial");
+  const basePlan = useMutation({
+    mutationFn: (next: "paid" | "free") => {
+      const why = window.prompt(`Reason for setting this account to ${next}?`) ?? "";
+      if (!why.trim()) throw new Error("A reason is required");
+      return adminSetBasePlan({ data: { routeId, userId, tier: next, reason: why } });
+    },
+    onSuccess: () => {
+      toast.success("Plan updated");
+      void qc.invalidateQueries({ queryKey: ["admin-account", routeId, userId] });
+      void qc.invalidateQueries({ queryKey: ["admin-accounts", routeId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const grant = useMutation({
     mutationFn: () =>
       adminGrantAccess({
@@ -660,7 +676,7 @@ function AccountDetail({
           routeId,
           userId,
           tier,
-          source: "complimentary",
+          source,
           days: days === "never" ? null : Number(days),
           reason,
         },
@@ -700,6 +716,25 @@ function AccountDetail({
         <p className="text-xs text-muted-foreground">
           Signs in with: {a.signInMethods.length ? a.signInMethods.join(", ") : "—"}
         </p>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border p-3">
+        <div>
+          <h3 className="text-sm font-semibold">Paid account</h3>
+          <p className="text-xs text-muted-foreground">
+            Base plan: <strong>{a.basePlan}</strong>. Paid owners make their homes Pro for every member.
+          </p>
+        </div>
+        {(role === "SUPER_ADMIN" || role === "BILLING_ADMIN") && (
+          <button
+            type="button"
+            disabled={basePlan.isPending}
+            onClick={() => basePlan.mutate(a.basePlan === "paid" ? "free" : "paid")}
+            className="h-10 rounded-xl border border-border px-4 text-sm font-semibold"
+          >
+            {a.basePlan === "paid" ? "Set to free" : "Set to paid"}
+          </button>
+        )}
       </div>
 
       <div>
@@ -754,8 +789,30 @@ function AccountDetail({
           grant.mutate();
         }}
       >
-        <h3 className="text-sm font-semibold">Give complimentary access</h3>
+        <h3 className="text-sm font-semibold">Give a free trial or complimentary access</h3>
         <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => { setTier("paid"); setSource("trial"); setDays("30"); setReason((r) => r || "30-day free trial"); }}
+            className="h-10 rounded-xl border border-border px-3 text-sm font-semibold"
+          >
+            30-day trial
+          </button>
+          <button
+            type="button"
+            onClick={() => { setTier("paid"); setSource("trial"); setDays("90"); setReason((r) => r || "90-day free trial"); }}
+            className="h-10 rounded-xl border border-border px-3 text-sm font-semibold"
+          >
+            90-day trial
+          </button>
+          <select
+            value={source}
+            onChange={(e) => setSource(e.target.value as "complimentary" | "trial")}
+            className="h-10 rounded-xl border border-border bg-background px-3 text-sm"
+          >
+            <option value="trial">trial</option>
+            <option value="complimentary">complimentary</option>
+          </select>
           <select
             value={tier}
             onChange={(e) => setTier(e.target.value)}
@@ -848,6 +905,26 @@ function Promotions({ routeId }: { routeId: string }) {
         }}
       >
         <h2 className="text-sm font-semibold sm:col-span-2">New promotion</h2>
+        <div className="flex flex-wrap gap-2 sm:col-span-2">
+          {[30, 90].map((d) => (
+            <button
+              key={d}
+              type="button"
+              onClick={() =>
+                setForm({
+                  ...form,
+                  tier: "paid",
+                  durationDays: String(d),
+                  code: form.code || `TRIAL${d}`,
+                  campaignName: form.campaignName || `${d}-day free trial`,
+                })
+              }
+              className="h-9 rounded-xl border border-border px-3 text-xs font-semibold"
+            >
+              {d}-day trial template
+            </button>
+          ))}
+        </div>
         <input
           value={form.code}
           onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
