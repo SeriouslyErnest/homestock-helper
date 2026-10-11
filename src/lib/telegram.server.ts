@@ -102,6 +102,7 @@ export const BOT_COMMANDS = [
   { command: "low", description: "Show low and out-of-stock items" },
   { command: "expiring", description: "Show what's expiring soon" },
   { command: "home", description: "Choose which home to use" },
+  { command: "menu", description: "Bring back the buttons" },
   { command: "help", description: "Show these commands" },
 ];
 

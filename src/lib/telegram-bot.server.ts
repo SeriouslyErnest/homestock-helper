@@ -36,6 +36,7 @@ export const HELP_TEXT =
   "/low — show low/out-of-stock items\n" +
   "/expiring — show expiring items\n" +
   "/home — choose household\n" +
+  "/menu — bring back the buttons\n" +
   "/help — show this help\n\n" +
   'Example: /add eggs 12\nThis adds one Shopping request called "eggs 12".';
 
@@ -48,13 +49,11 @@ export function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-const MENU: InlineButton = { text: "🔙 Main Menu", callback_data: "m:menu" };
 const ADD_PROMPT = "What would you like to add to Shopping? Just type the item name below:";
 
-/** Every bot reply carries a way back to the main menu. */
+/** The pinned button pad is the main menu; /menu or Cancel brings it back. */
 async function send(chatId: number, html: string, buttons?: InlineButton[][]) {
-  const rows = [...(buttons ?? []), [MENU]];
-  const res = await sendTelegramMessage(chatId, html, rows);
+  const res = await sendTelegramMessage(chatId, html, buttons);
   if (!res.ok && isPermanentFailure(res.description)) await markChatInactive(chatId);
   return res;
 }
@@ -84,7 +83,7 @@ async function takeAwaitingAdd(db: Admin, chatId: number): Promise<boolean> {
 async function promptAdd(db: Admin, chatId: number) {
   await setAwaitingAdd(db, chatId);
   await sendTelegramMessage(chatId, ADD_PROMPT, [
-    [{ text: "🔙 Cancel & Return to Main Menu", callback_data: "m:menu" }],
+    [{ text: "❌ Cancel", callback_data: "m:menu" }],
   ]);
 }
 
@@ -277,25 +276,26 @@ async function cmdShopping(ctx: Ctx, home: Home) {
   const pending = shopping.data ?? [];
   const nameOf = new Map((members.data ?? []).map((m) => [m.user_id, m.display_name]));
   const listed = new Set(pending.map((p) => p.item_id).filter(Boolean));
-  // Same rule as the Shopping page's "Running low" suggestions.
-  const low = items.filter(
-    (i) => (isLow(i) || i.quantity <= 0) && i.min_quantity > 0 && !listed.has(i.id),
-  );
+  // One line per product (stock rows grouped), same rule as /low.
+  const groups = new Map<string, typeof items>();
+  for (const i of items) groups.set(productKey(i), [...(groups.get(productKey(i)) ?? []), i]);
   const lines: string[] = [];
-  if (low.length) {
-    lines.push("<b>Running Low</b>");
-    for (const i of low)
-      lines.push(
-        `${escapeHtml(i.name)} — ${i.quantity <= 0 ? "Out of Stock" : `${i.quantity} left, keep ${i.min_quantity}`}`,
-      );
+  const low: string[] = [];
+  for (const rows of groups.values()) {
+    const s = productStatus(rows);
+    if (s.min <= 0 || s.status === "ok" || rows.some((r) => listed.has(r.id))) continue;
+    low.push(
+      `• ${escapeHtml(rows[0]!.name)} — ${s.status === "out" ? "Out of Stock" : `${s.total} left, keep ${s.min}`}`,
+    );
   }
+  if (low.length) lines.push("<b>Running Low</b>", ...low);
   if (pending.length) {
     if (lines.length) lines.push("");
     lines.push("<b>Buy Requests</b>");
     for (const p of pending) {
       const q = Number(p.quantity) > 1 ? ` ×${Number(p.quantity)}` : "";
       const who = p.requested_by ? nameOf.get(p.requested_by) : null;
-      lines.push(`${escapeHtml(p.name)}${q}${who ? ` — requested by ${escapeHtml(who)}` : ""}`);
+      lines.push(`• ${escapeHtml(p.name)}${q}${who ? ` — requested by ${escapeHtml(who)}` : ""}`);
     }
   }
   const body = lines.length ? trimList(lines).join("\n") : "Nothing to buy right now. 🎉";
@@ -578,6 +578,11 @@ export async function handleBotUpdate(db: Admin, update: Update): Promise<void> 
     rest = text;
   }
 
+  if (cmd === "menu" || cmd === "start") {
+    await log(db, "menu", "ok");
+    await sendWithKeyboard(chatId, "Here is the main menu. Tap a button below to check your home:");
+    return;
+  }
   if (cmd === "help") {
     await log(db, "help", "ok");
     await sendWithKeyboard(chatId, HELP_TEXT);
