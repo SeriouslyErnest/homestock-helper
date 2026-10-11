@@ -554,3 +554,21 @@ export function usageScore(usage: ItemUsage | undefined, fallbackUpdatedAt: stri
   const recency = 10 / (1 + daysAgo);
   return (usage?.consumeCount ?? 0) + recency;
 }
+
+/** Pro status of a home: unlocked when one of its owners is on the paid plan. */
+export type HouseholdPro = { pro: boolean; sponsor_is_me?: boolean; sponsor_name?: string | null };
+
+export function useHouseholdPro(householdId: string | undefined) {
+  return useQuery({
+    queryKey: ["household-pro", householdId],
+    enabled: !!householdId,
+    staleTime: 60_000,
+    queryFn: async (): Promise<HouseholdPro> => {
+      const { data, error } = await supabase.rpc("household_pro_status", {
+        _household_id: householdId!,
+      });
+      if (error) throw error;
+      return data as unknown as HouseholdPro;
+    },
+  });
+}
