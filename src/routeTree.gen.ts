@@ -15,6 +15,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAddRouteImport } from './routes/_authenticated/add'
 import { Route as AuthenticatedConsumeRouteImport } from './routes/_authenticated/consume'
+import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
 import { Route as AuthenticatedMoreRouteImport } from './routes/_authenticated/more'
 import { Route as AuthenticatedReconcileRouteImport } from './routes/_authenticated/reconcile'
@@ -54,6 +55,11 @@ const AuthenticatedAddRoute = AuthenticatedAddRouteImport.update({
 const AuthenticatedConsumeRoute = AuthenticatedConsumeRouteImport.update({
   id: '/consume',
   path: '/consume',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
+  id: '/insights',
+  path: '/insights',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/add': typeof AuthenticatedAddRoute
   '/consume': typeof AuthenticatedConsumeRoute
+  '/insights': typeof AuthenticatedInsightsRoute
   '/inventory': typeof AuthenticatedInventoryRoute
   '/more': typeof AuthenticatedMoreRoute
   '/reconcile': typeof AuthenticatedReconcileRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/add': typeof AuthenticatedAddRoute
   '/consume': typeof AuthenticatedConsumeRoute
+  '/insights': typeof AuthenticatedInsightsRoute
   '/inventory': typeof AuthenticatedInventoryRoute
   '/more': typeof AuthenticatedMoreRoute
   '/reconcile': typeof AuthenticatedReconcileRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/add': typeof AuthenticatedAddRoute
   '/_authenticated/consume': typeof AuthenticatedConsumeRoute
+  '/_authenticated/insights': typeof AuthenticatedInsightsRoute
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
   '/_authenticated/more': typeof AuthenticatedMoreRoute
   '/_authenticated/reconcile': typeof AuthenticatedReconcileRoute
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/add'
     | '/consume'
+    | '/insights'
     | '/inventory'
     | '/more'
     | '/reconcile'
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/add'
     | '/consume'
+    | '/insights'
     | '/inventory'
     | '/more'
     | '/reconcile'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/add'
     | '/_authenticated/consume'
+    | '/_authenticated/insights'
     | '/_authenticated/inventory'
     | '/_authenticated/more'
     | '/_authenticated/reconcile'
@@ -280,6 +292,13 @@ declare module '@tanstack/react-router' {
       path: '/consume'
       fullPath: '/consume'
       preLoaderRoute: typeof AuthenticatedConsumeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/insights': {
+      id: '/_authenticated/insights'
+      path: '/insights'
+      fullPath: '/insights'
+      preLoaderRoute: typeof AuthenticatedInsightsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/inventory': {
@@ -365,6 +384,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAddRoute: typeof AuthenticatedAddRoute
   AuthenticatedConsumeRoute: typeof AuthenticatedConsumeRoute
+  AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
   AuthenticatedMoreRoute: typeof AuthenticatedMoreRoute
   AuthenticatedReconcileRoute: typeof AuthenticatedReconcileRoute
@@ -378,6 +398,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAddRoute: AuthenticatedAddRoute,
   AuthenticatedConsumeRoute: AuthenticatedConsumeRoute,
+  AuthenticatedInsightsRoute: AuthenticatedInsightsRoute,
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
   AuthenticatedMoreRoute: AuthenticatedMoreRoute,
   AuthenticatedReconcileRoute: AuthenticatedReconcileRoute,
