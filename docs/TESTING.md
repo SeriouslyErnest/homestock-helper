@@ -50,3 +50,8 @@ database read-back.
 
 ## 2026-10-11 — Telegram menu cleanup, grouped Running Low, no expiry inheritance
 - Typecheck only. Not tested in Telegram or browser yet (app unpublished).
+
+## 2026-10-11 — Pro homes, Household insights, empty stock clears expiry
+- E2E (temp password account, 390px, deleted afterwards): home not Pro on free plan; 30-day trial grant made the home Pro (status says "through your plan"); PRO badge + Household insights link on More; Insights page shows used/added totals and staples from real events; consuming dated Yoghurt to 0 cleared its expiry; daily snapshot job skipped the free home and recorded the Pro home; free home cannot read snapshots; a user cannot write their own subscription row (403). PASS.
+- Unit tests (bunx vitest run): burn rate, 30-day window, dead stock at 60 days, restock rhythm, weekly flow, spoiled units — 6/6 PASS.
+- Not tested: admin console Paid toggle, trial presets and promo templates (need the operator's authenticator).
