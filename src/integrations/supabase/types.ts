@@ -203,6 +203,62 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean
+          created_at: string
+          current_period_end: string | null
+          environment: string
+          id: string
+          price_id: string | null
+          provider: string
+          provider_customer_id: string | null
+          provider_subscription_id: string
+          status: string
+          tier: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          environment?: string
+          id?: string
+          price_id?: string | null
+          provider: string
+          provider_customer_id?: string | null
+          provider_subscription_id: string
+          status: string
+          tier?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          environment?: string
+          id?: string
+          price_id?: string | null
+          provider?: string
+          provider_customer_id?: string | null
+          provider_subscription_id?: string
+          status?: string
+          tier?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_subscriptions_tier_fkey"
+            columns: ["tier"]
+            isOneToOne: false
+            referencedRelation: "app_plans"
+            referencedColumns: ["tier"]
+          },
+        ]
+      }
       cron_tokens: {
         Row: {
           created_at: string
@@ -997,6 +1053,51 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_snapshots: {
+        Row: {
+          created_at: string
+          expires_on: string | null
+          household_id: string
+          item_id: string
+          min_quantity: number
+          quantity: number
+          snapshot_date: string
+        }
+        Insert: {
+          created_at?: string
+          expires_on?: string | null
+          household_id: string
+          item_id: string
+          min_quantity: number
+          quantity: number
+          snapshot_date: string
+        }
+        Update: {
+          created_at?: string
+          expires_on?: string | null
+          household_id?: string
+          item_id?: string
+          min_quantity?: number
+          quantity?: number
+          snapshot_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_snapshots_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_snapshots_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       telegram_admin_links: {
         Row: {
           chat_id: number
@@ -1270,6 +1371,8 @@ export type Database = {
         Args: { _household_id: string }
         Returns: number
       }
+      household_is_pro: { Args: { _household_id: string }; Returns: boolean }
+      household_pro_status: { Args: { _household_id: string }; Returns: Json }
       my_access: {
         Args: never
         Returns: {
@@ -1307,6 +1410,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      record_pro_snapshots: { Args: never; Returns: number }
       redeem_promo: { Args: { _code: string }; Returns: Json }
       regenerate_invite_code: {
         Args: { _household_id: string }

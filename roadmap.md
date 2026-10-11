@@ -67,3 +67,11 @@
 - [x] Telegram: pinned button pad, Switch home, conversational Add item, /menu fallback, Main Menu inline buttons removed (2026-10-11)
 - [x] Telegram Shopping: Running Low grouped per product as separate lines (2026-10-11)
 - [x] New stock never inherits existing expiry (2026-10-11)
+
+## Pro & Insights (2026-10-11)
+- [x] Pro homes (owner on paid tier unlocks for members), PRO badge on More
+- [x] Household Insights page (audit, forecasting, dashboard); Pro-only daily snapshots
+- [x] Admin: set account paid/free, 30/90-day trial presets, promo templates
+- [x] Payments prep (subscription table + effective tier), not connected
+- [x] Stock reaching zero clears its expiry date
+- [x] End-to-end test

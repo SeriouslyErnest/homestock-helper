@@ -191,3 +191,11 @@ Per chat 40 messages/min and 300/h (silently dropped above that), 5 link attempt
 - The pinned six-button pad is the bot's main menu. Replies no longer carry a "Main Menu" button; /menu (also in Telegram's [/] list) or the ❌ Cancel button on the Add prompt brings the pad back. ➕ Add item asks for a name; plain text answers it.
 - Telegram Shopping shows Running Low as one bullet line per product (stock rows grouped, same rule as /low), then Buy Requests as bullet lines.
 - New stock never inherits an existing expiry date: adding to a dated row puts the new units on the product's undated row (created if missing). The optional "Add expiry" step then dates only those units.
+
+## Pro homes & Household insights (2026-10-11)
+- A home is Pro when any of its owners is on the paid plan (base plan set by admin, a trial/complimentary grant, a redeemed promo code, or later a live subscription). Every member of a Pro home sees Insights; a PRO badge shows next to the home on More.
+- Insights: will run out within a week (units used over the last 30 days), expiring in 7 days, untouched 60+ days, top staples, restock rhythm, weekly in/out (8 weeks), units spoiled on the shelf.
+- Existing stock events stay as they are. Extra data (one daily stock snapshot per item) is recorded only for Pro homes, from the day Pro is switched on.
+- Admin: set an account Paid/Free, give 30- or 90-day trials, and quick 30/90-day promo templates.
+- Payments: prepared, not connected. A future verified payment webhook writes subscriptions; an active live subscription counts as paid automatically.
+- Stock reaching zero clears that row's expiry date (Use one, corrections, any decrease).
