@@ -92,6 +92,27 @@ Built with TanStack Start (React 19), Tailwind CSS v4 and Supabase
 - **Times in your timezone** — everything is stored in UTC and rendered in
   the viewer's local timezone, so daylight saving never shifts a date.
 
+## HomeStock Pro
+
+The public `/pro` preview is separate from `/about` and the user guide. It
+shows fictional sample screenshots, never a visitor's household data. More
+links to the preview; `/insights` is the real, authenticated Pro screen.
+
+- Any owner with effective paid access unlocks the whole home for members.
+- Insights cover 30-day consumption and restocking, run-out estimates,
+  most-used staples, restock intervals, 7-day expiry checks, untouched stock
+  at 60+ days and an eight-week stock-flow chart.
+- Standard `inventory_events` continue for all homes. Additional daily
+  `stock_snapshots` are recorded only while a home is Pro. “Spoiled on shelf”
+  means quantity recorded on the expiry date, not confirmed discarded food.
+- Admins can set paid/free base plans and issue 30/90-day trials and promo
+  codes. Members' paid plans do not unlock homes they do not own.
+- Payments are **prepared, not connected**. No checkout or published prices
+  exist. Future verified payment webhooks alone may write subscriptions.
+
+See [Pro implementation notes](docs/PRO.md) for calculation limits, access
+boundaries, screenshot regeneration and the future billing handoff.
+
 ## Product lookup
 
 Barcodes resolve in this order:
@@ -151,13 +172,19 @@ After that the route answers plain "Not found" to everyone else.
 src/routes/                  TanStack Start file routes
   index.tsx                  Landing page
   about.tsx                  Product/marketing page
+  pro.tsx                    Public Pro preview with fictional screenshots
   auth.tsx                   Sign-in (email link + Google)
   ops.$.tsx                  Hidden admin console (ssr: false, noindex)
   _authenticated/            App screens behind the auth gate
     inventory.tsx  consume.tsx  scan.tsx  add.tsx  shopping.tsx
-    more.tsx       setup.tsx    item/$itemId.tsx
+    more.tsx       setup.tsx    item/$itemId.tsx   insights.tsx
 src/lib/
   homestock.ts               Shared queries, household switching, date helpers
+  insights.ts                Pure deterministic Pro calculations
+  insights.test.ts           Tests for consumption, forecasts and snapshots
+  billing.ts                 Payment preparation; no connected checkout
+src/components/
+  pro-samples.tsx             Fictional screenshot subjects (no household queries)
   admin.server.ts            Server-only: email HMAC/masking, console path check
   admin.functions.ts         Admin server functions (guarded by role)
 src/integrations/supabase/   Generated clients + auth middleware (do not edit)

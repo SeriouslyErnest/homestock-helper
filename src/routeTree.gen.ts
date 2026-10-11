@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ProRouteImport } from './routes/pro'
 import { Route as AuthenticatedAddRouteImport } from './routes/_authenticated/add'
 import { Route as AuthenticatedConsumeRouteImport } from './routes/_authenticated/consume'
 import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
@@ -45,6 +46,11 @@ const AboutRoute = AboutRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProRoute = ProRouteImport.update({
+  id: '/pro',
+  path: '/pro',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAddRoute = AuthenticatedAddRouteImport.update({
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/pro': typeof ProRoute
   '/add': typeof AuthenticatedAddRoute
   '/consume': typeof AuthenticatedConsumeRoute
   '/insights': typeof AuthenticatedInsightsRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/pro': typeof ProRoute
   '/add': typeof AuthenticatedAddRoute
   '/consume': typeof AuthenticatedConsumeRoute
   '/insights': typeof AuthenticatedInsightsRoute
@@ -164,6 +172,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/pro': typeof ProRoute
   '/_authenticated/add': typeof AuthenticatedAddRoute
   '/_authenticated/consume': typeof AuthenticatedConsumeRoute
   '/_authenticated/insights': typeof AuthenticatedInsightsRoute
@@ -185,6 +194,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/pro'
     | '/add'
     | '/consume'
     | '/insights'
@@ -204,6 +214,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/pro'
     | '/add'
     | '/consume'
     | '/insights'
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/about'
     | '/auth'
+    | '/pro'
     | '/_authenticated/add'
     | '/_authenticated/consume'
     | '/_authenticated/insights'
@@ -245,6 +257,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
+  ProRoute: typeof ProRoute
   OpsSplatRoute: typeof OpsSplatRoute
   ApiPublicCronExpiryDigestRoute: typeof ApiPublicCronExpiryDigestRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
@@ -278,6 +291,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pro': {
+      id: '/pro'
+      path: '/pro'
+      fullPath: '/pro'
+      preLoaderRoute: typeof ProRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/add': {
@@ -417,6 +437,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
+  ProRoute: ProRoute,
   OpsSplatRoute: OpsSplatRoute,
   ApiPublicCronExpiryDigestRoute: ApiPublicCronExpiryDigestRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,

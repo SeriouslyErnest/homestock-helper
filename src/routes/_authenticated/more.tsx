@@ -331,6 +331,7 @@ function MorePage() {
           <span className="flex-1">Household insights</span>
           {!pro?.pro && <span className="text-xs text-muted-foreground">Pro</span>}
         </Link>
+        <Link to="/pro" className="mb-4 block text-sm font-semibold text-brand underline">Explore Pro features</Link>
         <label htmlFor="hh-name" className="mb-1 block text-xs font-bold text-muted-foreground">
           Name
         </label>

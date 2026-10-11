@@ -1,4 +1,7 @@
 import type { ReactNode } from "react";
+import { Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
+import proForecast from "@/assets/pro/forecast.jpg.asset.json";
 import inventory from "@/assets/guide/inventory.jpg";
 import useUp from "@/assets/guide/use-up.jpg";
 import shopping from "@/assets/guide/shopping.jpg";
@@ -119,7 +122,7 @@ const FLOWS: Flow[] = [
       "Under More, tap “Connect Telegram”. The HomeStock bot opens — tap Start. The link works once and expires after 15 minutes.",
       "The bot welcomes you and shows a set of buttons under the chat — Shopping, Low stock, Expiring, Add item, Switch home and Help. Tap one to check your home, or type a command. It only works in a private chat with the bot.",
       "Turn on expiry reminders per home and choose how early. You get one heads-up and one on the day. Tap “Got it” to stop reminders for that item — you can also tap “Got it” on the item page in the app.",
-      "Disconnect in the app, or send /stop to the bot.",
+      "If the buttons are hidden, send /menu to bring them back. While adding, Cancel stops the prompt and restores the buttons. Disconnect in the app, or send /stop to the bot.",
     ],
     commands: [
       {
@@ -131,9 +134,23 @@ const FLOWS: Flow[] = [
       { cmd: "/expiring", what: "Shows what's expiring soon." },
       { cmd: "/home", what: "Picks which home Telegram uses — it doesn't change the app." },
       { cmd: "/help", what: "Lists the commands." },
+      { cmd: "/menu", what: "Brings back the six quick buttons." },
       { cmd: "/stop", what: "Disconnects this chat." },
     ],
     tip: "The card only appears once your admin has switched Telegram on. Telegram can't change stock — that stays in the app. To keep things safe the bot has limits: about 30 commands a minute, 60 additions a day, and a full Shopping list (300 items) must be tidied in the app first. If you hit a limit, wait a minute or use the app.",
+  },
+  {
+    title: "11. Household insights with HomeStock Pro",
+    img: proForecast.url,
+    alt: "Fictional Pro insights screenshot showing oat milk and eggs run-out estimates, staples and restock intervals",
+    steps: [
+      "When an owner has Pro, everyone in that home can open More → Household insights. A small PRO badge beside Household shows it is unlocked.",
+      "Plan your next shop with run-out estimates based on recorded consumption over 30 days, your most-used staples, and average time between restocks.",
+      "Check dated stock expiring within 7 days and items untouched for 60 days or more. Compare units added and used over 30 days and in the eight-week chart.",
+      "“Spoiled on shelf” counts stock still recorded on its expiry date, not food confirmed thrown away. Extra daily records start only while your home is Pro; existing inventory history can still be used.",
+      "Enter an eligible trial or promo code under More → Have a code?. Payments are not connected yet. Forecasts are estimates, and new homes need recorded use before patterns appear.",
+    ],
+    tip: "The picture uses a fictional home and sample figures. See all Pro features and sample screenshots on the separate HomeStock Pro page.",
   },
 ];
 
@@ -236,6 +253,7 @@ export function UserGuide() {
             {f.tip && (
               <p className="mt-3 rounded-2xl bg-brand-soft px-4 py-3 text-sm">Tip: {f.tip}</p>
             )}
+            {f.img === proForecast.url && <Button variant="outline" asChild className="mt-4"><Link to="/pro">Explore HomeStock Pro</Link></Button>}
           </div>
           <div
             className={`mx-auto w-full max-w-[240px] ${i % 2 ? "md:order-1" : ""} ${
@@ -249,7 +267,7 @@ export function UserGuide() {
                   alt={f.alt ?? ""}
                   loading="lazy"
                   width={390}
-                  height={844}
+                    height={f.img === proForecast.url ? 606 : 844}
                   className="w-full rounded-3xl border border-border shadow-lg"
                 />
               ))}
@@ -257,7 +275,7 @@ export function UserGuide() {
         </article>
       ))}
       <p className="text-center text-xs text-muted-foreground">
-        Screenshots use a sample home with made-up items; the Telegram chat is an example.
+        Screenshots use sample homes with made-up items and figures; the Telegram chat is an example.
       </p>
     </div>
   );
