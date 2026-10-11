@@ -3,8 +3,8 @@
 What has been checked end-to-end, when, and how. Re-test a feature when its
 code has changed since its "Last tested" date.
 
-Test accounts: none. All test accounts and test homes were deleted on
-2026-09-29 after the end-to-end run. Create a fresh confirmed account via the
+Test accounts: none. Latest temporary test accounts and home were deleted on
+2026-10-11 after the end-to-end run. Create a fresh confirmed account via the
 admin API for the next run and delete it afterwards.
 
 Method: headless browser at phone size (390x844) against the preview, plus
@@ -61,3 +61,14 @@ database read-back.
 - Navigation PASS: Pro → User guide → section 11 → Explore HomeStock Pro → Household insights sends a signed-out visitor to sign-in. Guide Pro section and image render without overflow. No account, home, entitlement or settings were created or changed.
 - Existing calculation tests rerun with `bunx vitest run src/lib/insights.test.ts`: 6/6 PASS. These are regression checks, not fresh authenticated entitlement/admin/payment E2E tests.
 - Screenshot subjects mirror Insights using explicit fictional data; not captures of a real home's recorded history. Captures stored as CDN assets. Payments remain unconnected; earlier real-Telegram and admin-TOTP checks remain pending.
+
+## 2026-10-11 08:59–09:04 UTC — Fresh password-account E2E
+- Hosted email/password setting read: enabled; email auto-confirm remains false. Enable-email-auth reported it was already enabled; no global signup/approval/alert settings were changed and no password UI was added.
+- Two isolated accounts created with confirmed email via privileged test access. Approval was simulated through developer database access (not the admin UI); first-entry markers were set to avoid test signup alerts. This does not verify the real confirmation-email or admin-TOTP approval flow.
+- Password login in the browser against the hosted auth endpoint: wrong password rejected (400); correct password accepted (200). The resulting session opened the real signed-in app at setup.
+- UI + database read-back PASS: create home, add Yoghurt quantity 2/minimum 1 with typed 14/10/2026 expiry; Inventory +1 leaves old dated stock intact and creates an undated unit; grouped consume and immediate Undo restore the total; tracked Shopping tick-off increases undated stock; untick reverses it. Correction dialog accepts and saves zero with expiry cleared. Saves required waiting for completion before changing pages; initial test-run failures were timing/selector errors, not rejected app writes.
+- Access PASS: free home sees locked Insights; a paid non-owner does not unlock it; an owner trial unlocks PRO badges and real event-derived Insights for both owner and member. Membership used join-request RPC and owner-authorized approval RPC. Grants were applied through privileged test access, not admin buttons. Removing the owner grant locks member Insights again. Self-written subscription row rejected (403).
+- Browser evidence at 1280×1800: owner/member More and Insights, consume/Undo, correction, downgrade screenshots inspected. No runtime page errors. Existing insights maths rerun: 6/6 PASS.
+- Known limitation observed: consuming the final dated unit clears its expiry; Undo restores quantity as undated rather than restoring the prior date. Inventory Undo guarantees the total in this test, not the original expiry distribution. No fix attempted in this test-only request.
+- Cleanup verified: both temporary auth accounts return 404; test home removed; dependent stock/events/shopping and test grants/approvals/directory/onboarding/join requests/rate-limit rows cleared. Temporary credential/session state file deleted. No snapshot scheduler run was triggered, avoiding writes to unrelated homes.
+- Not freshly verified: real email delivery, Google sign-in, scanner camera/rotation, live Telegram delivery/buttons, admin TOTP and grant/promo UI, or daily snapshot scheduler. Payments remain unconnected. App remains unpublished.
