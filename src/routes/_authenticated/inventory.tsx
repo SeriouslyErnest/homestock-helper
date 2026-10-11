@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { CorrectQuantityDialog } from "@/components/correct-quantity";
 import { ProductPhotoDialog } from "@/components/product-photo-dialog";
-import { AddExpiryDialog } from "@/components/add-expiry-dialog";
+import { AddExpiryDialog, addStock } from "@/components/add-expiry-dialog";
 import {
   emojiFor,
   useCategories,

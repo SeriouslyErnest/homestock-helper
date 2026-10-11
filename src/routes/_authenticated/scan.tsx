@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Minus, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
-import { AddExpiryDialog, applyExpiry } from "@/components/add-expiry-dialog";
+import { AddExpiryDialog, addStock, applyExpiry } from "@/components/add-expiry-dialog";
 import { DateField } from "@/components/date-field";
 import { lookupProduct } from "@/lib/product-lookup";
 import { cacheManualProduct } from "@/lib/product-lookup.functions";
