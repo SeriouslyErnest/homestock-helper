@@ -182,8 +182,9 @@ export function weeklyFlow(events: InsightEvent[], weeks = 8, now: Date = new Da
 
 /**
  * Units that were still on the shelf on their expiry date, from Pro snapshots.
- * Counted once per item row and expiry date (the snapshot on that date, or the
- * last one before it).
+ * Counted once per item row and expiry date, only when a snapshot exists on
+ * the expiry date itself. Earlier snapshots do not prove stock remained then.
+ * This measures recorded expired stock, not confirmed disposal or food waste.
  */
 export function wastedUnits(snapshots: InsightSnapshot[]): number {
   const best = new Map<string, InsightSnapshot>();
