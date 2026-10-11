@@ -133,10 +133,13 @@ function ShoppingPage() {
         }
         // Bought something tracked? Restock the inventory item automatically.
         if (entry.item_id && delta !== 0) {
-          const { error: stockError } = await supabase.rpc("adjust_item_quantity", {
-            _item_id: entry.item_id,
-            _delta: delta,
-          });
+          let stockError: unknown = null;
+          let itemId = entry.item_id;
+          try {
+            itemId = await addStock(entry.item_id, delta);
+          } catch (e) {
+            stockError = e;
+          }
           if (stockError) {
             // Don't leave it ticked off with the stock untouched.
             await supabase
@@ -147,7 +150,6 @@ function ShoppingPage() {
             return;
           }
           if (household?.show_expiry !== false && delta > 0) {
-            const itemId = entry.item_id;
             toast.success(`Added ${delta} × ${entry.name} to stock`, {
               action: {
                 label: "Add expiry",
