@@ -1,9 +1,10 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Ban, Check, Copy, LogOut, RefreshCw, RotateCcw, UserMinus, X } from "lucide-react";
+import { BarChart3, Ban, Check, Copy, LogOut, RefreshCw, RotateCcw, UserMinus, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
+import { ProBadge } from "@/components/pro-badge";
 import { PromoCard } from "@/components/promo-code";
 import { TelegramCard } from "@/components/telegram-card";
 import { AskForMoreHomes } from "@/components/limit-request";
@@ -17,6 +18,7 @@ import {
   useEntitlements,
   useHousehold,
   useHouseholds,
+  useHouseholdPro,
   useJoinRequests,
   useMembers,
   useMyJoinRequests,
@@ -43,6 +45,7 @@ export const Route = createFileRoute("/_authenticated/more")({
 function MorePage() {
   const { data: household } = useHousehold();
   const { data: members } = useMembers(household?.id);
+  const { data: pro } = useHouseholdPro(household?.id);
   const { data: joinRequests } = useJoinRequests(household?.id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -310,7 +313,24 @@ function MorePage() {
       </section>
 
       <section className="mb-6 rounded-2xl border border-border bg-card p-4">
-        <h2 className="mb-2 text-sm font-bold">Household</h2>
+        <h2 className="mb-2 flex items-center gap-2 text-sm font-bold">
+          Household {pro?.pro && <ProBadge />}
+        </h2>
+        {pro?.pro && (
+          <p className="mb-3 text-xs text-muted-foreground">
+            {pro.sponsor_is_me
+              ? "Pro is on for everyone in this home through your plan."
+              : `Pro is on for everyone in this home${pro.sponsor_name ? ` thanks to ${pro.sponsor_name}` : ""}.`}
+          </p>
+        )}
+        <Link
+          to="/insights"
+          className="mb-4 flex items-center gap-3 rounded-2xl bg-surface-2 p-3 text-sm font-semibold"
+        >
+          <BarChart3 size={18} className="text-brand" />
+          <span className="flex-1">Household insights</span>
+          {!pro?.pro && <span className="text-xs text-muted-foreground">Pro</span>}
+        </Link>
         <label htmlFor="hh-name" className="mb-1 block text-xs font-bold text-muted-foreground">
           Name
         </label>
