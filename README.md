@@ -192,3 +192,5 @@ Conventions worth knowing:
 - Product data: [Open Food Facts](https://world.openfoodfacts.org) — ODbL /
   CC BY-SA. Please keep the attribution on the About page if you reuse it.
 - Built with [Lovable](https://lovable.dev).
+
+**Telegram:** a pinned button pad (Shopping, Low stock, Expiring, Switch home, Help, Add item) is the menu; /menu brings it back. Add item takes plain text. **Stock:** newly added units never inherit an older expiry date.

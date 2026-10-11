@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Minus, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
-import { AddExpiryDialog, applyExpiry } from "@/components/add-expiry-dialog";
+import { AddExpiryDialog, addStock, applyExpiry } from "@/components/add-expiry-dialog";
 import { DateField } from "@/components/date-field";
 import { lookupProduct } from "@/lib/product-lookup";
 import { cacheManualProduct } from "@/lib/product-lookup.functions";
@@ -127,14 +127,10 @@ function ScanPage() {
     for (const line of basket) {
       try {
         if (line.itemId) {
-          const { error } = await supabase.rpc("adjust_item_quantity", {
-            _item_id: line.itemId,
-            _delta: line.qty,
-          });
-          if (error) throw error;
+          const target = await addStock(line.itemId, line.qty);
           if (line.expires) {
             try {
-              await applyExpiry(line.itemId, line.qty, line.expires);
+              await applyExpiry(target, line.qty, line.expires);
             } catch {
               // The stock is saved; a missing date never undoes a restock.
             }
@@ -255,27 +251,30 @@ function ScanPage() {
   async function addFoundToStock(item: Item) {
     const qty = addQty;
     setAdding(true);
-    const { error } = await supabase.rpc("adjust_item_quantity", {
-      _item_id: item.id,
-      _delta: qty,
-    });
+    let target: string | null = null;
+    try {
+      target = await addStock(item.id, qty);
+    } catch {
+      target = null;
+    }
     setAdding(false);
-    if (error) {
+    if (!target) {
       setMessage("Couldn't add it. Try again.");
       return;
     }
+    const rowId = target;
     toast.success(`Added ${qty} × ${item.name}`, {
       action: {
         label: "Undo",
         onClick: () => {
-          void supabase.rpc("adjust_item_quantity", { _item_id: item.id, _delta: -qty });
+          void supabase.rpc("adjust_item_quantity", { _item_id: rowId, _delta: -qty });
         },
       },
       ...(showExpiry
         ? {
             cancel: {
               label: "Add expiry",
-              onClick: () => setExpiryFor({ id: item.id, name: item.name, qty }),
+              onClick: () => setExpiryFor({ id: rowId, name: item.name, qty }),
             },
           }
         : {}),

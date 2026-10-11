@@ -6,6 +6,59 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Item } from "@/lib/homestock";
 
 /**
+ * Add `delta` new units of the product in row `itemId`. New stock never
+ * inherits an existing expiry date: if that row has a date, the units go to
+ * the product's undated row in the same home (created when missing).
+ * Returns the id of the row that received the units (use it for Undo/expiry).
+ */
+export async function addStock(itemId: string, delta: number): Promise<string> {
+  const { data: row, error: readErr } = await supabase
+    .from("items")
+    .select("*")
+    .eq("id", itemId)
+    .single();
+  if (readErr || !row) throw readErr ?? new Error("missing");
+  const current = row as Item;
+  let target = current.id;
+  if (delta > 0 && current.expires_on) {
+    let q = supabase
+      .from("items")
+      .select("id")
+      .eq("household_id", current.household_id)
+      .is("expires_on", null)
+      .limit(1);
+    q = current.barcode ? q.eq("barcode", current.barcode) : q.is("barcode", null).ilike("name", current.name);
+    const { data: sib } = await q.maybeSingle();
+    if (sib) target = sib.id;
+    else {
+      const { data: auth } = await supabase.auth.getUser();
+      const { data: created, error: insErr } = await supabase
+        .from("items")
+        .insert({
+          household_id: current.household_id,
+          name: current.name,
+          barcode: current.barcode,
+          image_url: current.image_url,
+          category: current.category,
+          location: current.location,
+          unit: current.unit,
+          min_quantity: current.min_quantity,
+          quantity: 0,
+          expires_on: null,
+          created_by: auth.user?.id ?? null,
+        })
+        .select("id")
+        .single();
+      if (insErr || !created) throw insErr ?? new Error("insert");
+      target = created.id;
+    }
+  }
+  const { error } = await supabase.rpc("adjust_item_quantity", { _item_id: target, _delta: delta });
+  if (error) throw error;
+  return target;
+}
+
+/**
  * Give the `qty` units just added to `itemId` an expiry date. If the row holds
  * only those units (or already has this date), the date is set on it.
  * Otherwise the new units move to their own row with the date, so older stock

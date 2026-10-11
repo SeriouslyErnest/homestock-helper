@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { CorrectQuantityDialog } from "@/components/correct-quantity";
 import { ProductPhotoDialog } from "@/components/product-photo-dialog";
-import { AddExpiryDialog } from "@/components/add-expiry-dialog";
+import { AddExpiryDialog, addStock } from "@/components/add-expiry-dialog";
 import {
   emojiFor,
   useCategories,
@@ -243,35 +243,46 @@ function InventoryPage() {
     localStorage.setItem("homestock-sort-dir", next);
   }
 
-  async function apply(item: Item, delta: number) {
-    const { error } = await supabase.rpc("adjust_item_quantity", {
-      _item_id: item.id,
-      _delta: delta,
-    });
+  async function apply(item: Item, delta: number): Promise<string | null> {
+    let target: string | null = item.id;
+    let error: unknown = null;
+    if (delta > 0) {
+      try {
+        target = await addStock(item.id, delta);
+      } catch (e) {
+        error = e;
+      }
+    } else {
+      ({ error } = await supabase.rpc("adjust_item_quantity", {
+        _item_id: item.id,
+        _delta: delta,
+      }));
+    }
     queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
     queryClient.invalidateQueries({ queryKey: ["item", item.id] });
     if (error) {
       toast.error(`Couldn't update ${item.name}. Check your connection and try again.`);
-      return false;
+      return null;
     }
-    return true;
+    return target;
   }
 
   async function adjust(item: Item, delta: number) {
     if (busyId) return;
     setBusyId(item.id);
-    const ok = await apply(item, delta);
+    const landed = await apply(item, delta);
     setBusyId(null);
     // Only offer Undo once the change actually landed on the server.
-    if (!ok) return;
+    if (!landed) return;
+    const row = { ...item, id: landed };
     const offerExpiry = delta > 0 && household?.show_expiry !== false;
     toast(delta < 0 ? `Took one ${item.name}` : `Added one ${item.name}`, {
       ...(offerExpiry
         ? {
-            action: { label: "Add expiry", onClick: () => setExpiryFor(item) },
-            cancel: { label: "Undo", onClick: () => void apply(item, -delta) },
+            action: { label: "Add expiry", onClick: () => setExpiryFor(row) },
+            cancel: { label: "Undo", onClick: () => void apply(row, -delta) },
           }
-        : { action: { label: "Undo", onClick: () => void apply(item, -delta) } }),
+        : { action: { label: "Undo", onClick: () => void apply(row, -delta) } }),
       duration: offerExpiry ? 7000 : 5000,
     });
   }

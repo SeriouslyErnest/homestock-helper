@@ -130,10 +130,34 @@ function ItemPage() {
   async function adjust(delta: number, withUndo = false) {
     if (busy) return;
     setBusy(true);
-    const { error } = await supabase.rpc("adjust_item_quantity", {
-      _item_id: itemId,
-      _delta: delta,
-    });
+    // Adding to a dated row would give new units that date, so new stock
+    // goes to the undated row instead (see addStock).
+    let target = itemId;
+    let error: unknown = null;
+    if (delta > 0 && item?.expires_on) {
+      try {
+        const { addStock } = await import("@/components/add-expiry-dialog");
+        target = await addStock(itemId, delta);
+      } catch (e) {
+        error = e;
+      }
+    } else {
+      ({ error } = await supabase.rpc("adjust_item_quantity", {
+        _item_id: itemId,
+        _delta: delta,
+      }));
+    }
+    if (!error && target !== itemId) {
+      queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
+      setBusy(false);
+      toast.success(`Added ${delta} as new stock without the old expiry date`, {
+        action: {
+          label: "Undo",
+          onClick: () => void supabase.rpc("adjust_item_quantity", { _item_id: target, _delta: -delta }),
+        },
+      });
+      return;
+    }
     queryClient.invalidateQueries({ queryKey: ["item", itemId] });
     queryClient.invalidateQueries({ queryKey: ["items", household?.id] });
     setBusy(false);
