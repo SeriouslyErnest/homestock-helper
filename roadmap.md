@@ -69,7 +69,7 @@
 - [x] New stock never inherits existing expiry (2026-10-11)
 
 ## Pro & Insights (2026-10-11)
-- [ ] Fresh password-account E2E, real inventory + Pro flows, test-data cleanup and dated test log
+- [x] Fresh password-account E2E: inventory, Shopping, consume/Undo, owner/member Pro access and downgrade; isolated test data removed and dated results/limitations logged
 - [x] Public /pro teaser with sample-only screenshots, updated user guide and technical documentation, browser verification (1280/390/320px, dark, guide navigation, image delivery; six maths tests passed)
 - [x] Pro homes (owner on paid tier unlocks for members), PRO badge on More
 - [x] Household Insights page (audit, forecasting, dashboard); Pro-only daily snapshots
