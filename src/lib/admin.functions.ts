@@ -262,7 +262,16 @@ export const adminAccountDetail = createServerFn({ method: "POST" })
         .select("user_id, email_masked, display_name, first_seen_at, last_seen_at")
         .eq("user_id", data.userId)
         .maybeSingle(),
-      supabaseAdmin.rpc("effective_tier", { _user_id: data.userId }),
+      supabaseAdmin
+        .rpc("effective_tier", { _user_id: data.userId })
+        .then(async (r) => {
+          const { data: base } = await supabaseAdmin
+            .from("user_plans")
+            .select("tier")
+            .eq("user_id", data.userId)
+            .maybeSingle();
+          return { ...r, base: base?.tier ?? "free" };
+        }),
       supabaseAdmin
         .from("entitlement_grants")
         .select("*")
@@ -360,6 +369,40 @@ export const adminGrantAccess = createServerFn({ method: "POST" })
       targetType: "account",
       targetId: data.userId,
       afterJson: grant,
+      reason: data.reason.trim(),
+    });
+    return { ok: true };
+  });
+
+/** Mark an account as paid (or back to free) with no end date — its base plan. */
+export const adminSetBasePlan = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: { routeId: string; userId: string; tier: "paid" | "free"; reason: string }) =>
+      cleanInput(input),
+  )
+  .handler(async ({ data, context }) => {
+    await guard(data.routeId, context, ["SUPER_ADMIN", "BILLING_ADMIN"]);
+    if (data.tier !== "paid" && data.tier !== "free") throw new Error("Unknown plan");
+    if (!data.reason.trim()) throw new Error("A reason is required");
+    const { writeAudit } = await import("./admin.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: before } = await supabaseAdmin
+      .from("user_plans")
+      .select("*")
+      .eq("user_id", data.userId)
+      .maybeSingle();
+    const { error } = await supabaseAdmin
+      .from("user_plans")
+      .upsert({ user_id: data.userId, tier: data.tier }, { onConflict: "user_id" });
+    if (error) throw error;
+    await writeAudit({
+      adminUserId: context.userId,
+      actionType: "plan.base_set",
+      targetType: "account",
+      targetId: data.userId,
+      beforeJson: before,
+      afterJson: { tier: data.tier },
       reason: data.reason.trim(),
     });
     return { ok: true };
