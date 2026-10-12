@@ -72,3 +72,6 @@ database read-back.
 - Known limitation observed: consuming the final dated unit clears its expiry; Undo restores quantity as undated rather than restoring the prior date. Inventory Undo guarantees the total in this test, not the original expiry distribution. No fix attempted in this test-only request.
 - Cleanup verified: both temporary auth accounts return 404; test home removed; dependent stock/events/shopping and test grants/approvals/directory/onboarding/join requests/rate-limit rows cleared. Temporary credential/session state file deleted. No snapshot scheduler run was triggered, avoiding writes to unrelated homes.
 - Not freshly verified: real email delivery, Google sign-in, scanner camera/rotation, live Telegram delivery/buttons, admin TOTP and grant/promo UI, or daily snapshot scheduler. Payments remain unconnected. App remains unpublished.
+
+## 2026-10-12 — Telegram add reply
+- Removed inline "Add more" button; only Undo remains (use pinned Add item). Typecheck only.
