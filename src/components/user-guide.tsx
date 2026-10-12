@@ -127,7 +127,7 @@ const FLOWS: Flow[] = [
     commands: [
       {
         cmd: "/add <item>",
-        what: "Puts one thing on Shopping. The words are kept exactly — “/add eggs 12” adds one request called “eggs 12”. Or tap ➕ Add item and just type the name. Tap Undo if it was a mistake, ➕ Add more for another, or 🔙 Main Menu to go back.",
+        what: "Puts one thing on Shopping. The words are kept exactly — “/add eggs 12” adds one request called “eggs 12”. Or tap ➕ Add item and just type the name. Tap Undo if it was a mistake; tap ➕ Add item again to add another.",
       },
       { cmd: "/shopping", what: "Shows your shopping list." },
       { cmd: "/low", what: "Shows what's running low or out." },

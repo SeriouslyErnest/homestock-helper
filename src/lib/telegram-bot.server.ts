@@ -229,13 +229,13 @@ async function cmdAdd(ctx: Ctx, home: Home, text: string) {
     .insert({ user_id: home.userId, shopping_item_id: row.id })
     .select("id")
     .single();
+  // Only Undo inline; to add another, tap ➕ Add item on the pinned pad.
   const buttons: InlineButton[] = [];
-  if (undo) buttons.push({ text: "Undo", callback_data: `u:${undo.id}` });
-  buttons.push({ text: "➕ Add more", callback_data: "m:add" });
+  if (undo) buttons.push({ text: "↩️ Undo", callback_data: `u:${undo.id}` });
   await send(
     ctx.chatId,
     `Added <b>${escapeHtml(name)}</b> to <b>${escapeHtml(home.name)}</b>.`,
-    [buttons],
+    buttons.length ? [buttons] : undefined,
   );
   return "ok";
 }
