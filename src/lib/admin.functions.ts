@@ -307,6 +307,7 @@ export const adminAccountDetail = createServerFn({ method: "POST" })
         ? {
             userId: account.data.user_id,
             emailMasked: account.data.email_masked,
+            email: authUser.data.user?.email ?? null,
             displayName: account.data.display_name,
             firstSeenAt: account.data.first_seen_at,
             lastSeenAt: account.data.last_seen_at,
