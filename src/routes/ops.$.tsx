@@ -613,7 +613,7 @@ function Accounts({ routeId, role }: { routeId: string; role: string }) {
             className="flex w-full items-center justify-between gap-3 border-b border-border bg-card px-4 py-3 text-left last:border-0"
           >
             <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold">{a.emailMasked}</span>
+              <span className="block truncate text-sm font-semibold">{a.email ?? a.emailMasked}</span>
               <span className="block truncate text-xs text-muted-foreground">
                 {a.displayName ?? "No name"} · joined {fmt(a.firstSeenAt)}
               </span>
@@ -709,7 +709,7 @@ function AccountDetail({
   return (
     <section className="space-y-4 rounded-2xl border border-border bg-card p-4">
       <div>
-        <h2 className="text-lg font-semibold">{a.emailMasked}</h2>
+        <h2 className="break-all text-lg font-semibold">{a.email ?? a.emailMasked}</h2>
         <p className="text-xs text-muted-foreground">
           {a.displayName ?? "No name"} · effective plan {a.tier} · last seen {fmt(a.lastSeenAt)}
         </p>

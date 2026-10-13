@@ -30,6 +30,7 @@ export type AdminRole = "SUPER_ADMIN" | "BILLING_ADMIN" | "SUPPORT_ADMIN" | "REA
 export type AdminAccount = {
   userId: string;
   emailMasked: string;
+  email: string | null;
   displayName: string | null;
   firstSeenAt: string;
   lastSeenAt: string;
@@ -217,6 +218,15 @@ export const adminListAccounts = createServerFn({ method: "POST" })
     const { hashEmail } = await import("./admin.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    // Real addresses are read live from sign-in records at view time, never stored.
+    const emails = new Map<string, string>();
+    for (let page = 1; page <= 20; page++) {
+      const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
+      const users = list?.users ?? [];
+      for (const u of users) if (u.email) emails.set(u.id, u.email);
+      if (users.length < 1000) break;
+    }
+
     let query = supabaseAdmin
       .from("account_directory")
       .select("user_id, email_masked, display_name, first_seen_at, last_seen_at")
@@ -225,11 +235,12 @@ export const adminListAccounts = createServerFn({ method: "POST" })
 
     const search = data.search?.trim();
     if (search) {
-      if (search.includes("@")) {
-        query = query.eq("email_hash", hashEmail(search));
-      } else {
-        query = query.ilike("display_name", `%${search}%`);
-      }
+      const needle = search.toLowerCase();
+      const ids = [...emails].filter(([, e]) => e.toLowerCase().includes(needle)).map(([id]) => id);
+      const safe = search.replace(/[,()%*\\]/g, "");
+      const parts = [`display_name.ilike.%${safe}%`, `email_hash.eq.${hashEmail(search)}`];
+      if (ids.length) parts.push(`user_id.in.(${ids.slice(0, 200).join(",")})`);
+      query = query.or(parts.join(","));
     }
 
     const { data: rows, error } = await query;
@@ -241,6 +252,7 @@ export const adminListAccounts = createServerFn({ method: "POST" })
       results.push({
         userId: row.user_id,
         emailMasked: row.email_masked,
+        email: emails.get(row.user_id) ?? null,
         displayName: row.display_name,
         firstSeenAt: row.first_seen_at,
         lastSeenAt: row.last_seen_at,
@@ -295,6 +307,7 @@ export const adminAccountDetail = createServerFn({ method: "POST" })
         ? {
             userId: account.data.user_id,
             emailMasked: account.data.email_masked,
+            email: authUser.data.user?.email ?? null,
             displayName: account.data.display_name,
             firstSeenAt: account.data.first_seen_at,
             lastSeenAt: account.data.last_seen_at,
