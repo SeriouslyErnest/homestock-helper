@@ -46,7 +46,7 @@ database read-back.
 - 2026-10-05 — Telegram button grid + welcome message (typecheck only, not live-tested): persistent 6-button keyboard (Shopping, Low stock, Expiring, Add item, Home, Help) sent with the welcome on first connect, on /start when already connected, and with /help; button labels map to commands by exact match only; "Add item" prompts for /add <item>; /stop removes the keyboard. Retest on a phone after publish.
 
 ## 2026-10-10 — Telegram conversational Add item + Main Menu buttons
-- Add item button waits 10 min for a typed name (no /add needed); Cancel, Add more and Main Menu inline buttons on every reply. Typecheck only; needs real Telegram test after publish.
+- Add item button waits 10 min for a typed name (no /add needed); ❌ Cancel inline on the prompt, ↩️ Undo inline on the added reply (updated 2026-10-12: the "Add more" inline button was removed — tap the pinned Add item again). Typecheck only; needs real Telegram test after publish.
 
 ## 2026-10-11 — Telegram menu cleanup, grouped Running Low, no expiry inheritance
 - Typecheck only. Not tested in Telegram or browser yet (app unpublished).
