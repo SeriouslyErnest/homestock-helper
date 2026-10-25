@@ -70,9 +70,9 @@ export function AppShell({
         {headerExtra}
       </header>
 
-      <main className="min-h-0 flex-1 px-5 pb-32">{children}</main>
+      <main className="min-h-0 flex-1 px-5 pb-[calc(8rem+env(safe-area-inset-bottom,0px))]">{children}</main>
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 bg-gradient-to-t from-background from-30% to-transparent px-3 pt-7 pb-3">
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 bg-gradient-to-t from-background from-30% to-transparent px-3 pt-7 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
         <nav
           aria-label="Main navigation"
           className="pointer-events-auto mx-auto grid h-16 w-full max-w-md grid-cols-5 items-center justify-items-center rounded-3xl border border-border bg-card/95 shadow-lg backdrop-blur"
