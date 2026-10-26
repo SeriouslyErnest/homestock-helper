@@ -277,6 +277,33 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_reminders: {
+        Row: {
+          created_at: string
+          day_of_month: number
+          id: string
+          last_sent_on: string | null
+          message: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_month: number
+          id?: string
+          last_sent_on?: string | null
+          message: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day_of_month?: number
+          id?: string
+          last_sent_on?: string | null
+          message?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       entitlement_grants: {
         Row: {
           created_at: string

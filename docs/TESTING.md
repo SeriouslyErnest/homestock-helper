@@ -75,3 +75,7 @@ database read-back.
 
 ## 2026-10-12 — Telegram add reply
 - Removed inline "Add more" button; only Undo remains (use pinned Add item). Typecheck only.
+
+## 2026-10-26 — Monthly custom Telegram reminders
+- Unit: reminderDueOn (chosen day, 29–31 fall back to month end), ordinal labels — 3/3 PASS.
+- Typecheck clean. Not yet tested: live Telegram delivery, the add/remove screen in the browser, 10-limit trigger via UI.
