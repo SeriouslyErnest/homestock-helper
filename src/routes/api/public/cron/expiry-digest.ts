@@ -243,6 +243,12 @@ export const Route = createFileRoute("/api/public/cron/expiry-digest")({
                     toSend.map((i) => i.id),
                   )
                   .gte("expires_on", today);
+                if (custom && !permanent)
+                  await supabaseAdmin
+                    .from("custom_reminders")
+                    .update({ last_sent_on: null })
+                    .eq("user_id", p.user_id)
+                    .eq("last_sent_on", today);
                 queries++;
               }
               await new Promise((r) => setTimeout(r, 40));
@@ -270,7 +276,7 @@ export const Route = createFileRoute("/api/public/cron/expiry-digest")({
               else {
                 errors++;
                 if (isPermanentFailure(res.description)) await markChatInactive(Number(l.chat_id));
-                // Release so tomorrow's run doesn't skip it… only within the same day it can retry.
+                // Temporary failure: release so a later run today can retry.
                 else
                   await supabaseAdmin
                     .from("custom_reminders")
