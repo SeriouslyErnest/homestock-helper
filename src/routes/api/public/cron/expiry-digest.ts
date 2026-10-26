@@ -54,6 +54,44 @@ export const Route = createFileRoute("/api/public/cron/expiry-digest")({
         // One chat may hold several accounts in the same home: message it once.
         const sentChatHome = new Set<string>();
 
+        // Monthly custom reminders due today, grouped per account.
+        const { reminderDueOn } = await import("@/lib/custom-reminders");
+        const customDue = new Map<string, { id: string; message: string }[]>();
+        {
+          const { data: rs } = await supabaseAdmin
+            .from("custom_reminders")
+            .select("id, user_id, day_of_month, message, last_sent_on")
+            .gte("day_of_month", Number(today.slice(8, 10)))
+            .limit(5000);
+          queries++;
+          for (const r of rs ?? []) {
+            if (r.last_sent_on === today || !reminderDueOn(r.day_of_month, today)) continue;
+            const list = customDue.get(r.user_id) ?? [];
+            list.push({ id: r.id, message: r.message });
+            customDue.set(r.user_id, list);
+          }
+        }
+        /** Claims this account's due reminders once per day; returns the HTML section or "". */
+        const takeCustom = async (userId: string): Promise<string> => {
+          const due = customDue.get(userId);
+          if (!due?.length) return "";
+          customDue.delete(userId);
+          const { data: claimed } = await supabaseAdmin
+            .from("custom_reminders")
+            .update({ last_sent_on: today })
+            .eq("user_id", userId)
+            .in(
+              "id",
+              due.map((d) => d.id),
+            )
+            .or(`last_sent_on.is.null,last_sent_on.lt.${today}`)
+            .select("id");
+          queries++;
+          const ok = new Set((claimed ?? []).map((c) => c.id));
+          const lines = due.filter((d) => ok.has(d.id)).map((d) => `• ${escapeHtml(d.message)}`);
+          return lines.length ? `📌 <b>Custom reminders</b>\n${lines.join("\n")}` : "";
+        };
+
         try {
           for (;;) {
             const { data: prefs } = await supabaseAdmin
@@ -188,6 +226,8 @@ export const Route = createFileRoute("/api/public/cron/expiry-digest")({
                 },
               ]);
               buttons.push([{ text: "Open HomeStock", url: `${APP_URL}/inventory` }]);
+              const custom = await takeCustom(p.user_id);
+              if (custom) html += `\n\n${custom}`;
               const res = await sendTelegramMessage(Number(chatId), html, buttons);
               if (res.ok) sent++;
               else {
