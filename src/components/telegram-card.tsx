@@ -7,6 +7,7 @@ import {
   telegramStatus,
   unlinkTelegram,
 } from "@/lib/telegram.functions";
+import { CustomReminders } from "@/components/custom-reminders";
 
 export function TelegramCard({
   householdId,
@@ -112,6 +113,7 @@ export function TelegramCard({
               </select>
             </label>
           )}
+          <CustomReminders />
           <button
             type="button"
             onClick={() => disconnect.mutate()}
