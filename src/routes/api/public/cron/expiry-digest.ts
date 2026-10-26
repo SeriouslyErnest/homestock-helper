@@ -249,6 +249,38 @@ export const Route = createFileRoute("/api/public/cron/expiry-digest")({
             }
             if (batch.length < BATCH) break;
           }
+
+          // Accounts with custom reminders but no expiry message today: send on their own.
+          const leftover = [...customDue.keys()];
+          for (let i = 0; i < leftover.length; i += BATCH) {
+            const ids = leftover.slice(i, i + BATCH);
+            const { data: links } = await supabaseAdmin
+              .from("telegram_links")
+              .select("user_id, chat_id")
+              .eq("active", true)
+              .in("user_id", ids);
+            queries++;
+            for (const l of links ?? []) {
+              const custom = await takeCustom(l.user_id);
+              if (!custom) continue;
+              const res = await sendTelegramMessage(Number(l.chat_id), custom, [
+                [{ text: "Open HomeStock", url: `${APP_URL}/more` }],
+              ]);
+              if (res.ok) sent++;
+              else {
+                errors++;
+                if (isPermanentFailure(res.description)) await markChatInactive(Number(l.chat_id));
+                // Release so tomorrow's run doesn't skip it… only within the same day it can retry.
+                else
+                  await supabaseAdmin
+                    .from("custom_reminders")
+                    .update({ last_sent_on: null })
+                    .eq("user_id", l.user_id)
+                    .eq("last_sent_on", today);
+              }
+              await new Promise((r) => setTimeout(r, 40));
+            }
+          }
         } catch (e) {
           errors++;
           console.error("expiry-digest failed", e instanceof Error ? e.message : "unknown");
