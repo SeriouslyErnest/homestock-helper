@@ -148,8 +148,23 @@ export async function chatUnderLimit(
   max: number,
   windowSeconds: number,
 ): Promise<boolean> {
-  const { underLimit } = await import("./admin.server");
-  return underLimit(await chatKey(chatId), bucket, max, windowSeconds);
+  // Limits are fixed in the server-only RPC, never supplied by Telegram input.
+  const expected: Record<string, [number, number]> = {
+    tg_chat_min: [40, 60], tg_chat_hour: [300, 3600], tg_link_try: [5, 900],
+  };
+  const rule = expected[bucket];
+  if (!rule || rule[0] !== max || rule[1] !== windowSeconds) throw new Error("Unknown Telegram limit");
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return takeTelegramLimits(supabaseAdmin, [await chatKey(chatId)], [bucket]);
+}
+
+type LimitDb = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
+
+/** Fail closed on database errors; all counters are serialized in one transaction. */
+export async function takeTelegramLimits(db: LimitDb, subjects: string[], buckets: string[]): Promise<boolean> {
+  const { data, error } = await db.rpc("telegram_take_limits", { _subjects: subjects, _buckets: buckets });
+  if (error) throw new Error("Telegram rate limit unavailable");
+  return data === true;
 }
 
 /** Strip control / invisible / bidi characters and collapse whitespace in user text. */

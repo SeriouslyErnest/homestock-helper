@@ -61,13 +61,27 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         const text = (typeof rawText === "string" ? rawText : "").slice(0, 1000).trim();
         const isPrivate = update.message?.chat?.type === "private";
 
+        // Add prompts consolidate admission and state into one transaction.
+        // This runs only after the same secret, size, sender and replay guards.
+        const { isAddPromptUpdate, handleAddPromptUpdate, handleBotUpdate } =
+          await import("@/lib/telegram-bot.server");
+        if (typeof chatId === "number" && isAddPromptUpdate(update)) {
+          try {
+            await handleAddPromptUpdate(supabaseAdmin, update);
+          } catch (e) {
+            console.error("telegram add prompt failed", e instanceof Error ? e.message : "unknown");
+          }
+          return Response.json({ ok: true });
+        }
+
         // Per-chat flood guard for every chat, linked or not. Over the limit we
         // stay silent so a flood can't make the bot send a flood back.
         if (typeof chatId === "number") {
-          const { chatUnderLimit } = await import("@/lib/telegram.server");
-          const okMin = await chatUnderLimit(chatId, "tg_chat_min", 40, 60);
-          const okHour = okMin && (await chatUnderLimit(chatId, "tg_chat_hour", 300, 3600));
-          if (!okMin || !okHour) return Response.json({ ok: true, throttled: true });
+          const { chatKey, takeTelegramLimits } = await import("@/lib/telegram.server");
+          const key = await chatKey(chatId);
+          if (!(await takeTelegramLimits(supabaseAdmin, [key, key], ["tg_chat_min", "tg_chat_hour"]))) {
+            return Response.json({ ok: true, throttled: true });
+          }
         }
 
         const startMatch = /^\/start(?:@\w+)?(?:\s+([A-Za-z0-9_-]{16,64}))?$/.exec(text);
@@ -174,7 +188,6 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         }
 
         try {
-          const { handleBotUpdate } = await import("@/lib/telegram-bot.server");
           await handleBotUpdate(supabaseAdmin, update);
         } catch (e) {
           console.error("telegram update failed", e instanceof Error ? e.message : "unknown");
