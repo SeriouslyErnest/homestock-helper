@@ -12,7 +12,7 @@ vi.mock("./telegram.server", async (original) => ({
 import { handleAddPromptUpdate, handleBotUpdate } from "./telegram-bot.server";
 import { chatKey } from "./telegram.server";
 
-const enabled = process.env.RUN_TELEGRAM_DB_TESTS === "1";
+const enabled = process.env["RUN_TELEGRAM_DB_TESTS"] === "1";
 describe.skipIf(!enabled)("Telegram admission against isolated real database fixtures", () => {
   type Db = Parameters<typeof handleBotUpdate>[0];
   let db: Db;
@@ -26,6 +26,10 @@ describe.skipIf(!enabled)("Telegram admission against isolated real database fix
     if (r.error) throw new Error("Isolated Telegram test database operation failed");
     return r;
   }
+  function required<T>(value: T | null | undefined): T {
+    if (value === null || value === undefined) throw new Error("Isolated test fixture missing");
+    return value;
+  }
   async function prepare() {
     const start = performance.now();
     const r = check(await db.rpc("telegram_prepare_add", { _chat: chat, _chat_key: key }));
@@ -33,8 +37,8 @@ describe.skipIf(!enabled)("Telegram admission against isolated real database fix
     return r.data as { status: string; homes?: { userId: string }[] };
   }
   beforeAll(async () => {
-    const url = process.env.SUPABASE_URL;
-    const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const url = process.env["SUPABASE_URL"];
+    const secret = process.env["SUPABASE_SERVICE_ROLE_KEY"];
     if (!url || !secret) throw new Error("Missing integration test access");
     db = createClient(url, secret, {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -53,10 +57,12 @@ describe.skipIf(!enabled)("Telegram admission against isolated real database fix
       users.push(r.data.user.id);
     }
     for (let i = 0; i < 2; i++) {
-      const r = check(await db.from("households").insert({ name: `Telegram test ${i}`, created_by: users[i] }).select("id").single());
-      homes.push(r.data.id);
-      check(await db.from("household_members").insert({ household_id: homes[i], user_id: users[i], role: "owner" }));
-      check(await db.from("telegram_links").insert({ user_id: users[i], chat_id: chat, active: true, linked_at: new Date(Date.now() + i * 1000).toISOString() }));
+      const userId = required(users[i]);
+      const r = check(await db.from("households").insert({ name: `Telegram test ${i}`, created_by: userId }).select("id").single());
+      const homeId = required(r.data).id;
+      homes.push(homeId);
+      check(await db.from("household_members").insert({ household_id: homeId, user_id: userId, role: "owner" }));
+      check(await db.from("telegram_links").insert({ user_id: userId, chat_id: chat, active: true, linked_at: new Date(Date.now() + i * 1000).toISOString() }));
     }
   }, 30_000);
   afterAll(async () => {
@@ -90,35 +96,35 @@ describe.skipIf(!enabled)("Telegram admission against isolated real database fix
     expect(check(await db.from("telegram_chat_state").select("chat_id").eq("chat_id", chat)).data).toEqual([]);
   });
   it("rejects context whose selected account is not a member, even if another linked account is", async () => {
-    check(await db.from("telegram_chat_context").upsert({ chat_id: chat, user_id: users[1], household_id: homes[0] }));
+    check(await db.from("telegram_chat_context").upsert({ chat_id: chat, user_id: required(users[1]), household_id: required(homes[0]) }));
     expect((await prepare()).status).toBe("no_home");
   });
   it("prompt → literal item name → Shopping → Undo reads back correctly", async () => {
-    check(await db.from("telegram_chat_context").upsert({ chat_id: chat, user_id: users[0], household_id: homes[0] }));
+    check(await db.from("telegram_chat_context").upsert({ chat_id: chat, user_id: required(users[0]), household_id: required(homes[0]) }));
     const update = { message: { chat: { id: chat, type: "private" }, text: "➕ Add item" } };
     await handleAddPromptUpdate(db, update);
     const state = check(await db.from("telegram_chat_state").select("awaiting,expires_at").eq("chat_id", chat).single());
-    expect(state.data.awaiting).toBe("add");
-    expect(Date.parse(state.data.expires_at) - Date.now()).toBeGreaterThan(9 * 60_000);
+    expect(required(state.data).awaiting).toBe("add");
+    expect(Date.parse(required(state.data).expires_at) - Date.now()).toBeGreaterThan(9 * 60_000);
     await handleBotUpdate(db, { message: { ...update.message, text: "Test eggs <literal>" } });
-    const item = check(await db.from("shopping_items").select("id,name,requested_by,quantity").eq("household_id", homes[0]).single());
-    expect(item.data.name).toBe("Test eggs <literal>");
-    expect(item.data.requested_by).toBe(users[0]);
-    expect(Number(item.data.quantity)).toBe(1);
+    const item = required(check(await db.from("shopping_items").select("id,name,requested_by,quantity").eq("household_id", required(homes[0])).single()).data);
+    expect(item.name).toBe("Test eggs <literal>");
+    expect(item.requested_by).toBe(users[0]);
+    expect(Number(item.quantity)).toBe(1);
     await handleBotUpdate(db, { message: { ...update.message, text: "/shopping" } });
     expect(delivery.mock.calls.some((args: unknown[]) => String(args[1]).includes("Test eggs &lt;literal&gt;"))).toBe(true);
-    const undo = check(await db.from("telegram_undo").select("id").eq("shopping_item_id", item.data.id).single());
-    await handleBotUpdate(db, { callback_query: { id: "isolated-test", data: `u:${undo.data.id}`, message: { chat: { id: chat, type: "private" } } } });
-    expect(check(await db.from("shopping_items").select("id").eq("id", item.data.id)).data).toEqual([]);
+    const undo = required(check(await db.from("telegram_undo").select("id").eq("shopping_item_id", item.id).single()).data);
+    await handleBotUpdate(db, { callback_query: { id: "isolated-test", data: `u:${undo.id}`, message: { chat: { id: chat, type: "private" } } } });
+    expect(check(await db.from("shopping_items").select("id").eq("id", item.id)).data).toEqual([]);
     const audit = check(await db.from("telegram_command_log").select("command,status").gt("created_at", auditStart).eq("command", "add"));
     expect(audit.data).toContainEqual({ command: "add", status: "prompt" });
   }, 30_000);
   it("immediately rejects removed membership without a settings cache", async () => {
-    check(await db.from("household_members").delete().eq("user_id", users[0]).eq("household_id", homes[0]));
+    check(await db.from("household_members").delete().eq("user_id", required(users[0])).eq("household_id", required(homes[0])));
     expect((await prepare()).status).toBe("prompt"); // sole remaining authorized home
     const context = check(await db.from("telegram_chat_context").select("user_id,household_id").eq("chat_id", chat).single());
-    expect(context.data.user_id).toBe(users[1]);
-    expect(context.data.household_id).toBe(homes[1]);
+    expect(required(context.data).user_id).toBe(users[1]);
+    expect(required(context.data).household_id).toBe(homes[1]);
   });
   it.each([
     ["tg_chat_min", 40], ["tg_chat_hour", 300], ["tg_cmd", 30],
