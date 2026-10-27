@@ -83,3 +83,9 @@ database read-back.
 ## 2026-10-27 16:56 UTC — Telegram prompt speed regression tests
 - Vitest: 20/20 PASS (11 Telegram prompt tests, 3 custom-reminder tests, 6 insights tests). Checks exact private-chat Add recognition, admission before delivery, awaited audit after delivery, chat flood silence, paused/unlinked/throttled/no-home refusal, failed delivery state cleanup, and fail-closed database/audit errors.
 - Settings remain fresh on every prompt; no 60-second cache and no background audit writes. Live Telegram latency is not measured by these mocked-send tests.
+
+## 2026-10-27 22:56 UTC — Telegram speed build completion checks
+- Standard Vitest run: 23/23 unit tests PASS; 11 account/database integration tests explicitly skipped. Includes direct and legacy inline Add routing through atomic admission, failure-state cleanup errors, delivery-before-awaited-audit ordering, and existing reminders/insights regressions.
+- Read-only database inspection confirmed `telegram_prepare_add` and `telegram_take_limits` are installed with execution restricted to service role. No accounts, auth settings or Telegram deliveries were created/changed during this check.
+- Finished exact selected-account membership rechecks on the subsequent typed-name path; daily add throttling now uses the atomic quota RPC. Added deterministic link ordering and fixed strict-type errors in the opt-in integration test.
+- Actual phone delivery time, account-based prompt → Shopping → Undo, and concurrent database quota tests remain unverified; require a separate confirmed test run. No sub-second delivery guarantee is made. Publishing was not requested.
