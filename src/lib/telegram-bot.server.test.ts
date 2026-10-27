@@ -7,7 +7,7 @@ vi.mock("./telegram.server", async (original) => ({
   telegramCall: mocks.call,
   markChatInactive: mocks.inactive,
 }));
-import { handleAddPromptUpdate, isAddPromptUpdate } from "./telegram-bot.server";
+import { handleAddPromptUpdate, handleBotUpdate, isAddPromptUpdate } from "./telegram-bot.server";
 import { takeTelegramLimits } from "./telegram.server";
 
 const update = { message: { chat: { id: 123, type: "private" }, text: "➕ Add item" } };
@@ -74,5 +74,32 @@ describe("Telegram fast Add prompt", () => {
     const d = database();
     d.rpc.mockResolvedValueOnce({ data: null, error: { message: "unavailable" } } as never);
     await expect(takeTelegramLimits(d.db, ["user"], ["tg_cmd"])).rejects.toThrow("rate limit unavailable");
+  });
+  it("routes direct Add callers through one admission transaction", async () => {
+    const d = database();
+    await handleBotUpdate(d.db, update);
+    expect(d.rpc).toHaveBeenCalledTimes(1);
+    expect(d.rpc.mock.calls[0]).toEqual([
+      "telegram_prepare_add", { _chat: 123, _chat_key: expect.any(String) },
+    ]);
+    expect(d.events).toEqual(["admission", "send", "audit"]);
+  });
+  it("checks legacy inline Add membership before delivery", async () => {
+    const d = database("no_home");
+    await handleBotUpdate(d.db, { callback_query: {
+      id: "test-callback", data: "m:add", message: { chat: { id: 123, type: "private" } },
+    } });
+    expect(d.rpc).toHaveBeenCalledTimes(1);
+    expect(mocks.send).not.toHaveBeenCalledWith(123, expect.stringContaining("Just type"), expect.anything());
+    expect(mocks.call).toHaveBeenCalledWith("answerCallbackQuery", {
+      callback_query_id: "test-callback", text: "Choose a home first",
+    });
+  });
+  it("reports failed cleanup rather than claiming unseen state was removed", async () => {
+    const d = database();
+    mocks.send.mockResolvedValueOnce({ ok: false, description: "network error" });
+    d.eq.mockResolvedValueOnce({ error: { message: "unavailable" } } as never);
+    await expect(handleAddPromptUpdate(d.db, update)).rejects.toThrow("cleanup failed");
+    expect(d.insert).not.toHaveBeenCalled();
   });
 });
