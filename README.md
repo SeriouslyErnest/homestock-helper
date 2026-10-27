@@ -72,6 +72,14 @@ Built with TanStack Start (React 19), Tailwind CSS v4 and Supabase
   status only), `expiry_acks` (per user + stock record + date),
   `expiry_reminders` (advance/day stages). Admin must press "Turn on
   Telegram buttons" once so the webhook also receives button taps.
+  Add item prompts use the server-only `telegram_prepare_add` RPC: fresh
+  settings, active links, exact selected-account membership, atomic chat/account
+  quotas and a 10-minute awaiting state in one transaction. Other Telegram
+  quota checks, including the 60/day add limit, use `telegram_take_limits`.
+  Prompts are delivered before the audit insert, but that insert is awaited
+  before the webhook closes; settings are not cached. Failed prompt delivery
+  clears awaiting state. This reduces database round trips, not a guaranteed
+  Telegram delivery time.
 - **Telegram admin sign-up alerts** — two independent switches in the admin
   console (waiting-for-approval, first-time-in). Alerts go to operators via
   `telegram_admin_links`, a dedicated table separate from user reminder

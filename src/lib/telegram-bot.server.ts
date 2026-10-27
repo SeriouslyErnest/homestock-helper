@@ -67,7 +67,8 @@ async function setAwaitingAdd(db: Admin, chatId: number) {
 }
 
 async function clearState(db: Admin, chatId: number) {
-  await db.from("telegram_chat_state").delete().eq("chat_id", chatId);
+  const { error } = await db.from("telegram_chat_state").delete().eq("chat_id", chatId);
+  if (error) throw new Error("Telegram awaiting state cleanup failed");
 }
 
 /** True (and cleared) when this chat was waiting for an item name. */
@@ -123,7 +124,16 @@ async function activeHome(ctx: Ctx, homes: Home[]): Promise<Home | null> {
     const ok = homes.find(
       (h) => h.householdId === data.household_id && ctx.userIds.includes(data.user_id),
     );
-    if (ok) return { ...ok, userId: data.user_id };
+    if (ok) {
+      const { data: membership, error } = await ctx.db
+        .from("household_members")
+        .select("user_id")
+        .eq("household_id", data.household_id)
+        .eq("user_id", data.user_id)
+        .maybeSingle();
+      if (error) throw new Error("Telegram membership unavailable");
+      if (membership) return { ...ok, userId: data.user_id };
+    }
     await ctx.db.from("telegram_chat_context").delete().eq("chat_id", ctx.chatId);
     if (homes.length !== 1) return null;
   }
@@ -200,8 +210,7 @@ async function cmdAdd(ctx: Ctx, home: Home, text: string) {
     return "invalid";
   }
   // Caps so a linked chat can't flood a home's list.
-  const { underLimit } = await import("./admin.server");
-  if (!(await underLimit(home.userId, "tg_add_day", 60, 86400))) {
+  if (!(await takeTelegramLimits(ctx.db, [home.userId], ["tg_add_day"]))) {
     await send(ctx.chatId, "That's a lot of additions from Telegram today. Please use the app for more.", [
       [OPEN("/shopping")],
     ]);
@@ -533,6 +542,8 @@ export async function handleAddPromptUpdate(db: Admin, update: Update): Promise<
 
 /** Handles everything except /start linking and /stop, which stay in the webhook. */
 export async function handleBotUpdate(db: Admin, update: Update): Promise<void> {
+  // Keep direct callers on the same fresh, membership-checked prompt path.
+  if (isAddPromptUpdate(update)) return handleAddPromptUpdate(db, update);
   const cb = update.callback_query;
   const chat = cb ? cb.message?.chat : update.message?.chat;
   const chatId = chat?.id;
@@ -545,7 +556,7 @@ export async function handleBotUpdate(db: Admin, update: Update): Promise<void> 
 
   const [enabled, linkResult] = await Promise.all([
     readSetting<{ enabled?: boolean }>("telegram_commands_enabled"),
-    db.from("telegram_links").select("user_id, linked_at").eq("chat_id", chatId).eq("active", true).order("linked_at"),
+    db.from("telegram_links").select("user_id, linked_at").eq("chat_id", chatId).eq("active", true).order("linked_at").order("user_id"),
   ]);
   if (linkResult.error) throw new Error("Telegram links unavailable");
   const answer = (text: string) =>
@@ -580,18 +591,12 @@ export async function handleBotUpdate(db: Admin, update: Update): Promise<void> 
     return;
   }
 
-  if (cb && (cb.data === "m:menu" || cb.data === "m:add")) {
-    if (cb.data === "m:add") {
-      await promptAdd(db, chatId);
-      await log(db, "button:add_more", "ok");
-      await answer("Type the item name");
-    } else {
-      await clearState(db, chatId);
-      const { sendWithKeyboard } = await import("./telegram.server");
-      await sendWithKeyboard(chatId, "Here is the main menu. Tap a button below to check your home:");
-      await log(db, "button:menu", "ok");
-      await answer("Main menu");
-    }
+  if (cb && cb.data === "m:menu") {
+    await clearState(db, chatId);
+    const { sendWithKeyboard } = await import("./telegram.server");
+    await sendWithKeyboard(chatId, "Here is the main menu. Tap a button below to check your home:");
+    await log(db, "button:menu", "ok");
+    await answer("Main menu");
     return;
   }
 
@@ -678,7 +683,8 @@ export async function afterLink(db: Admin, chatId: number): Promise<string> {
     .select("user_id")
     .eq("chat_id", chatId)
     .eq("active", true)
-    .order("linked_at");
+    .order("linked_at")
+    .order("user_id");
   const ctx: Ctx = { db, chatId, userIds: (links ?? []).map((l) => l.user_id) };
   const homes = await homesFor(ctx);
   const active = await activeHome(ctx, homes);
