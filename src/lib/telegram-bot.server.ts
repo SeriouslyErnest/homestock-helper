@@ -17,6 +17,8 @@ import {
   readSetting,
   sendTelegramMessage,
   telegramCall,
+  chatKey,
+  takeTelegramLimits,
   type InlineButton,
 } from "./telegram.server";
 
@@ -87,7 +89,8 @@ async function promptAdd(db: Admin, chatId: number) {
 }
 
 async function log(db: Admin, command: string, status: string) {
-  await db.from("telegram_command_log").insert({ command, status });
+  const { error } = await db.from("telegram_command_log").insert({ command, status });
+  if (error) throw new Error("Telegram command audit failed");
 }
 
 /** Homes the chat's linked accounts can access right now (one entry per home). */
@@ -476,6 +479,58 @@ type Update = {
   };
 };
 
+/** Only an exact button or empty /add takes the fast path; text remains literal. */
+export function isAddPromptUpdate(update: Update): boolean {
+  if (update.callback_query) {
+    return update.callback_query.message?.chat?.type === "private" && update.callback_query.data === "m:add";
+  }
+  if (update.message?.chat?.type !== "private") return false;
+  const text = typeof update.message.text === "string" ? update.message.text.slice(0, 1000).trim() : "";
+  return text === "➕ Add item" || /^\/add(?:@\w+)?\s*$/i.test(text);
+}
+
+/** Called only after webhook authentication, payload guards and update deduplication.
+ * One fresh transaction checks both chat/user limits, links, membership and state.
+ * Delivery happens before the awaited audit write, never fire-and-forget.
+ */
+export async function handleAddPromptUpdate(db: Admin, update: Update): Promise<void> {
+  if (!isAddPromptUpdate(update)) return;
+  const cb = update.callback_query;
+  const chatId = cb ? cb.message?.chat?.id : update.message?.chat?.id;
+  if (typeof chatId !== "number" || !Number.isSafeInteger(chatId)) return;
+  const { data, error } = await db.rpc("telegram_prepare_add", { _chat: chatId, _chat_key: await chatKey(chatId) });
+  if (error || !data || typeof data !== "object" || Array.isArray(data)) {
+    throw new Error("Telegram Add preparation unavailable");
+  }
+  const result = data as { status?: string; homes?: Home[] };
+  const answer = (text: string) => cb ? telegramCall("answerCallbackQuery", { callback_query_id: cb.id, text }) : Promise.resolve(null);
+  if (result.status === "chat_throttled") return;
+  if (result.status === "prompt") {
+    const delivered = await send(chatId, ADD_PROMPT, [[{ text: "❌ Cancel", callback_data: "m:menu" }]]);
+    // Never leave an unseen prompt active when Telegram reports delivery failure.
+    if (!delivered.ok) await clearState(db, chatId);
+    await log(db, cb ? "button:add_more" : "add", delivered.ok ? "prompt" : "delivery_failed");
+    await answer(delivered.ok ? "Type the item name" : "Please try again");
+    return;
+  }
+  if (result.status === "paused") {
+    await send(chatId, "HomeStock's Telegram commands are paused for a moment. Please use the app.", [[OPEN()]]);
+    await answer("Paused");
+  } else if (result.status === "unlinked") {
+    await send(chatId, "This Telegram chat is no longer linked to HomeStock. Reconnect it from HomeStock → More → Telegram.", [[OPEN("/more")]]);
+    await answer("Not linked");
+  } else if (result.status === "user_throttled") {
+    if (!cb) await send(chatId, "That's a lot of messages — please wait a minute and try again.");
+    await answer("Slow down a little");
+  } else if (result.status === "no_home") {
+    await needHome({ db, chatId, userIds: [] }, result.homes ?? []);
+    await log(db, "add", "no_home");
+    await answer("Choose a home first");
+  } else {
+    throw new Error("Unknown Telegram Add preparation result");
+  }
+}
+
 /** Handles everything except /start linking and /stop, which stay in the webhook. */
 export async function handleBotUpdate(db: Admin, update: Update): Promise<void> {
   const cb = update.callback_query;
@@ -488,7 +543,11 @@ export async function handleBotUpdate(db: Admin, update: Update): Promise<void> 
     return;
   }
 
-  const enabled = await readSetting<{ enabled?: boolean }>("telegram_commands_enabled");
+  const [enabled, linkResult] = await Promise.all([
+    readSetting<{ enabled?: boolean }>("telegram_commands_enabled"),
+    db.from("telegram_links").select("user_id, linked_at").eq("chat_id", chatId).eq("active", true).order("linked_at"),
+  ]);
+  if (linkResult.error) throw new Error("Telegram links unavailable");
   const answer = (text: string) =>
     cb ? telegramCall("answerCallbackQuery", { callback_query_id: cb.id, text }) : null;
 
@@ -500,12 +559,7 @@ export async function handleBotUpdate(db: Admin, update: Update): Promise<void> 
     return;
   }
 
-  const { data: links } = await db
-    .from("telegram_links")
-    .select("user_id, linked_at")
-    .eq("chat_id", chatId)
-    .eq("active", true)
-    .order("linked_at");
+  const links = linkResult.data;
   const ctx: Ctx = { db, chatId, userIds: (links ?? []).map((l) => l.user_id) };
   if (ctx.userIds.length === 0) {
     await answer("Not linked");
@@ -518,11 +572,9 @@ export async function handleBotUpdate(db: Admin, update: Update): Promise<void> 
   }
 
   // Generous per-account limit: stops loops and scripts, never normal use.
-  const { underLimit } = await import("./admin.server");
-  if (
-    !(await underLimit(ctx.userIds[0]!, "tg_cmd", 30, 60)) ||
-    !(await underLimit(ctx.userIds[0]!, "tg_cmd_hour", 300, 3600))
-  ) {
+  const firstUser = ctx.userIds[0];
+  if (!firstUser) return;
+  if (!(await takeTelegramLimits(db, [firstUser, firstUser], ["tg_cmd", "tg_cmd_hour"]))) {
     await answer("Slow down a little");
     if (!cb) await send(chatId, "That's a lot of messages — please wait a minute and try again.");
     return;

@@ -13,6 +13,7 @@
 - Telegram links: one chat may serve many accounts (telegram_links keyed by user_id, no chat_id uniqueness); admin alert destinations live in telegram_admin_links — separate and authoritative, never touched by user-side disconnects or /stop.
 - Admin console requires a second factor: every admin server fn demands aal2 (TOTP-verified session); one-time recovery codes in public.admin_recovery_codes are salted hashes and only let an operator re-enroll, never bypass the gate.
 - Telegram companion: the webhook only orchestrates; stock/low/expiry rules live in src/lib/stock-rules.ts shared with the app, Telegram can never change stock, and every command re-checks membership via the chat's active telegram_links — why: Telegram and the app must never disagree or bypass home access.
+- Telegram Add prompts use server-only telegram_prepare_add for fresh settings, atomic chat/account quotas, actual selected-user membership and awaiting state; other Telegram quota checks use telegram_take_limits, and audit writes are awaited after delivery — why: fewer round-trips without stale permissions, quota races or background logging.
 - Expiry acknowledgements are keyed by (user, item row, expires_on) in expiry_acks and reminder stages in expiry_reminders — why: date changes reset naturally and split stock starts fresh.
 - Test log: docs/TESTING.md records what was tested and when; update it after every test run.
 
