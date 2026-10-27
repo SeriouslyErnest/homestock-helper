@@ -79,3 +79,7 @@ database read-back.
 ## 2026-10-26 — Monthly custom Telegram reminders
 - Unit: reminderDueOn (chosen day, 29–31 fall back to month end), ordinal labels — 3/3 PASS.
 - Typecheck clean. Not yet tested: live Telegram delivery, the add/remove screen in the browser, 10-limit trigger via UI.
+
+## 2026-10-27 16:56 UTC — Telegram prompt speed regression tests
+- Vitest: 20/20 PASS (11 Telegram prompt tests, 3 custom-reminder tests, 6 insights tests). Checks exact private-chat Add recognition, admission before delivery, awaited audit after delivery, chat flood silence, paused/unlinked/throttled/no-home refusal, failed delivery state cleanup, and fail-closed database/audit errors.
+- Settings remain fresh on every prompt; no 60-second cache and no background audit writes. Live Telegram latency is not measured by these mocked-send tests.
