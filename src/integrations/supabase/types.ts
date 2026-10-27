@@ -1448,6 +1448,14 @@ export type Database = {
         Args: { _item_id: string; _note?: string; _quantity: number }
         Returns: number
       }
+      telegram_prepare_add: {
+        Args: { _chat: number; _chat_key: string }
+        Returns: Json
+      }
+      telegram_take_limits: {
+        Args: { _buckets: string[]; _subjects: string[] }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

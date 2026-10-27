@@ -183,6 +183,13 @@
       "when": 1793007809018,
       "tag": "0025_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1793120108634,
+      "tag": "0026_telegram_fast_add_admission",
+      "breakpoints": true
     }
   ]
 }
