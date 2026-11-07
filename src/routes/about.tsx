@@ -656,8 +656,12 @@ function AboutPage() {
             <a href="#" aria-disabled="true" className="text-muted-foreground">
               Terms
             </a>
-            <a href="#" aria-disabled="true" className="text-muted-foreground">
-              Support / Contact
+            <a
+              href="https://seriouslyernest.github.io/#feedback"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Feedback &amp; Support
             </a>
             <Link to="/auth">Open HomeStock</Link>
             <Link to="/pro">HomeStock Pro</Link>

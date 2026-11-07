@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Ban, Check, Copy, LogOut, RefreshCw, RotateCcw, UserMinus, X } from "lucide-react";
+import { BarChart3, Ban, Check, Copy, LogOut, MessageSquareHeart, RefreshCw, RotateCcw, UserMinus, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { ProBadge } from "@/components/pro-badge";
@@ -644,6 +644,17 @@ function MorePage() {
         >
           <RotateCcw size={15} /> Restart welcome flow
         </button>
+        <a
+          href="https://seriouslyernest.github.io/#feedback"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-border py-3 text-sm font-semibold"
+        >
+          <MessageSquareHeart size={15} /> Feedback &amp; Support
+        </a>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Report an issue, suggest a feature, or support the project on Ko-fi. Opens in a new tab.
+        </p>
       </section>
 
       <section className="rounded-2xl border border-border bg-card p-4">

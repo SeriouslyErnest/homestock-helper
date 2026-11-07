@@ -56,6 +56,6 @@ function ProPage() {
       </section>)}
       <section className="py-9"><h2 className="text-xl font-bold">Your home, your recorded history</h2><p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">Ordinary inventory history stays unchanged. Additional daily stock records are collected only while the home is Pro. Forecasts are estimates from recorded use, not guarantees. New homes need some history before patterns appear.</p><p className="mt-3 text-sm text-muted-foreground">To check your home’s access, open More and look for the PRO badge beside Household. Open Household insights there. An eligible trial or promo code can be entered under “Have a code?”.</p></section>
     </main>
-    <footer className="border-t border-border px-5 py-5 text-center text-xs text-muted-foreground">HomeStock Pro · <Link to="/about" className="underline">Read the full user guide</Link></footer>
+    <footer className="border-t border-border px-5 py-5 text-center text-xs text-muted-foreground">HomeStock Pro · <Link to="/about" className="underline">Read the full user guide</Link> · <a href="https://seriouslyernest.github.io/#feedback" target="_blank" rel="noopener noreferrer" className="underline">Feedback &amp; Support</a></footer>
   </div>;
 }
