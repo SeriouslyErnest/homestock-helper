@@ -19,6 +19,7 @@ export type Member = {
   user_id: string;
   role: string;
   display_name: string | null;
+  created_at: string;
 };
 
 export type Item = {

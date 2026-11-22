@@ -23,3 +23,4 @@
 - Pro-only extra data lives in public.stock_snapshots, written by the daily pg_cron job record_pro_snapshots() for Pro homes only; insights maths is pure in src/lib/insights.ts with vitest tests — why: free homes never accumulate extra data and the numbers stay deterministic.
 - adjust_item_quantity/set_item_quantity clear expires_on when a row reaches 0 — why: empty stock must never show as expiring.
 - Public Pro previews use isolated, fictional read-only screenshot subjects and CDN asset pointers; never fetch or seed household data for marketing — why: sample screenshots must not disclose real homes or trigger telemetry/billing writes.
+- Homes: removing a member needs confirmation; leaving as sole owner passes ownership to the oldest member (DB trigger after_member_removed); a home with no members is deleted. Leave confirmations use 5s countdowns. — why: no orphaned, ownerless homes.

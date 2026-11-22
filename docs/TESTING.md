@@ -89,3 +89,7 @@ database read-back.
 - Read-only database inspection confirmed `telegram_prepare_add` and `telegram_take_limits` are installed with execution restricted to service role. No accounts, auth settings or Telegram deliveries were created/changed during this check.
 - Finished exact selected-account membership rechecks on the subsequent typed-name path; daily add throttling now uses the atomic quota RPC. Added deterministic link ordering and fixed strict-type errors in the opt-in integration test.
 - Actual phone delivery time, account-based prompt → Shopping → Undo, and concurrent database quota tests remain unverified; require a separate confirmed test run. No sub-second delivery guarantee is made. Publishing was not requested.
+
+## 2026-11-22 04:48 UTC — Leave/remove safeguards
+- Unit: src/lib/leave-plan.test.ts 5/5 (last member → delete, sole owner → oldest member succeeds, plain member, co-owner, 5s countdown). Full suite 28 pass / 11 opt-in skipped. Typecheck clean.
+- Not tested: database succession/auto-delete trigger with real accounts, countdown UI in browser (account E2E awaits confirmation).

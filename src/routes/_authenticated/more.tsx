@@ -24,6 +24,22 @@ import {
   useMyJoinRequests,
 } from "@/lib/homestock";
 import { supabase } from "@/integrations/supabase/client";
+import { planLeave, LEAVE_COUNTDOWN_SECONDS } from "@/lib/leave-plan";
+
+/** Button that stays disabled until a countdown finishes. */
+function CountdownButton({ label, onClick, className, resetKey }: { label: string; onClick: () => void; className: string; resetKey: string }) {
+  const [left, setLeft] = useState(LEAVE_COUNTDOWN_SECONDS);
+  useEffect(() => {
+    setLeft(LEAVE_COUNTDOWN_SECONDS);
+    const t = setInterval(() => setLeft((n) => (n > 0 ? n - 1 : 0)), 1000);
+    return () => clearInterval(t);
+  }, [resetKey]);
+  return (
+    <button onClick={onClick} disabled={left > 0} className={`${className} disabled:opacity-50`}>
+      {left > 0 ? `${label} (${left}s)` : label}
+    </button>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/more")({
   head: () => ({
@@ -57,6 +73,8 @@ function MorePage() {
   const [joining, setJoining] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [leaveStep, setLeaveStep] = useState<1 | 2>(1);
+  const [confirmRemove, setConfirmRemove] = useState<{ id: string; name: string } | null>(null);
   const [deciding, setDeciding] = useState<string | null>(null);
   const { data: households } = useHouseholds();
   const { data: plan } = useEntitlements();
@@ -94,6 +112,7 @@ function MorePage() {
     !!plan?.enforced && (members?.length ?? 0) >= (plan?.max_members ?? Infinity);
   const myPending = (myRequests ?? []).filter((r) => r.status === "pending");
   const isOwner = (members ?? []).some((m) => m.user_id === userId && m.role === "owner");
+  const leavePlan = userId && members ? planLeave(members, userId) : null;
   const pending = (joinRequests ?? []).filter((r) => r.status === "pending");
   const blocked = (joinRequests ?? []).filter((r) => r.status === "blocked");
 
@@ -119,6 +138,7 @@ function MorePage() {
       toast.error("Could not remove them — you need to be the owner.");
       return;
     }
+    setConfirmRemove(null);
     queryClient.invalidateQueries({ queryKey: ["members", household.id] });
     toast.success(`${name} removed`);
   }
@@ -140,7 +160,8 @@ function MorePage() {
     else clearActiveHouseholdId();
     await queryClient.invalidateQueries();
     setConfirmLeave(false);
-    toast.success("You left the household");
+    setLeaveStep(1);
+    toast.success(leavePlan?.kind === "delete" ? "You left — the household was deleted" : "You left the household");
     navigate({ to: "/inventory" });
   }
 
@@ -552,7 +573,7 @@ function MorePage() {
               <span className="text-xs text-muted-foreground">{m.role}</span>
               {isOwner && m.user_id !== userId && (
                 <button
-                  onClick={() => removeMember(m.user_id, m.display_name ?? "Housemate")}
+                  onClick={() => setConfirmRemove({ id: m.user_id, name: m.display_name ?? "Housemate" })}
                   aria-label={`Remove ${m.display_name ?? "housemate"}`}
                   className="grid h-11 w-11 place-items-center rounded-xl text-muted-foreground active:bg-card"
                 >
@@ -563,21 +584,63 @@ function MorePage() {
           ))}
         </ul>
 
-        {confirmLeave ? (
-          <div className="mt-3 rounded-xl bg-warning-soft p-3">
+        {confirmRemove && (
+          <div className="mt-3 rounded-xl bg-warning-soft p-3" role="alertdialog">
             <p className="text-sm">
-              Leave {household?.name}? You'll lose access to its inventory until someone invites you
-              back.
+              Remove {confirmRemove.name} from {household?.name}? They will immediately lose access to this inventory.
             </p>
             <div className="mt-3 flex gap-2">
-              <button
-                onClick={leaveHousehold}
-                className="flex-1 rounded-xl bg-warning py-2.5 text-sm font-semibold text-white"
-              >
-                Leave
+              <button onClick={() => removeMember(confirmRemove.id, confirmRemove.name)} className="flex-1 rounded-xl bg-destructive py-2.5 text-sm font-semibold text-destructive-foreground">
+                Remove
               </button>
+              <button onClick={() => setConfirmRemove(null)} className="flex-1 rounded-xl border border-border py-2.5 text-sm font-semibold">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {confirmLeave ? (
+          <div className="mt-3 rounded-xl bg-warning-soft p-3" role="alertdialog">
+            {leaveStep === 2 ? (
+              <p className="text-sm font-semibold">
+                As the last member leaving, households without an owner will be deleted — all items, history and
+                shopping lists in {household?.name}. This is not reversible. Are you sure?
+              </p>
+            ) : leavePlan?.kind === "transfer" ? (
+              <p className="text-sm">
+                You are the owner of {household?.name}. Ownership will be passed to {leavePlan.successorName}, the
+                next oldest member, when you leave.
+              </p>
+            ) : leavePlan?.kind === "delete" ? (
+              <p className="text-sm">
+                Leave {household?.name}? You are the owner and the only member left.
+              </p>
+            ) : (
+              <p className="text-sm">
+                Leave {household?.name}? You'll lose access to its inventory until someone invites you back.
+              </p>
+            )}
+            <div className="mt-3 flex gap-2">
+              {leavePlan?.kind === "member" ? (
+                <button onClick={leaveHousehold} className="flex-1 rounded-xl bg-warning py-2.5 text-sm font-semibold text-white">
+                  Leave
+                </button>
+              ) : leavePlan?.kind === "delete" && leaveStep === 1 ? (
+                <CountdownButton resetKey="step1" label="Yes, continue" onClick={() => setLeaveStep(2)} className="flex-1 rounded-xl bg-warning py-2.5 text-sm font-semibold text-white" />
+              ) : (
+                <CountdownButton
+                  resetKey={`final-${leaveStep}`}
+                  label={leaveStep === 2 ? "Yes, delete & leave" : "Yes, leave"}
+                  onClick={leaveHousehold}
+                  className={`flex-1 rounded-xl py-2.5 text-sm font-semibold ${leaveStep === 2 ? "bg-destructive text-destructive-foreground" : "bg-warning text-white"}`}
+                />
+              )}
               <button
-                onClick={() => setConfirmLeave(false)}
+                onClick={() => {
+                  setConfirmLeave(false);
+                  setLeaveStep(1);
+                }}
                 className="flex-1 rounded-xl border border-border py-2.5 text-sm font-semibold"
               >
                 Cancel
