@@ -93,3 +93,11 @@ database read-back.
 ## 2026-11-22 04:48 UTC — Leave/remove safeguards
 - Unit: src/lib/leave-plan.test.ts 5/5 (last member → delete, sole owner → oldest member succeeds, plain member, co-owner, 5s countdown). Full suite 28 pass / 11 opt-in skipped. Typecheck clean.
 - Not tested: database succession/auto-delete trigger with real accounts, countdown UI in browser (account E2E awaits confirmation).
+
+## 2026-11-22 05:10 UTC — Leave/remove safeguards, signed-in run
+- Browser at 390px, one temporary signed-in owner plus two placeholder housemates (test home set up with developer database access). PASS:
+  - Remove housemate: confirmation names the person and home; Remove takes members 3 → 2.
+  - Sole owner leaving: warning names "Test Mate" as next oldest; "Yes, leave (5s)" disabled at start, unlocked after ~5s; leaving lands on setup.
+  - Last member: step 1 "Yes, continue (5s)" and step 2 "not reversible" "Yes, delete & leave (5s)" both locked 5s; afterwards the home no longer exists.
+  - Database: on a fresh 3-member home, removing the sole owner made the oldest member owner and left the newer one as member. No page errors.
+- Not tested: two real accounts in separate browsers (the handed-over owner signing in). All test homes, placeholder members and the test account's setup rows removed.

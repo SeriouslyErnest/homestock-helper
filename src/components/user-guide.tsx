@@ -32,6 +32,8 @@ const FLOWS: Flow[] = [
       "First time in? A short welcome tour shows the basics (skip it any time; restart it from More). Then create a home, or type the 6-letter invite code someone gave you and wait for the owner to approve you.",
       "Under More, owners can rename the home, copy the invite code, approve join requests and switch the expiry-date and location boxes off for everyone.",
       "Done inviting? Switch off “Open for join requests”. Tap “New code” and the old code stops working straight away — handy if it was shared too widely.",
+      "Removing a housemate asks you to confirm first. If you are the only owner and leave, the longest-standing member becomes owner — you'll see who, and “Yes, leave” unlocks after 5 seconds.",
+      "The last person to leave gets two warnings, each with a 5-second wait. The home and everything in it is then deleted, and this can't be undone.",
     ],
     tip: "Tap your initials at the top right any time to reach your account.",
   },

@@ -72,6 +72,16 @@ Running low / buy request → Shop → Restock.
 - Accounts can belong to many homes; the app shows one at a time
   (most-recently-used first, choice remembered). Same product in two
   locations = two rows clustered together with a combined total.
+- **Leaving and removing safeguards**: an owner removing a housemate must
+  confirm first. When the only owner leaves, ownership passes to the
+  longest-standing remaining member (database trigger
+  `after_member_removed`); the owner sees who before a 5-second countdown
+  unlocks "Yes, leave". The last member gets two 5-second warnings — the
+  second says the home will be deleted and it can't be undone — and the
+  home plus everything in it is deleted when they leave. No home is ever
+  left empty or without an owner.
+- **Feedback & Support** link (https://seriouslyernest.github.io/#feedback,
+  new tab) appears under More → Help & welcome and in the About and Pro footers.
 
 ## Plan allowances
 
@@ -174,7 +184,7 @@ Telegram reminders, restart welcome, promo code, account).
 
 - No activity-history screen; events are used for undo, ranking and admin counts.
 - No automatic matching of buy requests to products — completion is manual.
-- No household deletion UI.
+- No separate "delete household" button — a home is deleted only when its last member leaves.
 - Sign-in is by email link or Google only — no passwords and no 6-digit code.
 - Abuse limits: 10 wrong invite codes per hour, 5 wrong promo codes per 15 minutes, 5 wrong admin recovery codes per 15 minutes, 30 product lookups per minute per person. Text caps: item/shopping names 200, notes 1,000, places 100, home names 80, people names 60; photo links must be https.
 - Expiry dates are typed as DD/MM/YYYY (or picked from a calendar); impossible dates are refused, never auto-corrected.
