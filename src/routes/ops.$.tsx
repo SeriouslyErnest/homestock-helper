@@ -1288,7 +1288,7 @@ function Signups({ routeId }: { routeId: string }) {
   });
 
   const invite = useMutation({
-    mutationFn: () => adminInviteUser({ data: { routeId, email, origin: window.location.origin } }),
+    mutationFn: () => adminInviteUser({ data: { routeId, email } }),
     onSuccess: (r) => {
       toast.success(`Invitation sent to ${r.emailMasked}`);
       setEmail("");

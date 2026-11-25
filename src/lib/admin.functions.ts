@@ -783,32 +783,42 @@ export const adminListInvites = createServerFn({ method: "POST" })
 /**
  * Emails a one-time sign-up link. The address itself is never stored in the
  * app's tables — only a salted fingerprint and a masked form for display.
+ * Restricted to SUPER_ADMIN with an hourly send cap, a 24-hour per-recipient
+ * cooldown, and a fixed server-side redirect URL.
  */
 export const adminInviteUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { routeId: string; email: string; origin: string }) => cleanInput(input))
+  .inputValidator((input: { routeId: string; email: string }) => cleanInput(input))
   .handler(async ({ data, context }) => {
-    await guard(data.routeId, context, ["SUPER_ADMIN", "SUPPORT_ADMIN"]);
+    await guard(data.routeId, context, ["SUPER_ADMIN"]);
     const email = data.email.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Enter a valid email address");
-    // Only our own app addresses may be used as the link destination.
-    let origin: string;
-    try {
-      const u = new URL(data.origin);
-      const okHost =
-        (u.protocol === "https:" && /(^|\.)lovable\.app$/.test(u.hostname)) ||
-        (u.hostname === "localhost" && (u.protocol === "http:" || u.protocol === "https:"));
-      if (!okHost) throw new Error();
-      origin = u.origin;
-    } catch {
-      throw new Error("Invalid redirect address");
+    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new Error("Enter a valid email address");
     }
 
-    const { hashEmail, maskEmail, writeAudit } = await import("./admin.server");
+    const { hashEmail, maskEmail, underLimit, writeAudit } = await import("./admin.server");
+    const { APP_URL } = await import("./telegram.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    const hash = hashEmail(email);
+    const { data: existing } = await supabaseAdmin
+      .from("signup_invites")
+      .select("last_sent_at, accepted_at")
+      .eq("email_hash", hash)
+      .maybeSingle();
+    if (existing?.accepted_at) {
+      throw new Error("That address already accepted an invitation.");
+    }
+    if (existing?.last_sent_at && Date.now() - Date.parse(existing.last_sent_at) < 24 * 3600 * 1000) {
+      throw new Error("An invitation was already sent to that address in the last 24 hours.");
+    }
+
+    if (!(await underLimit(context.userId, "admin_invite_hour", 10, 3600))) {
+      throw new Error("Invite limit reached (10 per hour). Try again later.");
+    }
+
     const { error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${origin}/inventory`,
+      redirectTo: `${APP_URL}/inventory`,
     });
     if (error) {
       throw new Error(
@@ -818,7 +828,6 @@ export const adminInviteUser = createServerFn({ method: "POST" })
       );
     }
 
-    const hash = hashEmail(email);
     const nowIso = new Date().toISOString();
     await supabaseAdmin.from("signup_invites").upsert(
       {

@@ -197,6 +197,13 @@
       "when": 1795322795690,
       "tag": "0027_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1795617564516,
+      "tag": "0028_tighten_household_select_and_pro_check",
+      "breakpoints": true
     }
   ]
 }
